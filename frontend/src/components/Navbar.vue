@@ -51,7 +51,7 @@
         @click="mobileMenuOpen = !mobileMenuOpen"
         class="md:hidden text-gold text-2xl font-bold h-10 w-10 flex items-center justify-center"
       >
-        {{ mobileMenuOpen ? '✕' : '≡' }}
+        <i :class="mobileMenuOpen ? 'pi pi-times' : 'pi pi-bars'"></i>
       </button>
     </div>
     

@@ -1,13 +1,12 @@
 from flask import Flask
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
 import os
 from dotenv import load_dotenv
 
 # Load environment variables from .env
 load_dotenv()
 
-db = SQLAlchemy()
+from app.database import db
 
 def create_app(config_name=None):
     """Application factory"""
@@ -25,7 +24,9 @@ def create_app(config_name=None):
     
     # Create database tables
     with app.app_context():
-        db.create_all()
+        # Import models to register them with SQLAlchemy
+        from app.models import Carti, Users, CartiCitite, Recenzii
+        # Note: Tables already exist in the database, so we don't call db.create_all()
     
     # Register blueprints
     from app.routes import main_bp

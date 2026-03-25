@@ -97,7 +97,7 @@
       <!-- Books Read Section -->
       <div class="mb-8 sm:mb-12">
         <h2 class="text-xl sm:text-3xl font-bold text-gold mb-4 sm:mb-6 flex items-center gap-2 glow-gold">
-          <span class="text-2xl sm:text-4xl">📚</span> Cărțile Citite
+          <i class="pi pi-book text-2xl sm:text-4xl"></i> Cărțile Citite
         </h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <div 
@@ -138,7 +138,7 @@
       <!-- Ratings Given Section -->
       <div class="mb-12">
         <h2 class="text-xl sm:text-3xl font-bold text-gold mb-4 sm:mb-6 flex items-center gap-2 glow-gold">
-          <span class="text-2xl sm:text-4xl">⭐</span> Evalurile Mele
+          <i class="pi pi-star text-2xl sm:text-4xl"></i> Evalurile Mele
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <div 

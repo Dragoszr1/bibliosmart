@@ -100,7 +100,7 @@
             <!-- Social Login Options -->
             <div class="space-y-2 sm:space-y-3">
               <button class="w-full bg-dark hover:bg-secondary border-2 border-gold text-gold font-semibold py-2 sm:py-3 px-4 text-sm sm:text-base rounded-lg transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-gold">
-                <span>👨‍🎓</span> Oaspete
+                <i class="pi pi-user"></i> Oaspete
               </button>
             </div>
 
@@ -127,17 +127,17 @@
           <!-- Features Section -->
           <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-dark rounded-lg shadow-dark-lg border-2 border-gold p-6 text-center card-hover">
-              <div class="text-4xl mb-3">📚</div>
+              <i class="pi pi-book text-4xl mb-3 text-gold"></i>
               <h3 class="text-gold font-bold mb-2">Răsfoi Cărți</h3>
               <p class="text-white text-sm">Explorează colecția noastră vastă de cărți și resurse</p>
             </div>
             <div class="bg-dark rounded-lg shadow-dark-lg border-2 border-gold p-6 text-center card-hover">
-              <div class="text-4xl mb-3">⭐</div>
+              <i class="pi pi-star text-4xl mb-3 text-gold"></i>
               <h3 class="text-gold font-bold mb-2">Evaluează și Recenzionează</h3>
               <p class="text-white text-sm">Partajează gândurile tale și ajută-i pe alții să descopere cărți grozave</p>
             </div>
             <div class="bg-dark rounded-lg shadow-dark-lg border-2 border-gold p-6 text-center card-hover">
-              <div class="text-4xl mb-3">👥</div>
+              <i class="pi pi-users text-4xl mb-3 text-gold"></i>
               <h3 class="text-gold font-bold mb-2">Alătură-te Comunității</h3>
               <p class="text-white text-sm">Conectează-te cu alți cititori și pasionați de cărți</p>
             </div>

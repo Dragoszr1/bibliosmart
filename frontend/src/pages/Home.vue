@@ -136,28 +136,28 @@
           <h2 class="text-xl sm:text-3xl font-bold text-gradient mb-4 sm:mb-6">De ce să Alegi Biblioteca?</h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 text-white">
             <div class="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-gradient-to-r from-dark/80 to-secondary/80 backdrop-blur-sm border border-gold/10 shadow-elegant card-hover">
-              <span class="text-gold text-xl sm:text-2xl flex-shrink-0 animate-pulse-glow">✓</span>
+              <i class="pi pi-check text-gold text-xl sm:text-2xl flex-shrink-0 animate-pulse-glow"></i>
               <div class="text-xs sm:text-base">
                 <h4 class="font-bold text-gradient mb-1">Colecție Vastă</h4>
                 <p>Mii de cărți în toate genurile</p>
               </div>
             </div>
             <div class="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-gradient-to-r from-dark/80 to-secondary/80 backdrop-blur-sm border border-gold/10 shadow-elegant card-hover">
-              <span class="text-gold text-xl sm:text-2xl flex-shrink-0 animate-pulse-glow">✓</span>
+              <i class="pi pi-check text-gold text-xl sm:text-2xl flex-shrink-0 animate-pulse-glow"></i>
               <div class="text-xs sm:text-base">
                 <h4 class="font-bold text-gradient mb-1">Ghidare Expert</h4>
                 <p>Bibliotecari gata să te ajute</p>
               </div>
             </div>
             <div class="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-gradient-to-r from-dark/80 to-secondary/80 backdrop-blur-sm border border-gold/10 shadow-elegant card-hover">
-              <span class="text-gold text-xl sm:text-2xl flex-shrink-0 animate-pulse-glow">✓</span>
+              <i class="pi pi-check text-gold text-xl sm:text-2xl flex-shrink-0 animate-pulse-glow"></i>
               <div class="text-xs sm:text-base">
                 <h4 class="font-bold text-gradient mb-1">Împrumut Ușor</h4>
                 <p>Proces simplu de împrumut</p>
               </div>
             </div>
             <div class="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-gradient-to-r from-dark/80 to-secondary/80 backdrop-blur-sm border border-gold/10 shadow-elegant card-hover">
-              <span class="text-gold text-xl sm:text-2xl flex-shrink-0 animate-pulse-glow">✓</span>
+              <i class="pi pi-check text-gold text-xl sm:text-2xl flex-shrink-0 animate-pulse-glow"></i>
               <div class="text-xs sm:text-base">
                 <h4 class="font-bold text-gradient mb-1">Acces Digital</h4>
                 <p>Cărți electronice și resurse</p>

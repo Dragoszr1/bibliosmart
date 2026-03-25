@@ -15,7 +15,7 @@
         <div class="relative">
           <div class="bg-gradient-to-r from-secondary to-dark rounded-lg sm:rounded-2xl shadow-dark-lg border-2 border-gold p-4 sm:p-8 card-hover">
             <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
-              <span class="hidden sm:block text-5xl">🔍</span>
+              <i class="pi pi-search hidden sm:block text-5xl text-gold"></i>
               <div class="flex-1 w-full sm:w-auto">
                 <input
                   v-model="searchQuery"
@@ -155,13 +155,13 @@
                 @click="sortBy('rating')"
                 :class="['px-3 sm:px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300', sortType === 'rating' ? 'bg-gold text-dark shadow-gold' : 'bg-secondary text-gold border-2 border-gold hover:bg-gold hover:text-dark']"
               >
-                ⭐
+                <i class="pi pi-star"></i>
               </button>
               <button 
                 @click="sortBy('newest')"
                 :class="['px-3 sm:px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300', sortType === 'newest' ? 'bg-gold text-dark shadow-gold' : 'bg-secondary text-gold border-2 border-gold hover:bg-gold hover:text-dark']"
               >
-                🆕
+                <i class="pi pi-clock"></i>
               </button>
             </div>
           </div>
@@ -187,11 +187,11 @@
                     book.available ? 'bg-primary text-white' : 'bg-accent text-white'
                   ]"
                 >
-                  {{ book.available ? '📥' : '❌' }}
+                  <i :class="book.available ? 'pi pi-check-circle' : 'pi pi-times-circle'"></i>
                 </div>
                 <!-- Rating Badge -->
                 <div class="absolute top-2 left-2 bg-gold text-dark text-xs sm:text-sm px-2 sm:px-3 py-1 rounded-full font-bold shadow-gold">
-                  ⭐ {{ book.rating }}
+                  <i class="pi pi-star"></i> {{ book.rating }}
                 </div>
               </div>
 
@@ -243,7 +243,7 @@
                     {{ book.available ? '📥' : '❌' }}
                   </button>
                   <button class="flex-1 bg-secondary hover:bg-dark border-2 border-gold text-gold font-bold py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm transition-all duration-300 transform hover:scale-105">
-                    ℹ️
+                    <i class="pi pi-info-circle"></i>
                   </button>
                 </div>
               </div>
@@ -252,7 +252,7 @@
 
           <!-- Empty State -->
           <div v-else class="bg-gradient-to-b from-secondary to-dark rounded-lg shadow-dark-lg border-2 border-gold p-8 sm:p-12 text-center">
-            <p class="text-4xl mb-4">📚</p>
+            <i class="pi pi-book text-4xl mb-4 text-gold"></i>
             <h3 class="text-xl sm:text-2xl font-bold text-gold mb-3">Nicio carte găsită</h3>
             <p class="text-white mb-6 text-sm sm:text-base">Încearcă să modifici filtrele sau cauta cu alt cuvânt cheie</p>
             <button 

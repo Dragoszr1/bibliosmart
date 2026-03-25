@@ -1,5 +1,56 @@
 """Database models for the library application"""
 
-# Import models here as you create them
-# Example:
-# from app.models.book import Book
+# Import db from the database module
+from app.database import db
+
+class Carti(db.Model):
+    """Books table model - matches existing 'carti' table"""
+    __tablename__ = 'carti'
+
+    carte_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    titlu = db.Column(db.String(50), nullable=False)
+    autor = db.Column(db.String(50), nullable=False)
+    ISBN = db.Column(db.String(13), nullable=False, unique=True)
+    stoc_total = db.Column(db.Integer)
+    stoc_disponibil = db.Column(db.Integer)
+    imprumutat = db.Column(db.Boolean)
+
+    def __repr__(self):
+        return f'<Carti {self.titlu}>'
+
+class Users(db.Model):
+    """Users table model - matches existing 'users' table"""
+    __tablename__ = 'users'
+
+    user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(50), nullable=False, unique=True)
+    email = db.Column(db.String(50), nullable=False, unique=True)
+    rol = db.Column(db.String(50), nullable=False)
+    telefon = db.Column(db.String(50), nullable=False, unique=True)
+
+    def __repr__(self):
+        return f'<Users {self.username}>'
+
+class CartiCitite(db.Model):
+    """Books read table model - matches existing 'carti_citite' table"""
+    __tablename__ = 'carti_citite'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    carte_id = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return f'<CartiCitite user:{self.user_id} carte:{self.carte_id}>'
+
+class Recenzii(db.Model):
+    """Reviews table model - matches existing 'recenzii' table"""
+    __tablename__ = 'recenzii'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    carte_id = db.Column(db.Integer, nullable=False)
+    nota = db.Column(db.Integer, nullable=False)
+    comentariu = db.Column(db.String(255), nullable=False)
+
+    def __repr__(self):
+        return f'<Recenzii user:{self.user_id} carte:{self.carte_id} nota:{self.nota}>'

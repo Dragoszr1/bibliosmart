@@ -133,18 +133,20 @@
 
           <!-- Security Info -->
           <div class="mt-8 bg-dark rounded-lg shadow-dark-lg border-2 border-gold p-6">
-            <h3 class="text-gold font-bold mb-4">🔐 Datele Tale sunt în Siguranță</h3>
+            <h3 class="text-gold font-bold mb-4 flex items-center gap-2">
+              <i class="pi pi-shield"></i> Datele Tale sunt în Siguranță
+            </h3>
             <ul class="space-y-2 text-white text-sm">
               <li class="flex items-start gap-2">
-                <span class="text-gold">✓</span>
+                <i class="pi pi-check text-gold"></i>
                 <span>Parola ta este criptată și niciodală partajată</span>
               </li>
               <li class="flex items-start gap-2">
-                <span class="text-gold">✓</span>
+                <i class="pi pi-check text-gold"></i>
                 <span>Respectăm reglementatiile de protecție a datelor</span>
               </li>
               <li class="flex items-start gap-2">
-                <span class="text-gold">✓</span>
+                <i class="pi pi-check text-gold"></i>
                 <span>Autentificare cu doi factori disponibilă</span>
               </li>
             </ul>
