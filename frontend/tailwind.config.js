@@ -6,11 +6,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-<<<<<<< HEAD
-        // Golden and burgundy-to-bright-red theme
-=======
         // Golden and burgundy to bright red theme
->>>>>>> c606094 (conectare db)
         primary: '#D4AF37',      // Golden
         secondary: '#9B1B30',    // Burgundy
         accent: '#DC143C',       // Bright red

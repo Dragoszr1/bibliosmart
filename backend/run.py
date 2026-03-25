@@ -2,11 +2,7 @@ import os
 from dotenv import load_dotenv
 from app import create_app
 
-<<<<<<< HEAD
 # Load environment variables from .env
-=======
-# Load environment variables
->>>>>>> c606094 (conectare db)
 load_dotenv()
 
 if __name__ == '__main__':

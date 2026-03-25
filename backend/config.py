@@ -10,10 +10,7 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
-<<<<<<< HEAD
-=======
     # MySQL database configuration
->>>>>>> c606094 (conectare db)
     DB_HOST = os.environ.get('DB_HOST') or 'localhost'
     DB_USER = os.environ.get('DB_USER') or 'admin'
     DB_PASSWORD = os.environ.get('DB_PASSWORD') or 'proiectbiblioteca26'
@@ -24,10 +21,7 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
-<<<<<<< HEAD
-=======
     # MySQL database configuration
->>>>>>> c606094 (conectare db)
     DB_HOST = os.environ.get('DB_HOST') or 'localhost'
     DB_USER = os.environ.get('DB_USER') or 'admin'
     DB_PASSWORD = os.environ.get('DB_PASSWORD') or 'proiectbiblioteca26'

@@ -35,49 +35,131 @@ html, body {
 
 /* Enhanced Shadows and Effects */
 .shadow-gold {
-  box-shadow: 0 10px 30px rgba(212, 175, 55, 0.1);
+  box-shadow:
+    0 4px 6px -1px rgba(212, 175, 55, 0.1),
+    0 10px 15px -3px rgba(212, 175, 55, 0.1),
+    0 20px 25px -5px rgba(212, 175, 55, 0.1);
 }
 
 .shadow-dark-lg {
-<<<<<<< HEAD
-  box-shadow: 0 15px 35px rgba(74, 28, 42, 0.23);
-=======
-  box-shadow: 0 15px 35px rgba(74, 28, 42, 0.2);
->>>>>>> c606094 (conectare db)
+  box-shadow:
+    0 10px 15px -3px rgba(74, 28, 42, 0.1),
+    0 20px 25px -5px rgba(74, 28, 42, 0.1),
+    0 25px 50px -12px rgba(74, 28, 42, 0.25);
+}
+
+.shadow-elegant {
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06),
+    0 4px 8px -2px rgba(74, 28, 42, 0.1);
 }
 
 .card-hover {
-  @apply transition-all duration-300 ease-out;
+  @apply transition-all duration-500 ease-out;
+  transform-style: preserve-3d;
 }
 
 .card-hover:hover {
-  @apply shadow-dark-lg -translate-y-1;
+  @apply shadow-dark-lg;
+  transform: translateY(-4px) scale(1.02);
+  box-shadow:
+    0 20px 25px -5px rgba(74, 28, 42, 0.1),
+    0 25px 50px -12px rgba(74, 28, 42, 0.25),
+    0 0 0 1px rgba(212, 175, 55, 0.1);
 }
 
+/* Modern Glassmorphism Effects */
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 8px 32px 0 rgba(31, 38, 135, 0.37),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.glass-border {
+  background: linear-gradient(135deg,
+    rgba(212, 175, 55, 0.1) 0%,
+    rgba(220, 20, 60, 0.1) 50%,
+    rgba(155, 27, 48, 0.1) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(5px);
+}
+
+/* Enhanced Glow Effects */
 .glow-gold {
-  text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+  text-shadow:
+    0 0 5px rgba(212, 175, 55, 0.3),
+    0 0 10px rgba(212, 175, 55, 0.2),
+    0 0 15px rgba(212, 175, 55, 0.1);
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.3));
 }
 
-/* Smooth transitions */
-a, button {
-  @apply transition-all duration-200 ease-out;
-}
-
-/* Card styling */
-.card-glass {
-  @apply backdrop-blur-sm bg-opacity-95;
-}
-
-/* Hover animations */
+/* Modern Button Effects */
 .btn-glow:hover {
-  box-shadow: 0 0 25px rgba(212, 175, 55, 0.4), inset 0 0 25px rgba(212, 175, 55, 0.1);
+  box-shadow:
+    0 0 20px rgba(212, 175, 55, 0.4),
+    0 0 40px rgba(212, 175, 55, 0.2),
+    inset 0 0 20px rgba(212, 175, 55, 0.1);
+  transform: translateY(-2px);
 }
 
-.border-glow {
-  @apply border-2 border-gold;
-  transition: box-shadow 0.3s ease;
+/* Subtle Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
 }
 
-.border-glow:hover {
-  box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.1), 0 0 15px rgba(212, 175, 55, 0.2);
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(212, 175, 55, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.4), 0 0 30px rgba(212, 175, 55, 0.2);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Modern Gradient Backgrounds */
+.gradient-modern {
+  background: linear-gradient(135deg,
+    rgba(155, 27, 48, 0.95) 0%,
+    rgba(74, 28, 42, 0.95) 50%,
+    rgba(220, 20, 60, 0.95) 100%);
+}
+
+.gradient-overlay {
+  background: linear-gradient(45deg,
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.05) 50%,
+    rgba(0, 0, 0, 0.1) 100%);
+}
+
+/* Enhanced Typography */
+.text-gradient {
+  background: linear-gradient(135deg, #FFD700 0%, #D4AF37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Modern Border Effects */
+.border-modern {
+  border: 1px solid transparent;
+  background: linear-gradient(white, white) padding-box,
+              linear-gradient(135deg, rgba(212, 175, 55, 0.3), rgba(220, 20, 60, 0.3)) border-box;
+}
+
+/* Smooth Transitions */
+* {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

@@ -4,11 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 from dotenv import load_dotenv
 
-<<<<<<< HEAD
 # Load environment variables from .env
-=======
-# Load environment variables
->>>>>>> c606094 (conectare db)
 load_dotenv()
 
 db = SQLAlchemy()
