@@ -47,7 +47,7 @@
               </div>
             </div>
 
-            <button class="w-full mt-4 sm:mt-6 bg-gradient-to-r from-gold to-primary hover:shadow-gold text-dark font-bold py-2 px-3 sm:px-4 rounded-lg text-xs sm:text-base transition-all duration-300 transform hover:scale-105 btn-glow">
+            <button @click="openEditModal" class="w-full mt-4 sm:mt-6 bg-gradient-to-r from-gold to-primary hover:shadow-gold text-dark font-bold py-2 px-3 sm:px-4 rounded-lg text-xs sm:text-base transition-all duration-300 transform hover:scale-105 btn-glow">
               Editează Profil
             </button>
           </div>
@@ -179,6 +179,55 @@
         </div>
       </div>
     </main>
+
+    <!-- Edit Profile Modal -->
+    <div v-if="editModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" @click.self="closeEditModal">
+      <div class="w-full max-w-lg bg-gradient-to-b from-secondary to-dark rounded-lg shadow-dark-lg border-2 border-gold p-6 sm:p-8">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl sm:text-2xl font-bold text-gold glow-gold">Editează Profil</h2>
+          <button @click="closeEditModal" class="text-white hover:text-gold text-2xl font-bold transition-colors duration-200">&times;</button>
+        </div>
+
+        <!-- Description Label -->
+        <label class="block text-gold font-semibold mb-2 text-sm sm:text-base">Descriere</label>
+
+        <!-- Description Textarea -->
+        <textarea
+          v-model="editDescription"
+          rows="5"
+          maxlength="255"
+          placeholder="Scrie ceva despre tine..."
+          class="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-dark border-2 border-gold text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gold transition-all duration-200 text-xs sm:text-base resize-none"
+        ></textarea>
+        <p class="text-primary text-xs mt-1 text-right">{{ editDescription.length }} / 255</p>
+
+        <!-- Messages -->
+        <div v-if="editErrorMessage" class="mt-3 bg-accent bg-opacity-20 border-l-4 border-accent rounded-lg p-3">
+          <p class="text-accent text-xs sm:text-sm">{{ editErrorMessage }}</p>
+        </div>
+        <div v-if="editSuccessMessage" class="mt-3 bg-primary bg-opacity-20 border-l-4 border-primary rounded-lg p-3">
+          <p class="text-primary text-xs sm:text-sm">{{ editSuccessMessage }}</p>
+        </div>
+
+        <!-- Buttons -->
+        <div class="mt-6 flex flex-col sm:flex-row gap-3">
+          <button
+            @click="saveDescription"
+            :disabled="savingDescription"
+            class="flex-1 bg-gradient-to-r from-gold to-primary hover:shadow-gold text-dark font-bold py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base transition-all duration-300 transform hover:scale-105 btn-glow disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{ savingDescription ? 'Se salvează...' : 'Modifică' }}
+          </button>
+          <button
+            @click="closeEditModal"
+            class="flex-1 border-2 border-gold text-gold hover:bg-gold hover:text-dark font-bold py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base transition-all duration-300"
+          >
+            Anulează
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -254,13 +303,61 @@ export default {
             date: 'ian 2026'
           }
         ]
-      }
+      },
+      editModalOpen: false,
+      editDescription: '',
+      editErrorMessage: '',
+      editSuccessMessage: '',
+      savingDescription: false
     }
   },
   mounted() {
     this.loadProfile()
   },
   methods: {
+    openEditModal() {
+      this.editDescription = this.user.description || ''
+      this.editErrorMessage = ''
+      this.editSuccessMessage = ''
+      this.editModalOpen = true
+    },
+    closeEditModal() {
+      this.editModalOpen = false
+    },
+    async saveDescription() {
+      const email = localStorage.getItem('userEmail')
+      if (!email) {
+        this.editErrorMessage = 'Utilizatorul nu este autentificat.'
+        return
+      }
+      this.savingDescription = true
+      this.editErrorMessage = ''
+      this.editSuccessMessage = ''
+
+      try {
+        const response = await fetch('/api/auth/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, description: this.editDescription })
+        })
+        const data = await response.json()
+
+        if (!response.ok) {
+          this.editErrorMessage = data.message || 'Nu s-a putut actualiza descrierea.'
+          return
+        }
+
+        this.user.description = this.editDescription || null
+        this.editSuccessMessage = 'Descriere actualizată cu succes!'
+        setTimeout(() => {
+          this.editModalOpen = false
+        }, 1200)
+      } catch (error) {
+        this.editErrorMessage = 'Eroare de rețea. Încearcă din nou.'
+      } finally {
+        this.savingDescription = false
+      }
+    },
     async loadProfile() {
       const email = localStorage.getItem('userEmail')
       if (!email) {

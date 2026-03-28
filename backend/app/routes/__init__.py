@@ -96,6 +96,29 @@ def profile():
         'description': result.get('description')
     }), 200
 
+@main_bp.route('/auth/profile', methods=['PUT'])
+def update_profile():
+    """Update user description by email."""
+    data = request.get_json(silent=True) or {}
+    email = data.get('email')
+    description = data.get('description')
+    if not email:
+        return jsonify({'success': False, 'message': 'Email is required'}), 400
+
+    update_query = text(
+        "UPDATE users SET description = :description WHERE email = :email"
+    )
+    try:
+        result = db.session.execute(update_query, {'description': description, 'email': email})
+        db.session.commit()
+        if result.rowcount == 0:
+            return jsonify({'success': False, 'message': 'Profile not found'}), 404
+    except Exception:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'Failed to update description'}), 500
+
+    return jsonify({'success': True, 'message': 'Description updated'}), 200
+
 @main_bp.route('/auth/register', methods=['POST'])
 def register():
     """Registration route with bcrypt password hashing and SQL insert."""
