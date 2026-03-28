@@ -31,7 +31,7 @@
             <p class="text-primary mb-3 sm:mb-4 text-xs sm:text-sm font-semibold">Membru din {{ user.joinDate }}</p>
             
             <!-- Description -->
-            <p class="text-white mb-4 sm:mb-6 text-xs sm:text-sm leading-relaxed hidden sm:block">
+            <p v-if="user.description" class="text-white mb-4 sm:mb-6 text-xs sm:text-sm leading-relaxed">
               {{ user.description }}
             </p>
 
@@ -188,10 +188,10 @@ export default {
   data() {
     return {
       user: {
-        name: 'Sarah Johnson',
-        profilePicture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
+        name: '',
+        profilePicture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Profile',
         joinDate: 'Ianuarie 2023',
-        description: 'Îndrăgostită de cărți și cititor pasionat. Explorcă în prezent genurile ficțiune știintifică și fantezie. Întotdeauna entuziasmată să descoprac autori noi și să partajez recomandări de citire!',
+        description: null,
         totalBooksRead: 24,
         averageRating: 4.2,
         currentlyReading: 3,
@@ -254,6 +254,35 @@ export default {
             date: 'ian 2026'
           }
         ]
+      }
+    }
+  },
+  mounted() {
+    this.loadProfile()
+  },
+  methods: {
+    async loadProfile() {
+      const email = localStorage.getItem('userEmail')
+      if (!email) {
+        this.$router.push('/login')
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/auth/profile?email=${encodeURIComponent(email)}`)
+        const data = await response.json()
+
+        if (!response.ok) {
+          console.error('Profile load failed:', data.message)
+          this.$router.push('/login')
+          return
+        }
+
+        this.user.name = data.username || ''
+        this.user.description = data.description || null
+      } catch (error) {
+        console.error('Profile fetch error:', error)
+        this.$router.push('/login')
       }
     }
   }

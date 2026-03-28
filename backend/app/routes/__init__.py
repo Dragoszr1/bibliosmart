@@ -75,6 +75,27 @@ def login():
         'email': result.get('email')
     }), 200
 
+@main_bp.route('/auth/profile', methods=['GET'])
+def profile():
+    """Fetch profile information by email."""
+    email = request.args.get('email')
+    if not email:
+        return jsonify({'success': False, 'message': 'Email is required'}), 400
+
+    query = text(
+        "SELECT username, email, description FROM users WHERE email = :email"
+    )
+    result = db.session.execute(query, {'email': email}).mappings().first()
+    if not result:
+        return jsonify({'success': False, 'message': 'Profile not found'}), 404
+
+    return jsonify({
+        'success': True,
+        'username': result.get('username'),
+        'email': result.get('email'),
+        'description': result.get('description')
+    }), 200
+
 @main_bp.route('/auth/register', methods=['POST'])
 def register():
     """Registration route with bcrypt password hashing and SQL insert."""

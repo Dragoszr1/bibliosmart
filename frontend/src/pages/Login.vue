@@ -190,6 +190,7 @@ export default {
         if (response.ok) {
           this.successMessage = 'Conectare reușită! Se redirecționează...'
           localStorage.setItem('isLoggedIn', 'true')
+          localStorage.setItem('userEmail', this.form.email)
           setTimeout(() => {
             this.$router.push('/')
           }, 1500)
