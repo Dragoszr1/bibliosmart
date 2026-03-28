@@ -48,16 +48,18 @@ def get_reviews():
 def login():
     """Login route with bcrypt password verification."""
     data = request.get_json(silent=True) or {}
-    login_value = data.get('login') or data.get('user') or data.get('email')
+    email = data.get('email')
     password = data.get('password')
 
-    if not login_value or not password:
-        return jsonify({'success': False, 'message': 'Login and password are required'}), 400
+    if not email or not password:
+        return jsonify({'success': False, 'message': 'Email and password are required'}), 400
 
+    # SQL query used to log in:
+    # SELECT username, email, hashed_password FROM users WHERE email = :email
     query = text(
-        "SELECT username, email, hashed_password FROM users WHERE username = :login OR email = :login"
+        "SELECT username, email, hashed_password FROM users WHERE email = :email"
     )
-    result = db.session.execute(query, {'login': login_value}).mappings().first()
+    result = db.session.execute(query, {'email': email}).mappings().first()
 
     if not result:
         return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
