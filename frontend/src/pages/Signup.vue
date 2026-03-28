@@ -200,12 +200,31 @@ export default {
         return
       }
 
-      // Simulează înregistrare
-      this.successMessage = 'Cont creat cu succes! Se redirecționează la conectare...'
-      
-      setTimeout(() => {
-        this.$router.push('/login')
-      }, 2000)
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            user: this.form.fullName,
+            email: this.form.email,
+            password: this.form.password
+          })
+        })
+
+        const data = await response.json()
+        if (response.ok) {
+          this.successMessage = 'Cont creat cu succes! Se redirecționează la conectare...'
+          setTimeout(() => {
+            this.$router.push('/login')
+          }, 2000)
+        } else {
+          this.errorMessage = data.message || 'Eroare la înregistrare'
+        }
+      } catch (error) {
+        this.errorMessage = 'Eroare de rețea. Încearcă din nou.'
+      }
     }
   }
 }

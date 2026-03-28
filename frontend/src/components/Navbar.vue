@@ -23,7 +23,7 @@
           Cărți
           <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gold transition-all duration-300 group-hover:w-full"></span>
         </router-link>
-        <router-link to="/profile" class="text-white hover:text-gold transition-all duration-200 font-medium relative group text-sm lg:text-base">
+        <router-link v-if="isLoggedIn" to="/profile" class="text-white hover:text-gold transition-all duration-200 font-medium relative group text-sm lg:text-base">
           Profil
           <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gold transition-all duration-300 group-hover:w-full"></span>
         </router-link>
@@ -64,7 +64,7 @@
         <router-link to="/books" @click="mobileMenuOpen = false" class="text-white hover:text-gold transition-all duration-200 font-medium py-2 px-3 rounded hover:bg-dark text-sm">
           Cărți
         </router-link>
-        <router-link to="/profile" @click="mobileMenuOpen = false" class="text-white hover:text-gold transition-all duration-200 font-medium py-2 px-3 rounded hover:bg-dark text-sm">
+        <router-link v-if="isLoggedIn" to="/profile" @click="mobileMenuOpen = false" class="text-white hover:text-gold transition-all duration-200 font-medium py-2 px-3 rounded hover:bg-dark text-sm">
           Profil
         </router-link>
         <a href="#" class="text-white hover:text-gold transition-all duration-200 font-medium py-2 px-3 rounded hover:bg-dark text-sm">
@@ -95,11 +95,20 @@ export default {
       mobileMenuOpen: false
     }
   },
+  mounted() {
+    this.isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
+  },
+  watch: {
+    '$route'() {
+      this.isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
+    }
+  },
   methods: {
     handleAuthClick() {
       if (this.isLoggedIn) {
         // Deconectare
         this.isLoggedIn = false
+        localStorage.removeItem('isLoggedIn')
         console.log('Utilizatorul s-a deconectat')
         this.mobileMenuOpen = false
         this.$router.push('/')

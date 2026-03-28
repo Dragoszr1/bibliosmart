@@ -47,6 +47,7 @@
               Toți Cititorii
             </button>
           </div>
+        </div>
         </aside>
 
         <!-- Main Content - Announcements -->
@@ -113,6 +114,7 @@
               </div>
             </div>
           </div>
+          </div>
         </section>
 
         <!-- Right Sidebar - Reserved for Future Use (Hidden on mobile) -->
@@ -163,6 +165,7 @@
                 <p>Cărți electronice și resurse</p>
               </div>
             </div>
+        </div>
         </div>
       </section>
     </main>

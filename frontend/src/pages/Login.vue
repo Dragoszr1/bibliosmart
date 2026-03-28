@@ -23,15 +23,15 @@
 
             <!-- Login Form -->
             <form @submit.prevent="handleLogin" class="space-y-4 sm:space-y-6">
-              <!-- Email/Username Field -->
+              <!-- Email Field -->
               <div>
                 <label for="email" class="block text-gold font-semibold mb-2 text-sm sm:text-base">
-                  Email sau Utilizator
+                  Email
                 </label>
                 <input
                   id="email"
                   v-model="form.email"
-                  type="text"
+                  type="email"
                   placeholder="Introdu email"
                   class="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-dark border-2 border-gold text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gold transition-all duration-200 text-xs sm:text-base"
                   required
@@ -174,16 +174,30 @@ export default {
         return
       }
 
-      // Simulează login cu acreditări demo
-      if (this.form.email === 'student@library.com' && this.form.password === 'demo123') {
-        this.successMessage = 'Conectare reușită! Se redirecționează...'
-        
-        // Simulează apel API
-        setTimeout(() => {
-          this.$router.push('/')
-        }, 1500)
-      } else {
-        this.errorMessage = 'Email sau parolă invalidă. Încearcă: student@library.com / demo123'
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: this.form.email,
+            password: this.form.password
+          })
+        })
+
+        const data = await response.json()
+        if (response.ok) {
+          this.successMessage = 'Conectare reușită! Se redirecționează...'
+          localStorage.setItem('isLoggedIn', 'true')
+          setTimeout(() => {
+            this.$router.push('/')
+          }, 1500)
+        } else {
+          this.errorMessage = data.message || 'Email sau parolă invalidă'
+        }
+      } catch (error) {
+        this.errorMessage = 'Eroare de rețea. Încearcă din nou.'
       }
     }
   }
