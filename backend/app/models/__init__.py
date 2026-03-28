@@ -25,8 +25,9 @@ class Users(db.Model):
     user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(50), nullable=False, unique=True)
     email = db.Column(db.String(50), nullable=False, unique=True)
-    rol = db.Column(db.String(50), nullable=False)
-    telefon = db.Column(db.String(50), nullable=False, unique=True)
+    hashed_password = db.Column(db.String(255), nullable=False)
+    rol = db.Column(db.String(50), nullable=False, default='user')
+    telefon = db.Column(db.String(50), nullable=True, unique=True)
 
     def __repr__(self):
         return f'<Users {self.username}>'

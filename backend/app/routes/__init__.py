@@ -1,4 +1,8 @@
 from flask import Blueprint, jsonify, request
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
+import bcrypt
+
 from app.database import db
 from app.models import Carti, Users, CartiCitite, Recenzii
 
@@ -42,10 +46,68 @@ def get_reviews():
 # Authentication routes structure
 @main_bp.route('/auth/login', methods=['POST'])
 def login():
-    """Basic login route - implement your authentication logic here"""
-    return jsonify({'message': 'Login endpoint - implement your authentication here'}), 200
+    """Login route with bcrypt password verification."""
+    data = request.get_json(silent=True) or {}
+    login_value = data.get('login') or data.get('user') or data.get('email')
+    password = data.get('password')
+
+    if not login_value or not password:
+        return jsonify({'success': False, 'message': 'Login and password are required'}), 400
+
+    query = text(
+        "SELECT username, email, hashed_password FROM users WHERE username = :login OR email = :login"
+    )
+    result = db.session.execute(query, {'login': login_value}).mappings().first()
+
+    if not result:
+        return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+
+    hashed_password = result.get('hashed_password')
+    if not hashed_password or not bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
+        return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+
+    return jsonify({
+        'success': True,
+        'message': 'Login successful',
+        'user': result.get('username'),
+        'email': result.get('email')
+    }), 200
 
 @main_bp.route('/auth/register', methods=['POST'])
 def register():
-    """Basic register route - implement your registration logic here"""
-    return jsonify({'message': 'Register endpoint - implement your registration here'}), 200
+    """Registration route with bcrypt password hashing and SQL insert."""
+    data = request.get_json(silent=True) or {}
+    username = data.get('user') or data.get('username') or data.get('fullName')
+    email = data.get('email')
+    password = data.get('password')
+
+    if not username or not email or not password:
+        return jsonify({'success': False, 'message': 'User, email, and password are required'}), 400
+
+    if len(password) < 8:
+        return jsonify({'success': False, 'message': 'Password must be at least 8 characters'}), 400
+
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    values = {
+        'username': username,
+        'email': email,
+        'hashed_password': hashed_password,
+        'rol': 'user',
+        'telefon': None
+    }
+
+    insert_query = text(
+        "INSERT INTO users (username, email, hashed_password, rol, telefon) VALUES (:username, :email, :hashed_password, :rol, :telefon)"
+    )
+
+    try:
+        db.session.execute(insert_query, values)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'User or email already exists'}), 409
+    except Exception:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'Registration failed'}), 500
+
+    return jsonify({'success': True, 'message': 'Registration successful'}), 201
