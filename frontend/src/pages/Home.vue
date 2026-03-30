@@ -4,8 +4,8 @@
     <section class="bg-gradient-to-br from-secondary via-dark to-accent py-8 sm:py-16 shadow-elegant relative overflow-hidden">
       <div class="absolute inset-0 gradient-overlay opacity-30"></div>
       <div class="max-w-full mx-auto px-3 sm:px-4 text-center relative z-10">
-        <h2 class="text-2xl sm:text-4xl font-bold text-gradient mb-2 sm:mb-4 glow-gold animate-float">Bine venit la Biblioteca Școlii Tale</h2>
-        <p class="text-primary text-xs sm:text-lg mb-4 sm:mb-8 opacity-90">Descoperi o lume de cunoștințe și posibilități infinite</p>
+        <h2 class="text-2xl sm:text-4xl font-bold text-gradient mb-2 sm:mb-4 glow-gold animate-float">Bine ai venit la Biblioteca</h2>
+        <p class="text-cream text-xs sm:text-lg mb-4 sm:mb-8 opacity-90">,loc pentru citat,</p>
       </div>
     </section>
 
@@ -14,54 +14,49 @@
       <div class="flex flex-col lg:flex-row gap-6 lg:gap-8">
         <!-- Left Sidebar - Top Readers (Hidden on mobile) -->
         <aside class="hidden lg:block w-full lg:w-72 lg:flex-shrink-0">
-          <div class="gradient-modern rounded-lg shadow-elegant border border-gold/20 card-hover p-4 sm:p-6 relative overflow-hidden sticky top-24">
-            <div class="absolute inset-0 glass-border rounded-lg"></div>
-            <div class="relative z-10">
-              <h3 class="text-lg sm:text-2xl font-bold text-gradient mb-4 sm:mb-6 flex items-center gap-2">
-                <i class="pi pi-trophy text-2xl sm:text-3xl text-gold animate-pulse-glow"></i>
-                Top Cititori
-              </h3>
-              <div class="space-y-3 sm:space-y-4">
-                <div
-                  v-for="(reader, index) in topReaders"
-                  :key="index"
-                  class="bg-gradient-to-r from-dark/80 to-secondary/80 backdrop-blur-sm rounded-lg p-3 sm:p-4 border border-gold/10 card-hover shadow-elegant text-sm"
-                >
+          <div class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 card-hover p-4 sm:p-6 sticky top-24">
+            <h3 class="text-lg sm:text-2xl font-bold text-secondary mb-4 sm:mb-6 flex items-center gap-2">
+              <i class="pi pi-trophy text-2xl sm:text-3xl text-gold animate-pulse-glow"></i>
+              Top Cititori
+            </h3>
+            <div class="space-y-3 sm:space-y-4">
+              <div
+                v-for="(reader, index) in topReaders"
+                :key="index"
+                class="bg-cream-dark rounded-lg p-3 sm:p-4 border border-secondary/20 card-hover shadow-sm text-sm"
+              >
                 <div class="flex items-center justify-between mb-2">
-                  <h4 class="text-gold font-bold">{{ reader.name }}</h4>
-                  <span class="text-primary text-xs font-semibold bg-secondary rounded-full px-2 py-1">{{ reader.rank }}</span>
+                  <h4 class="text-dark font-bold">{{ reader.name }}</h4>
+                  <span class="text-white text-xs font-semibold bg-secondary rounded-full px-2 py-1">{{ reader.rank }}</span>
                 </div>
-                <p class="text-white text-xs">
-                  <i class="pi pi-book text-gold mr-1"></i>
+                <p class="text-gray-700 text-xs">
+                  <i class="pi pi-book text-secondary mr-1"></i>
                   {{ reader.booksRead }} cărți
                 </p>
-                <div class="mt-2 bg-gold rounded-full h-2 overflow-hidden shadow-gold">
+                <div class="mt-2 bg-cream rounded-full h-2 overflow-hidden border border-secondary/20">
                   <div 
-                    class="bg-primary h-full rounded-full transition-all duration-500" 
+                    class="bg-secondary h-full rounded-full transition-all duration-500" 
                     :style="{ width: reader.progress + '%' }"
                   ></div>
                 </div>
               </div>
             </div>
-            <button class="w-full mt-4 sm:mt-6 bg-gradient-to-r from-gold to-primary hover:shadow-gold text-dark font-bold py-2 sm:py-3 px-4 rounded-lg text-xs sm:text-base transition-all duration-300 transform hover:scale-105 btn-glow">
+            <button class="w-full mt-4 sm:mt-6 bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 sm:py-3 px-4 rounded-lg text-xs sm:text-base transition-all duration-300 transform hover:scale-105">
               Toți Cititorii
             </button>
           </div>
-        </div>
         </aside>
 
         <!-- Main Content - Announcements -->
         <section class="flex-1 min-w-0">
           <!-- Announcements Section -->
-          <div class="gradient-modern rounded-lg shadow-elegant border border-gold/20 card-hover p-4 sm:p-8 relative overflow-hidden">
-            <div class="absolute inset-0 glass-border rounded-lg"></div>
-            <div class="relative z-10">
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3">
-                <h2 class="text-xl sm:text-3xl font-bold text-gradient flex items-center gap-2 sm:gap-3">
-                  <i class="pi pi-megaphone text-2xl sm:text-4xl text-gold animate-pulse-glow"></i>
-                  Anunțuri
-                </h2>
-              <button class="w-full sm:w-auto bg-gradient-to-r from-gold to-primary hover:shadow-gold text-dark font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg text-xs sm:text-base transition-all duration-300 transform hover:scale-105 btn-glow">
+          <div class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 card-hover p-4 sm:p-8">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3">
+              <h2 class="text-xl sm:text-3xl font-bold text-secondary flex items-center gap-2 sm:gap-3">
+                <i class="pi pi-megaphone text-2xl sm:text-4xl text-accent"></i>
+                Anunțuri
+              </h2>
+              <button class="w-full sm:w-auto bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg text-xs sm:text-base transition-all duration-300 transform hover:scale-105">
                 + Anunț Nou
               </button>
             </div>
@@ -71,37 +66,37 @@
               <div 
                 v-for="(announcement, index) in announcements" 
                 :key="index"
-                class="bg-gradient-to-br from-dark/90 to-secondary/90 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-gold/10 shadow-elegant card-hover relative overflow-hidden"
+                class="bg-cream-dark rounded-lg p-4 sm:p-6 border border-secondary/20 shadow-sm card-hover"
               >
                 <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2 sm:mb-3 gap-2">
                   <div>
-                    <h3 class="text-base sm:text-xl font-bold text-gold">{{ announcement.title }}</h3>
-                    <p class="text-primary text-xs sm:text-sm mt-1">
-                      De: <span class="font-semibold">{{ announcement.author }}</span> • {{ announcement.date }}
+                    <h3 class="text-base sm:text-xl font-bold text-dark">{{ announcement.title }}</h3>
+                    <p class="text-gray-500 text-xs sm:text-sm mt-1">
+                      De: <span class="font-semibold text-secondary">{{ announcement.author }}</span> • {{ announcement.date }}
                     </p>
                   </div>
                   <span 
                     :class="[
-                      'px-3 sm:px-4 py-1 sm:py-2 rounded-full text-xs font-semibold shadow-gold whitespace-nowrap',
+                      'px-3 sm:px-4 py-1 sm:py-2 rounded-full text-xs font-semibold whitespace-nowrap',
                       announcement.category === 'Event' ? 'bg-accent text-white' :
-                      announcement.category === 'Update' ? 'bg-gold text-dark' :
-                      'bg-primary text-white'
+                      announcement.category === 'Update' ? 'bg-secondary text-white' :
+                      'bg-dark text-white'
                     ]"
                   >
                     {{ announcement.category }}
                   </span>
                 </div>
-                <p class="text-white mb-3 sm:mb-4 text-xs sm:text-base">{{ announcement.content }}</p>
-                <div class="flex flex-wrap items-center gap-2 sm:gap-4 text-primary text-xs sm:text-sm">
-                  <button class="hover:text-gold transition-colors duration-200 font-medium hover:scale-110 transform flex items-center gap-1">
+                <p class="text-gray-700 mb-3 sm:mb-4 text-xs sm:text-base">{{ announcement.content }}</p>
+                <div class="flex flex-wrap items-center gap-2 sm:gap-4 text-secondary text-xs sm:text-sm">
+                  <button class="hover:text-accent transition-colors duration-200 font-medium hover:scale-110 transform flex items-center gap-1">
                     <i class="pi pi-thumbs-up"></i>
                     Apreciază
                   </button>
-                  <button class="hover:text-gold transition-colors duration-200 font-medium hover:scale-110 transform flex items-center gap-1">
+                  <button class="hover:text-accent transition-colors duration-200 font-medium hover:scale-110 transform flex items-center gap-1">
                     <i class="pi pi-comments"></i>
                     Comentează
                   </button>
-                  <button class="hover:text-gold transition-colors duration-200 font-medium hover:scale-110 transform flex items-center gap-1">
+                  <button class="hover:text-accent transition-colors duration-200 font-medium hover:scale-110 transform flex items-center gap-1">
                     <i class="pi pi-bookmark"></i>
                     Salvează
                   </button>
@@ -110,62 +105,55 @@
 
               <!-- Empty State -->
               <div v-if="announcements.length === 0" class="text-center py-8 sm:py-12">
-                <p class="text-white text-xs sm:text-lg">Nu sunt anunțuri deocamdată. Revino în curând!</p>
+                <p class="text-gray-600 text-xs sm:text-lg">Nu sunt anunțuri deocamdată. Revino în curând!</p>
               </div>
             </div>
-          </div>
           </div>
         </section>
 
         <!-- Right Sidebar - Reserved for Future Use (Hidden on mobile) -->
         <aside class="hidden lg:block w-full lg:w-72 lg:flex-shrink-0">
-          <div class="gradient-modern rounded-lg shadow-elegant border border-gold/20 card-hover p-4 sm:p-6 relative overflow-hidden sticky top-24">
-            <div class="absolute inset-0 glass-border rounded-lg"></div>
-            <div class="relative z-10">
-              <h3 class="text-lg sm:text-2xl font-bold text-gradient mb-4">Curand</h3>
-              <p class="text-white text-center py-6 sm:py-12 text-xs sm:text-base opacity-80">
-                Noi caracteristici și conțut vor fi adăugate aici curând!
-              </p>
-            </div>
+          <div class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 card-hover p-4 sm:p-6 sticky top-24">
+            <h3 class="text-lg sm:text-2xl font-bold text-secondary mb-4">Curand</h3>
+            <p class="text-gray-600 text-center py-6 sm:py-12 text-xs sm:text-base">
+              Noi caracteristici și conțut vor fi adăugate aici curând!
+            </p>
           </div>
         </aside>
       </div>
 
       <!-- Features Section -->
-      <section class="gradient-modern rounded-lg shadow-elegant p-4 sm:p-8 border border-gold/20 card-hover relative overflow-hidden mt-8 sm:mt-12">
-        <div class="absolute inset-0 glass-border rounded-lg"></div>
-        <div class="relative z-10">
-          <h2 class="text-xl sm:text-3xl font-bold text-gradient mb-4 sm:mb-6">De ce să Alegi Biblioteca?</h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 text-white">
-            <div class="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-gradient-to-r from-dark/80 to-secondary/80 backdrop-blur-sm border border-gold/10 shadow-elegant card-hover">
-              <i class="pi pi-check text-gold text-xl sm:text-2xl flex-shrink-0 animate-pulse-glow"></i>
-              <div class="text-xs sm:text-base">
-                <h4 class="font-bold text-gradient mb-1">Colecție Vastă</h4>
-                <p>Mii de cărți în toate genurile</p>
-              </div>
+      <section class="bg-cream rounded-lg shadow-elegant p-4 sm:p-8 border-2 border-secondary/60 card-hover mt-8 sm:mt-12">
+        <h2 class="text-xl sm:text-3xl font-bold text-secondary mb-4 sm:mb-6">De ce să Alegi Biblioteca?</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <div class="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-cream-dark border border-secondary/20 shadow-sm card-hover">
+            <i class="pi pi-check text-accent text-xl sm:text-2xl flex-shrink-0"></i>
+            <div class="text-xs sm:text-base">
+              <h4 class="font-bold text-dark mb-1">Colecție Vastă</h4>
+              <p class="text-gray-700">Mii de cărți în toate genurile</p>
             </div>
-            <div class="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-gradient-to-r from-dark/80 to-secondary/80 backdrop-blur-sm border border-gold/10 shadow-elegant card-hover">
-              <i class="pi pi-check text-gold text-xl sm:text-2xl flex-shrink-0 animate-pulse-glow"></i>
-              <div class="text-xs sm:text-base">
-                <h4 class="font-bold text-gradient mb-1">Ghidare Expert</h4>
-                <p>Bibliotecari gata să te ajute</p>
-              </div>
+          </div>
+          <div class="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-cream-dark border border-secondary/20 shadow-sm card-hover">
+            <i class="pi pi-check text-accent text-xl sm:text-2xl flex-shrink-0"></i>
+            <div class="text-xs sm:text-base">
+              <h4 class="font-bold text-dark mb-1">Ghidare Expert</h4>
+              <p class="text-gray-700">Bibliotecari gata să te ajute</p>
             </div>
-            <div class="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-gradient-to-r from-dark/80 to-secondary/80 backdrop-blur-sm border border-gold/10 shadow-elegant card-hover">
-              <i class="pi pi-check text-gold text-xl sm:text-2xl flex-shrink-0 animate-pulse-glow"></i>
-              <div class="text-xs sm:text-base">
-                <h4 class="font-bold text-gradient mb-1">Împrumut Ușor</h4>
-                <p>Proces simplu de împrumut</p>
-              </div>
+          </div>
+          <div class="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-cream-dark border border-secondary/20 shadow-sm card-hover">
+            <i class="pi pi-check text-accent text-xl sm:text-2xl flex-shrink-0"></i>
+            <div class="text-xs sm:text-base">
+              <h4 class="font-bold text-dark mb-1">Împrumut Ușor</h4>
+              <p class="text-gray-700">Proces simplu de împrumut</p>
             </div>
-            <div class="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-gradient-to-r from-dark/80 to-secondary/80 backdrop-blur-sm border border-gold/10 shadow-elegant card-hover">
-              <i class="pi pi-check text-gold text-xl sm:text-2xl flex-shrink-0 animate-pulse-glow"></i>
-              <div class="text-xs sm:text-base">
-                <h4 class="font-bold text-gradient mb-1">Acces Digital</h4>
-                <p>Cărți electronice și resurse</p>
-              </div>
+          </div>
+          <div class="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-cream-dark border border-secondary/20 shadow-sm card-hover">
+            <i class="pi pi-check text-accent text-xl sm:text-2xl flex-shrink-0"></i>
+            <div class="text-xs sm:text-base">
+              <h4 class="font-bold text-dark mb-1">Acces Digital</h4>
+              <p class="text-gray-700">Cărți electronice și resurse</p>
             </div>
-        </div>
+          </div>
         </div>
       </section>
     </main>

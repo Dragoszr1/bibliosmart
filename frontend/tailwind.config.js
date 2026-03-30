@@ -12,6 +12,8 @@ module.exports = {
         accent: '#DC143C',       // Bright red
         dark: '#4A1C2A',         // Dark burgundy
         gold: '#FFD700',         // Bright gold
+        cream: '#F0EBE4',        // Warm off-white (main content)
+        'cream-dark': '#E5DED5', // Slightly darker warm white (inner cards)
       }
     },
   },

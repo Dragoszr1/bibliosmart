@@ -1,12 +1,20 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_from_directory, current_app
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 import bcrypt
+import os
+import glob
 
 from app.database import db
 from app.models import Carti, Users, CartiCitite, Recenzii
 
 main_bp = Blueprint('main', __name__, url_prefix='/api')
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+PROFILE_PICTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'profile_pictures')
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @main_bp.route('/health', methods=['GET'])
 def health_check():
@@ -83,7 +91,7 @@ def profile():
         return jsonify({'success': False, 'message': 'Email is required'}), 400
 
     query = text(
-        "SELECT username, email, description FROM users WHERE email = :email"
+        "SELECT user_id, username, email, description FROM users WHERE email = :email"
     )
     result = db.session.execute(query, {'email': email}).mappings().first()
     if not result:
@@ -91,10 +99,42 @@ def profile():
 
     return jsonify({
         'success': True,
+        'user_id': result.get('user_id'),
         'username': result.get('username'),
         'email': result.get('email'),
         'description': result.get('description')
     }), 200
+
+@main_bp.route('/auth/books-read', methods=['GET'])
+def books_read():
+    """Fetch books read by a user.
+    SQL: SELECT c.carte_id, c.titlu, c.autor, c.ISBN
+         FROM carti_citite cc
+         JOIN carti c ON cc.carte_id = c.carte_id
+         WHERE cc.user_id = :user_id
+    """
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': 'user_id is required'}), 400
+
+    query = text(
+        "SELECT c.carte_id, c.titlu, c.autor, c.ISBN "
+        "FROM carti_citite cc "
+        "JOIN carti c ON cc.carte_id = c.carte_id "
+        "WHERE cc.user_id = :user_id"
+    )
+    rows = db.session.execute(query, {'user_id': user_id}).mappings().all()
+
+    books = []
+    for row in rows:
+        books.append({
+            'carte_id': row.get('carte_id'),
+            'titlu': row.get('titlu'),
+            'autor': row.get('autor'),
+            'ISBN': row.get('ISBN')
+        })
+
+    return jsonify({'success': True, 'books': books}), 200
 
 @main_bp.route('/auth/profile', methods=['PUT'])
 def update_profile():
@@ -157,3 +197,66 @@ def register():
         return jsonify({'success': False, 'message': 'Registration failed'}), 500
 
     return jsonify({'success': True, 'message': 'Registration successful'}), 201
+
+
+@main_bp.route('/auth/profile-picture', methods=['POST'])
+def upload_profile_picture():
+    """Upload or replace a user's profile picture.
+    Expects multipart/form-data with 'file' and 'email' fields.
+    Saves as <username>.<ext> in the profile_pictures folder.
+    """
+    email = request.form.get('email')
+    if not email:
+        return jsonify({'success': False, 'message': 'Email is required'}), 400
+
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'No file provided'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'No file selected'}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({'success': False, 'message': 'File type not allowed. Use png, jpg, jpeg, gif, or webp'}), 400
+
+    # Look up the username from the email
+    query = text("SELECT username FROM users WHERE email = :email")
+    result = db.session.execute(query, {'email': email}).mappings().first()
+    if not result:
+        return jsonify({'success': False, 'message': 'User not found'}), 404
+
+    username = result['username']
+    ext = file.filename.rsplit('.', 1)[1].lower()
+
+    # Remove any existing profile picture for this user
+    os.makedirs(PROFILE_PICTURES_DIR, exist_ok=True)
+    for old_file in glob.glob(os.path.join(PROFILE_PICTURES_DIR, f"{username}.*")):
+        os.remove(old_file)
+
+    # Save the new file as username.ext
+    filename = f"{username}.{ext}"
+    filepath = os.path.join(PROFILE_PICTURES_DIR, filename)
+    file.save(filepath)
+
+    return jsonify({
+        'success': True,
+        'message': 'Profile picture uploaded',
+        'filename': filename
+    }), 200
+
+
+@main_bp.route('/auth/profile-picture/<username>', methods=['GET'])
+def get_profile_picture(username):
+    """Serve a user's profile picture by username.
+    Looks for <username>.* in the profile_pictures folder.
+    """
+    os.makedirs(PROFILE_PICTURES_DIR, exist_ok=True)
+    matches = glob.glob(os.path.join(PROFILE_PICTURES_DIR, f"{username}.*"))
+
+    # Filter to only allowed extensions
+    matches = [m for m in matches if m.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS]
+
+    if not matches:
+        return jsonify({'success': False, 'message': 'No profile picture found'}), 404
+
+    return send_from_directory(PROFILE_PICTURES_DIR, os.path.basename(matches[0]))
