@@ -4,8 +4,8 @@
     <section class="bg-gradient-to-br from-secondary via-dark to-accent py-8 sm:py-16 shadow-elegant relative overflow-hidden">
       <div class="absolute inset-0 gradient-overlay opacity-30"></div>
       <div class="max-w-full mx-auto px-3 sm:px-4 text-center relative z-10">
-        <h2 class="text-2xl sm:text-4xl font-bold text-gradient mb-2 sm:mb-4 glow-gold">Profilul Meu</h2>
-        <p class="text-cream text-xs sm:text-lg mb-4 sm:mb-8 opacity-90">Bine ai revenit, {{ user.name }}</p>
+        <h2 class="text-2xl sm:text-4xl font-bold text-white mb-2 sm:mb-4 glow-white tracking-tight">Profilul Meu</h2>
+        <p class="text-cream/80 text-xs sm:text-lg mb-4 sm:mb-8 font-light">Bine ai revenit, {{ user.name }}</p>
       </div>
     </section>
 
@@ -65,7 +65,7 @@
               </div>
             </div>
 
-            <button @click="openEditModal" class="w-full mt-4 sm:mt-6 bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-xs sm:text-base transition-all duration-300 transform hover:scale-105">
+            <button @click="openEditModal" class="w-full mt-4 sm:mt-6 bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-xs sm:text-base transition-all duration-300 ">
               Editează Profil
             </button>
           </div>
@@ -224,7 +224,7 @@
           <button
             @click="saveDescription"
             :disabled="savingDescription"
-            class="flex-1 bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="flex-1 bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base transition-all duration-300  disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {{ savingDescription ? 'Se salvează...' : 'Modifică' }}
           </button>

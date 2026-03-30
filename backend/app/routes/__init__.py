@@ -12,6 +12,7 @@ main_bp = Blueprint('main', __name__, url_prefix='/api')
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 PROFILE_PICTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'profile_pictures')
+BOOK_IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'book_images')
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -33,8 +34,24 @@ def index():
 # Basic routing structure - queries to be implemented by user
 @main_bp.route('/books', methods=['GET'])
 def get_books():
-    """Basic books route - implement your queries here"""
-    return jsonify({'message': 'Books endpoint - implement your database queries here'}), 200
+    """Get all books from the carti table"""
+    try:
+        result = db.session.execute(text('SELECT carte_id, titlu, autor, ISBN, stoc_total, stoc_disponibil, imprumutat, gen FROM carti'))
+        books = []
+        for row in result:
+            books.append({
+                'carte_id': row[0],
+                'titlu': row[1],
+                'autor': row[2],
+                'ISBN': row[3],
+                'stoc_total': row[4],
+                'stoc_disponibil': row[5],
+                'imprumutat': row[6],
+                'gen': row[7]
+            })
+        return jsonify({'books': books}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @main_bp.route('/users', methods=['GET'])
 def get_users():
@@ -48,8 +65,44 @@ def get_books_read():
 
 @main_bp.route('/reviews', methods=['GET'])
 def get_reviews():
-    """Basic reviews route - implement your queries here"""
-    return jsonify({'message': 'Reviews endpoint - implement your database queries here'}), 200
+    """Get reviews for a specific book by carte_id.
+    Returns reviews with username, nota (rating), and comentariu.
+    """
+    carte_id = request.args.get('carte_id')
+    if not carte_id:
+        return jsonify({'success': False, 'message': 'carte_id is required'}), 400
+
+    try:
+        query = text("""
+            SELECT r.id, r.nota, r.comentariu, u.username
+            FROM recenzii r
+            JOIN users u ON r.user_id = u.user_id
+            WHERE r.carte_id = :carte_id
+            ORDER BY r.id DESC
+        """)
+        result = db.session.execute(query, {'carte_id': carte_id})
+        reviews = []
+        for row in result:
+            reviews.append({
+                'id': row[0],
+                'nota': row[1],
+                'comentariu': row[2],
+                'username': row[3]
+            })
+
+        # Calculate average rating
+        avg_rating = 0
+        if reviews:
+            avg_rating = round(sum(r['nota'] for r in reviews) / len(reviews), 1)
+
+        return jsonify({
+            'success': True,
+            'reviews': reviews,
+            'avg_rating': avg_rating,
+            'total_reviews': len(reviews)
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # Authentication routes structure
 @main_bp.route('/auth/login', methods=['POST'])
@@ -260,3 +313,65 @@ def get_profile_picture(username):
         return jsonify({'success': False, 'message': 'No profile picture found'}), 404
 
     return send_from_directory(PROFILE_PICTURES_DIR, os.path.basename(matches[0]))
+
+
+@main_bp.route('/books/image', methods=['POST'])
+def upload_book_image():
+    """Upload or replace a book cover image.
+    Expects multipart/form-data with 'file' and 'carte_id' fields.
+    Saves as <carte_id>.<ext> in the book_images folder.
+    """
+    carte_id = request.form.get('carte_id')
+    if not carte_id:
+        return jsonify({'success': False, 'message': 'carte_id is required'}), 400
+
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'No file provided'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'No file selected'}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({'success': False, 'message': 'File type not allowed. Use png, jpg, jpeg, gif, or webp'}), 400
+
+    # Verify the book exists
+    query = text("SELECT carte_id FROM carti WHERE carte_id = :carte_id")
+    result = db.session.execute(query, {'carte_id': carte_id}).mappings().first()
+    if not result:
+        return jsonify({'success': False, 'message': 'Book not found'}), 404
+
+    ext = file.filename.rsplit('.', 1)[1].lower()
+
+    # Remove any existing image for this book
+    os.makedirs(BOOK_IMAGES_DIR, exist_ok=True)
+    for old_file in glob.glob(os.path.join(BOOK_IMAGES_DIR, f"{carte_id}.*")):
+        os.remove(old_file)
+
+    # Save the new file as carte_id.ext
+    filename = f"{carte_id}.{ext}"
+    filepath = os.path.join(BOOK_IMAGES_DIR, filename)
+    file.save(filepath)
+
+    return jsonify({
+        'success': True,
+        'message': 'Book image uploaded',
+        'filename': filename
+    }), 200
+
+
+@main_bp.route('/books/image/<int:carte_id>', methods=['GET'])
+def get_book_image(carte_id):
+    """Serve a book's cover image by carte_id.
+    Looks for <carte_id>.* in the book_images folder.
+    """
+    os.makedirs(BOOK_IMAGES_DIR, exist_ok=True)
+    matches = glob.glob(os.path.join(BOOK_IMAGES_DIR, f"{carte_id}.*"))
+
+    # Filter to only allowed extensions
+    matches = [m for m in matches if m.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS]
+
+    if not matches:
+        return jsonify({'success': False, 'message': 'No book image found'}), 404
+
+    return send_from_directory(BOOK_IMAGES_DIR, os.path.basename(matches[0]))

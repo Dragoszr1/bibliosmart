@@ -4,8 +4,8 @@
     <section class="bg-gradient-to-br from-secondary via-dark to-accent py-8 sm:py-16 shadow-elegant relative overflow-hidden">
       <div class="absolute inset-0 gradient-overlay opacity-30"></div>
       <div class="max-w-full mx-auto px-3 sm:px-4 text-center relative z-10">
-        <h2 class="text-2xl sm:text-4xl font-bold text-gradient mb-2 sm:mb-4 glow-gold animate-float">Bine ai venit la Biblioteca</h2>
-        <p class="text-cream text-xs sm:text-lg mb-4 sm:mb-8 opacity-90">,loc pentru citat,</p>
+        <h2 class="text-2xl sm:text-4xl font-bold text-white mb-2 sm:mb-4 glow-white tracking-tight">Bine ai venit la Biblioteca</h2>
+        <p class="text-cream/80 text-xs sm:text-lg mb-4 sm:mb-8 font-light">Locul unde cunoașterea prinde viață</p>
       </div>
     </section>
 
@@ -16,7 +16,7 @@
         <aside class="hidden lg:block w-full lg:w-72 lg:flex-shrink-0">
           <div class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 card-hover p-4 sm:p-6 sticky top-24">
             <h3 class="text-lg sm:text-2xl font-bold text-secondary mb-4 sm:mb-6 flex items-center gap-2">
-              <i class="pi pi-trophy text-2xl sm:text-3xl text-gold animate-pulse-glow"></i>
+              <i class="pi pi-trophy text-2xl sm:text-3xl text-secondary"></i>
               Top Cititori
             </h3>
             <div class="space-y-3 sm:space-y-4">
@@ -41,7 +41,7 @@
                 </div>
               </div>
             </div>
-            <button class="w-full mt-4 sm:mt-6 bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 sm:py-3 px-4 rounded-lg text-xs sm:text-base transition-all duration-300 transform hover:scale-105">
+            <button class="w-full mt-4 sm:mt-6 bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 sm:py-3 px-4 rounded-lg text-xs sm:text-base transition-all duration-300 ">
               Toți Cititorii
             </button>
           </div>
@@ -56,7 +56,7 @@
                 <i class="pi pi-megaphone text-2xl sm:text-4xl text-accent"></i>
                 Anunțuri
               </h2>
-              <button class="w-full sm:w-auto bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg text-xs sm:text-base transition-all duration-300 transform hover:scale-105">
+              <button class="w-full sm:w-auto bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg text-xs sm:text-base transition-all duration-300 ">
                 + Anunț Nou
               </button>
             </div>
@@ -88,15 +88,15 @@
                 </div>
                 <p class="text-gray-700 mb-3 sm:mb-4 text-xs sm:text-base">{{ announcement.content }}</p>
                 <div class="flex flex-wrap items-center gap-2 sm:gap-4 text-secondary text-xs sm:text-sm">
-                  <button class="hover:text-accent transition-colors duration-200 font-medium hover:scale-110 transform flex items-center gap-1">
+                  <button class="hover:text-accent transition-colors duration-200 font-medium  transform flex items-center gap-1">
                     <i class="pi pi-thumbs-up"></i>
                     Apreciază
                   </button>
-                  <button class="hover:text-accent transition-colors duration-200 font-medium hover:scale-110 transform flex items-center gap-1">
+                  <button class="hover:text-accent transition-colors duration-200 font-medium  transform flex items-center gap-1">
                     <i class="pi pi-comments"></i>
                     Comentează
                   </button>
-                  <button class="hover:text-accent transition-colors duration-200 font-medium hover:scale-110 transform flex items-center gap-1">
+                  <button class="hover:text-accent transition-colors duration-200 font-medium  transform flex items-center gap-1">
                     <i class="pi pi-bookmark"></i>
                     Salvează
                   </button>

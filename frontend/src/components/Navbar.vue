@@ -1,10 +1,10 @@
 <template>
-  <nav class="bg-dark shadow-elegant border-b-4 border-secondary sticky top-0 z-50">
+  <nav class="bg-dark shadow-elegant border-b border-secondary/40 sticky top-0 z-50">
     <div class="max-w-full mx-auto px-3 sm:px-4 py-3 sm:py-4 flex justify-between items-center">
       <!-- Logo Section -->
       <div class="flex items-center gap-2 sm:gap-3 group cursor-pointer transition-all duration-300">
         <div class="relative">
-          <img src="/logo.webp" alt="Biblioteca Logo" class="h-9 sm:h-12 w-9 sm:w-12 transition-transform duration-300 group-hover:scale-110">
+          <img src="/logo.webp" alt="Biblioteca Logo" class="h-9 sm:h-12 w-9 sm:w-12 transition-transform duration-300 group-">
           <div class="absolute inset-0 bg-cream rounded-full opacity-0 group-hover:opacity-20 blur-lg transition-opacity duration-300"></div>
         </div>
         <div class="hidden sm:block">
@@ -36,7 +36,7 @@
         <button 
           @click="handleAuthClick"
           :class="[
-            'px-4 lg:px-6 py-2 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 text-sm lg:text-base',
+            'px-4 lg:px-6 py-2 rounded-lg font-bold transition-all duration-300  text-sm lg:text-base',
             isLoggedIn 
               ? 'bg-gradient-to-r from-accent to-red-700 hover:shadow-lg text-white' 
               : 'bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white'
@@ -56,7 +56,7 @@
     </div>
     
     <!-- Mobile Menu -->
-    <div v-if="mobileMenuOpen" class="md:hidden bg-dark border-t-2 border-secondary">
+    <div v-if="mobileMenuOpen" class="md:hidden bg-dark border-t border-secondary/30">
       <div class="px-3 sm:px-4 py-3 flex flex-col gap-2">
         <router-link to="/" @click="mobileMenuOpen = false" class="text-cream/80 hover:text-cream transition-all duration-200 font-medium py-2 px-3 rounded hover:bg-secondary/20 text-sm">
           Principală
@@ -73,7 +73,7 @@
         <button 
           @click="handleAuthClick"
           :class="[
-            'w-full px-4 py-2 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 text-sm',
+            'w-full px-4 py-2 rounded-lg font-bold transition-all duration-300  text-sm',
             isLoggedIn 
               ? 'bg-gradient-to-r from-accent to-red-700 hover:shadow-lg text-white' 
               : 'bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white'

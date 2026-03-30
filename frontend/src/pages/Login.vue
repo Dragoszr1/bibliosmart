@@ -4,8 +4,8 @@
     <section class="bg-gradient-to-br from-secondary via-dark to-accent py-8 sm:py-16 shadow-elegant relative overflow-hidden">
       <div class="absolute inset-0 gradient-overlay opacity-30"></div>
       <div class="max-w-full mx-auto px-3 sm:px-4 text-center relative z-10">
-        <h2 class="text-2xl sm:text-4xl font-bold text-gradient mb-2 sm:mb-4 glow-gold">Conectare</h2>
-        <p class="text-cream text-xs sm:text-lg mb-4 sm:mb-8 opacity-90">Bine ai revenit la Biblioteca</p>
+        <h2 class="text-2xl sm:text-4xl font-bold text-white mb-2 sm:mb-4 glow-white tracking-tight">Conectare</h2>
+        <p class="text-cream/80 text-xs sm:text-lg mb-4 sm:mb-8 font-light">Bine ai revenit la Biblioteca</p>
       </div>
     </section>
 
@@ -82,7 +82,7 @@
               <!-- Login Button -->
               <button
                 type="submit"
-                class="w-full bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base transition-all duration-300 transform hover:scale-105"
+                class="w-full bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base transition-all duration-300 "
               >
                 Conectare
               </button>

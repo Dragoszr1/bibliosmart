@@ -14,6 +14,7 @@ class Carti(db.Model):
     stoc_total = db.Column(db.Integer)
     stoc_disponibil = db.Column(db.Integer)
     imprumutat = db.Column(db.Boolean)
+    gen = db.Column(db.String(255), nullable=False)
 
     def __repr__(self):
         return f'<Carti {self.titlu}>'
@@ -28,6 +29,7 @@ class Users(db.Model):
     hashed_password = db.Column(db.String(255), nullable=False)
     rol = db.Column(db.String(50), nullable=False, default='user')
     telefon = db.Column(db.String(50), nullable=True, unique=True)
+    description = db.Column(db.String(255), nullable=True)
 
     def __repr__(self):
         return f'<Users {self.username}>'

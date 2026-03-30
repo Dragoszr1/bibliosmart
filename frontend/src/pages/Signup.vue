@@ -4,8 +4,8 @@
     <section class="bg-gradient-to-br from-secondary via-dark to-accent py-8 sm:py-16 shadow-elegant relative overflow-hidden">
       <div class="absolute inset-0 gradient-overlay opacity-30"></div>
       <div class="max-w-full mx-auto px-3 sm:px-4 text-center relative z-10">
-        <h2 class="text-2xl sm:text-4xl font-bold text-gradient mb-2 sm:mb-4 glow-gold">Creare Cont</h2>
-        <p class="text-cream text-xs sm:text-lg mb-4 sm:mb-8 opacity-90">Alătură-te Bibliotecii astazi</p>
+        <h2 class="text-2xl sm:text-4xl font-bold text-white mb-2 sm:mb-4 glow-white tracking-tight">Creare Cont</h2>
+        <p class="text-cream/80 text-xs sm:text-lg mb-4 sm:mb-8 font-light">Alătură-te Bibliotecii astăzi</p>
       </div>
     </section>
 
@@ -115,7 +115,7 @@
               <!-- Signup Button -->
               <button
                 type="submit"
-                class="w-full bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105"
+                class="w-full bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 "
               >
                 Creare Cont
               </button>
