@@ -181,6 +181,7 @@ export default {
           headers: {
             'Content-Type': 'application/json'
           },
+          credentials: 'include',
           body: JSON.stringify({
             email: this.form.email,
             password: this.form.password
@@ -190,8 +191,6 @@ export default {
         const data = await response.json()
         if (response.ok) {
           this.successMessage = 'Conectare reușită! Se redirecționează...'
-          localStorage.setItem('isLoggedIn', 'true')
-          localStorage.setItem('userEmail', this.form.email)
           setTimeout(() => {
             this.$router.push('/')
           }, 1500)

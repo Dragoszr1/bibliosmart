@@ -35,85 +35,37 @@
         </div>
       </div>
 
-      <!-- Content Layout -->
-      <div class="flex flex-col lg:flex-row gap-6 lg:gap-8">
-        <!-- Sidebar - Filters (Collapsible on mobile) -->
-        <aside class="w-full lg:w-72 lg:flex-shrink-0">
-          <!-- Mobile Filter Toggle Button -->
-          <button 
-            @click="filtersOpen = !filtersOpen"
-            class="lg:hidden w-full mb-4 bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-between text-sm sm:text-base"
-          >
-            <span class="flex items-center gap-2">
-              <span>🎯</span>
-              <span>{{ filtersOpen ? 'Ascunde' : 'Afișează' }} Filtre</span>
-            </span>
-            <span class="text-lg">{{ filtersOpen ? '▲' : '▼' }}</span>
-          </button>
-          
-          <!-- Filter Sidebar -->
-          <div v-show="filtersOpen" class="lg:block bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 sticky top-24 p-4 sm:p-6 card-hover">
-            <h3 class="text-lg sm:text-2xl font-bold text-secondary mb-4 sm:mb-6 hidden lg:flex items-center gap-2">
-              <span class="text-3xl">🎯</span> Filtre
-            </h3>
-
-            <!-- Availability Filter -->
-            <div class="mb-6 sm:mb-8">
-              <h4 class="text-base sm:text-lg font-bold text-dark mb-3 sm:mb-4">Disponibilitate</h4>
-              <div class="space-y-2 sm:space-y-3">
-                <label class="flex items-center gap-3 cursor-pointer group text-sm sm:text-base">
-                  <input
-                    type="checkbox"
-                    v-model="showAvailableOnly"
-                    @change="filterBooks"
-                    class="w-5 h-5 rounded border-secondary text-secondary focus:ring-secondary cursor-pointer"
-                  >
-                  <span class="text-gray-700 group-hover:text-secondary transition-colors duration-200">Doar disponibile</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Clear Filters -->
+      <!-- Content -->
+      <div>
+        <!-- Results Info -->
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <p class="text-dark font-semibold text-sm sm:text-base">
+            S-au găsit <span class="text-secondary text-lg sm:text-xl">{{ filteredBooks.length }}</span> cărți
+          </p>
+          <div class="flex gap-2 flex-wrap sm:flex-nowrap items-center">
             <button 
-              @click="clearFilters"
-              class="w-full bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 sm:py-3 px-4 rounded-lg transition-all duration-300  text-sm sm:text-base"
+              @click="sortBy('title')"
+              :class="['px-3 sm:px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300', sortType === 'title' ? 'bg-secondary text-white shadow-sm' : 'bg-cream text-secondary border-2 border-secondary/40 hover:bg-secondary hover:text-white']"
             >
-              Șterge Filtre
+              A-Z
+            </button>
+            <button 
+              @click="sortBy('available')"
+              :class="['px-3 sm:px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300', sortType === 'available' ? 'bg-secondary text-white shadow-sm' : 'bg-cream text-secondary border-2 border-secondary/40 hover:bg-secondary hover:text-white']"
+            >
+              <i class="pi pi-check-circle"></i>
+            </button>
+            <button 
+              @click="sortBy('newest')"
+              :class="['px-3 sm:px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300', sortType === 'newest' ? 'bg-secondary text-white shadow-sm' : 'bg-cream text-secondary border-2 border-secondary/40 hover:bg-secondary hover:text-white']"
+            >
+              <i class="pi pi-clock"></i>
             </button>
           </div>
-        </aside>
+        </div>
 
-        <!-- Main Content - Books Grid -->
-        <section class="flex-1 min-w-0">
-          <!-- Results Info -->
-          <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <p class="text-dark font-semibold text-sm sm:text-base">
-              S-au găsit <span class="text-secondary text-lg sm:text-xl">{{ filteredBooks.length }}</span> cărți
-            </p>
-            <div class="flex gap-2 flex-wrap sm:flex-nowrap">
-              <button 
-                @click="sortBy('title')"
-                :class="['px-3 sm:px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300', sortType === 'title' ? 'bg-secondary text-white shadow-sm' : 'bg-cream text-secondary border-2 border-secondary/40 hover:bg-secondary hover:text-white']"
-              >
-                A-Z
-              </button>
-              <button 
-                @click="sortBy('available')"
-                :class="['px-3 sm:px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300', sortType === 'available' ? 'bg-secondary text-white shadow-sm' : 'bg-cream text-secondary border-2 border-secondary/40 hover:bg-secondary hover:text-white']"
-              >
-                <i class="pi pi-check-circle"></i>
-              </button>
-              <button 
-                @click="sortBy('newest')"
-                :class="['px-3 sm:px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300', sortType === 'newest' ? 'bg-secondary text-white shadow-sm' : 'bg-cream text-secondary border-2 border-secondary/40 hover:bg-secondary hover:text-white']"
-              >
-                <i class="pi pi-clock"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- Books Grid -->
-          <div v-if="filteredBooks.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <!-- Books Grid -->
+        <div v-if="filteredBooks.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             <div 
               v-for="(book, index) in filteredBooks"
               :key="index"
@@ -199,7 +151,6 @@
               Șterge Filtre
             </button>
           </div>
-        </section>
       </div>
     </main>
 
@@ -282,6 +233,8 @@
       </div>
     </div>
   </div>
+
+
 </template>
 
 <script>
@@ -290,9 +243,7 @@ export default {
   data() {
     return {
       searchQuery: '',
-      showAvailableOnly: false,
       sortType: 'newest',
-      filtersOpen: false,
       allBooks: [],
       filteredBooks: [],
       showModal: false,
@@ -306,7 +257,7 @@ export default {
   methods: {
     async fetchBooks() {
       try {
-        const response = await fetch('http://localhost:5000/api/books');
+        const response = await fetch('/api/books');
         const data = await response.json();
         if (data.books) {
           this.allBooks = data.books.map(book => ({
@@ -328,8 +279,6 @@ export default {
     },
     filterBooks() {
       let result = this.allBooks;
-
-      // Filtru de căutare
       if (this.searchQuery.trim()) {
         const query = this.searchQuery.toLowerCase();
         result = result.filter(book =>
@@ -338,13 +287,6 @@ export default {
           book.genre.toLowerCase().includes(query)
         );
       }
-
-      // Filtru de disponibilitate
-      if (this.showAvailableOnly) {
-        result = result.filter(book => book.available);
-      }
-
-      // Sortare
       this.sortBooks(result);
       this.filteredBooks = result;
     },
@@ -367,7 +309,6 @@ export default {
     },
     clearFilters() {
       this.searchQuery = '';
-      this.showAvailableOnly = false;
       this.sortType = 'newest';
       this.filterBooks();
     },
@@ -378,9 +319,8 @@ export default {
       this.totalReviews = 0;
       this.loadingReviews = true;
       this.showModal = true;
-
       try {
-        const response = await fetch(`http://localhost:5000/api/reviews?carte_id=${book.id}`);
+        const response = await fetch(`/api/reviews?carte_id=${book.id}`);
         const data = await response.json();
         if (data.success) {
           this.reviews = data.reviews;

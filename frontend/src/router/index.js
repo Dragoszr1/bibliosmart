@@ -24,7 +24,8 @@ const routes = [
   {
     path: '/profile',
     component: Profile,
-    name: 'Profile'
+    name: 'Profile',
+    meta: { requiresAuth: true }
   },
   {
     path: '/books',
@@ -36,6 +37,24 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes
+})
+
+// Navigation guard — check JWT session for protected routes
+router.beforeEach(async (to, from, next) => {
+  if (to.meta.requiresAuth) {
+    try {
+      const res = await fetch('/api/auth/me', { credentials: 'include' })
+      if (res.ok) {
+        next()
+      } else {
+        next('/login')
+      }
+    } catch {
+      next('/login')
+    }
+  } else {
+    next()
+  }
 })
 
 export default router

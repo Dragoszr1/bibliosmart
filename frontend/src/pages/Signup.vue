@@ -207,6 +207,7 @@ export default {
           headers: {
             'Content-Type': 'application/json'
           },
+          credentials: 'include',
           body: JSON.stringify({
             user: this.form.fullName,
             email: this.form.email,
@@ -216,9 +217,9 @@ export default {
 
         const data = await response.json()
         if (response.ok) {
-          this.successMessage = 'Cont creat cu succes! Se redirecționează la conectare...'
+          this.successMessage = 'Cont creat cu succes! Se redirecționează...'
           setTimeout(() => {
-            this.$router.push('/login')
+            this.$router.push('/')
           }, 2000)
         } else {
           this.errorMessage = data.message || 'Eroare la înregistrare'

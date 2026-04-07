@@ -1,7 +1,10 @@
 from flask import Blueprint, jsonify, request, send_from_directory, current_app
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
+from functools import wraps
 import bcrypt
+import jwt
+import datetime
 import os
 import glob
 
@@ -16,6 +19,91 @@ BOOK_IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(o
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+# ── JWT Helpers ──────────────────────────────────────────────
+
+def create_jwt_token(user_id, username, email, rol):
+    """Create a JWT token with user claims."""
+    payload = {
+        'user_id': user_id,
+        'username': username,
+        'email': email,
+        'rol': rol,
+        'iat': datetime.datetime.now(datetime.timezone.utc),
+        'exp': datetime.datetime.now(datetime.timezone.utc) + current_app.config['JWT_ACCESS_TOKEN_EXPIRES']
+    }
+    return jwt.encode(payload, current_app.config['JWT_SECRET_KEY'], algorithm='HS256')
+
+
+def set_jwt_cookie(response, token):
+    """Set the JWT token as an httpOnly cookie on the response."""
+    response.set_cookie(
+        current_app.config['JWT_COOKIE_NAME'],
+        token,
+        httponly=True,
+        secure=current_app.config['JWT_COOKIE_SECURE'],
+        samesite=current_app.config['JWT_COOKIE_SAMESITE'],
+        max_age=int(current_app.config['JWT_ACCESS_TOKEN_EXPIRES'].total_seconds()),
+        path='/'
+    )
+    return response
+
+
+def clear_jwt_cookie(response):
+    """Clear the JWT cookie."""
+    response.set_cookie(
+        current_app.config['JWT_COOKIE_NAME'],
+        '',
+        httponly=True,
+        secure=current_app.config['JWT_COOKIE_SECURE'],
+        samesite=current_app.config['JWT_COOKIE_SAMESITE'],
+        max_age=0,
+        path='/'
+    )
+    return response
+
+
+def decode_jwt_token(token):
+    """Decode and verify a JWT token. Returns payload or None."""
+    try:
+        return jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return None
+
+
+def get_current_user():
+    """Extract user from the JWT cookie. Returns payload dict or None."""
+    token = request.cookies.get(current_app.config['JWT_COOKIE_NAME'])
+    if not token:
+        return None
+    return decode_jwt_token(token)
+
+
+def jwt_required(f):
+    """Decorator that enforces a valid JWT cookie."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = get_current_user()
+        if not user:
+            return jsonify({'success': False, 'message': 'Authentication required'}), 401
+        request.current_user = user
+        return f(*args, **kwargs)
+    return decorated
+
+
+def bibliotecar_required(f):
+    """Decorator that enforces a valid JWT cookie AND rol='1' (bibliotecar)."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = get_current_user()
+        if not user:
+            return jsonify({'success': False, 'message': 'Authentication required'}), 401
+        if str(user.get('rol')) != '1':
+            return jsonify({'success': False, 'message': 'Librarian privileges required'}), 403
+        request.current_user = user
+        return f(*args, **kwargs)
+    return decorated
 
 @main_bp.route('/health', methods=['GET'])
 def health_check():
@@ -52,6 +140,105 @@ def get_books():
         return jsonify({'books': books}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@main_bp.route('/books', methods=['POST'])
+@bibliotecar_required
+def add_book():
+    """Add a new book to the collection. Requires bibliotecar role."""
+    data = request.get_json(silent=True) or {}
+    titlu = data.get('titlu')
+    autor = data.get('autor')
+    isbn = data.get('ISBN')
+    stoc_total = data.get('stoc_total', 1)
+    stoc_disponibil = data.get('stoc_disponibil', stoc_total)
+    gen = data.get('gen')
+
+    if not titlu or not autor or not isbn or not gen:
+        return jsonify({'success': False, 'message': 'titlu, autor, ISBN, and gen are required'}), 400
+
+    insert_query = text(
+        "INSERT INTO carti (titlu, autor, ISBN, stoc_total, stoc_disponibil, imprumutat, gen) "
+        "VALUES (:titlu, :autor, :ISBN, :stoc_total, :stoc_disponibil, :imprumutat, :gen)"
+    )
+    try:
+        db.session.execute(insert_query, {
+            'titlu': titlu,
+            'autor': autor,
+            'ISBN': isbn,
+            'stoc_total': stoc_total,
+            'stoc_disponibil': stoc_disponibil,
+            'imprumutat': stoc_disponibil < stoc_total,
+            'gen': gen
+        })
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'A book with this ISBN already exists'}), 409
+    except Exception:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'Failed to add book'}), 500
+
+    return jsonify({'success': True, 'message': 'Book added successfully'}), 201
+
+
+@main_bp.route('/books/<int:carte_id>', methods=['PUT'])
+@bibliotecar_required
+def update_book(carte_id):
+    """Update a book's stock or details. Requires bibliotecar role."""
+    data = request.get_json(silent=True) or {}
+
+    # Build dynamic update
+    fields = {}
+    allowed = ['titlu', 'autor', 'ISBN', 'stoc_total', 'stoc_disponibil', 'gen']
+    for key in allowed:
+        if key in data:
+            fields[key] = data[key]
+
+    if not fields:
+        return jsonify({'success': False, 'message': 'No fields to update'}), 400
+
+    set_clause = ', '.join(f"{k} = :{k}" for k in fields)
+    fields['carte_id'] = carte_id
+
+    # Auto-update imprumutat flag if stock fields are changing
+    if 'stoc_total' in fields or 'stoc_disponibil' in fields:
+        set_clause += ', imprumutat = (stoc_disponibil < stoc_total)'
+
+    update_query = text(f"UPDATE carti SET {set_clause} WHERE carte_id = :carte_id")
+    try:
+        result = db.session.execute(update_query, fields)
+        db.session.commit()
+        if result.rowcount == 0:
+            return jsonify({'success': False, 'message': 'Book not found'}), 404
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'ISBN conflict'}), 409
+    except Exception:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'Failed to update book'}), 500
+
+    return jsonify({'success': True, 'message': 'Book updated successfully'}), 200
+
+
+@main_bp.route('/books/<int:carte_id>', methods=['DELETE'])
+@bibliotecar_required
+def delete_book(carte_id):
+    """Delete a book from the collection. Requires bibliotecar role."""
+    try:
+        # Delete related records first
+        db.session.execute(text("DELETE FROM recenzii WHERE carte_id = :id"), {'id': carte_id})
+        db.session.execute(text("DELETE FROM carti_citite WHERE carte_id = :id"), {'id': carte_id})
+        result = db.session.execute(text("DELETE FROM carti WHERE carte_id = :id"), {'id': carte_id})
+        db.session.commit()
+        if result.rowcount == 0:
+            return jsonify({'success': False, 'message': 'Book not found'}), 404
+    except Exception:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'Failed to delete book'}), 500
+
+    return jsonify({'success': True, 'message': 'Book deleted successfully'}), 200
+
 
 @main_bp.route('/users', methods=['GET'])
 def get_users():
@@ -104,10 +291,48 @@ def get_reviews():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+@main_bp.route('/reviews/user', methods=['GET'])
+def get_user_reviews():
+    """Get all reviews by a specific user.
+    Returns reviews with book title, author, nota, and comentariu.
+    """
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': 'user_id is required'}), 400
+
+    try:
+        query = text("""
+            SELECT r.id, r.nota, r.comentariu, c.titlu, c.autor
+            FROM recenzii r
+            JOIN carti c ON r.carte_id = c.carte_id
+            WHERE r.user_id = :user_id
+            ORDER BY r.id DESC
+        """)
+        result = db.session.execute(query, {'user_id': user_id})
+        reviews = []
+        for row in result:
+            reviews.append({
+                'id': row[0],
+                'nota': row[1],
+                'comentariu': row[2],
+                'titlu': row[3],
+                'autor': row[4]
+            })
+
+        return jsonify({
+            'success': True,
+            'reviews': reviews,
+            'total_reviews': len(reviews)
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 # Authentication routes structure
 @main_bp.route('/auth/login', methods=['POST'])
 def login():
-    """Login route with bcrypt password verification."""
+    """Login route with bcrypt password verification. Sets JWT httpOnly cookie."""
     data = request.get_json(silent=True) or {}
     email = data.get('email')
     password = data.get('password')
@@ -115,10 +340,8 @@ def login():
     if not email or not password:
         return jsonify({'success': False, 'message': 'Email and password are required'}), 400
 
-    # SQL query used to log in:
-    # SELECT username, email, hashed_password FROM users WHERE email = :email
     query = text(
-        "SELECT username, email, hashed_password FROM users WHERE email = :email"
+        "SELECT user_id, username, email, hashed_password, rol FROM users WHERE email = :email"
     )
     result = db.session.execute(query, {'email': email}).mappings().first()
 
@@ -129,24 +352,58 @@ def login():
     if not hashed_password or not bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
         return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
 
-    return jsonify({
+    token = create_jwt_token(
+        user_id=result['user_id'],
+        username=result['username'],
+        email=result['email'],
+        rol=result['rol']
+    )
+
+    resp = jsonify({
         'success': True,
         'message': 'Login successful',
-        'user': result.get('username'),
-        'email': result.get('email')
+        'user': {
+            'user_id': result['user_id'],
+            'username': result['username'],
+            'email': result['email'],
+            'rol': result['rol']
+        }
+    })
+    set_jwt_cookie(resp, token)
+    return resp, 200
+
+@main_bp.route('/auth/me', methods=['GET'])
+@jwt_required
+def auth_me():
+    """Return the currently authenticated user from the JWT cookie."""
+    user = request.current_user
+    return jsonify({
+        'success': True,
+        'user_id': user['user_id'],
+        'username': user['username'],
+        'email': user['email'],
+        'rol': user['rol']
     }), 200
 
+
+@main_bp.route('/auth/logout', methods=['POST'])
+def logout():
+    """Clear the JWT cookie."""
+    resp = jsonify({'success': True, 'message': 'Logged out'})
+    clear_jwt_cookie(resp)
+    return resp, 200
+
+
 @main_bp.route('/auth/profile', methods=['GET'])
+@jwt_required
 def profile():
-    """Fetch profile information by email."""
-    email = request.args.get('email')
-    if not email:
-        return jsonify({'success': False, 'message': 'Email is required'}), 400
+    """Fetch profile information from the JWT session."""
+    user = request.current_user
 
     query = text(
-        "SELECT user_id, username, email, description FROM users WHERE email = :email"
+        "SELECT user_id, username, email, description FROM users WHERE user_id = :user_id"
     )
-    result = db.session.execute(query, {'email': email}).mappings().first()
+    result = db.session.execute(query, {'user_id': user['user_id']}).mappings().first()
     if not result:
         return jsonify({'success': False, 'message': 'Profile not found'}), 404
 
@@ -159,16 +416,11 @@ def profile():
     }), 200
 
 @main_bp.route('/auth/books-read', methods=['GET'])
+@jwt_required
 def books_read():
-    """Fetch books read by a user.
-    SQL: SELECT c.carte_id, c.titlu, c.autor, c.ISBN
-         FROM carti_citite cc
-         JOIN carti c ON cc.carte_id = c.carte_id
-         WHERE cc.user_id = :user_id
-    """
-    user_id = request.args.get('user_id')
-    if not user_id:
-        return jsonify({'success': False, 'message': 'user_id is required'}), 400
+    """Fetch books read by the authenticated user."""
+    user = request.current_user
+    user_id = user['user_id']
 
     query = text(
         "SELECT c.carte_id, c.titlu, c.autor, c.ISBN "
@@ -190,19 +442,18 @@ def books_read():
     return jsonify({'success': True, 'books': books}), 200
 
 @main_bp.route('/auth/profile', methods=['PUT'])
+@jwt_required
 def update_profile():
-    """Update user description by email."""
+    """Update user description for the authenticated user."""
+    user = request.current_user
     data = request.get_json(silent=True) or {}
-    email = data.get('email')
     description = data.get('description')
-    if not email:
-        return jsonify({'success': False, 'message': 'Email is required'}), 400
 
     update_query = text(
-        "UPDATE users SET description = :description WHERE email = :email"
+        "UPDATE users SET description = :description WHERE user_id = :user_id"
     )
     try:
-        result = db.session.execute(update_query, {'description': description, 'email': email})
+        result = db.session.execute(update_query, {'description': description, 'user_id': user['user_id']})
         db.session.commit()
         if result.rowcount == 0:
             return jsonify({'success': False, 'message': 'Profile not found'}), 404
@@ -214,7 +465,7 @@ def update_profile():
 
 @main_bp.route('/auth/register', methods=['POST'])
 def register():
-    """Registration route with bcrypt password hashing and SQL insert."""
+    """Registration route with bcrypt password hashing. Sets JWT cookie on success."""
     data = request.get_json(silent=True) or {}
     username = data.get('user') or data.get('username') or data.get('fullName')
     email = data.get('email')
@@ -249,18 +500,28 @@ def register():
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Registration failed'}), 500
 
-    return jsonify({'success': True, 'message': 'Registration successful'}), 201
+    # Fetch the new user_id so we can issue a token
+    query = text("SELECT user_id FROM users WHERE email = :email")
+    new_user = db.session.execute(query, {'email': email}).mappings().first()
+    token = create_jwt_token(
+        user_id=new_user['user_id'],
+        username=username,
+        email=email,
+        rol='user'
+    )
+
+    resp = jsonify({'success': True, 'message': 'Registration successful'})
+    set_jwt_cookie(resp, token)
+    return resp, 201
 
 
 @main_bp.route('/auth/profile-picture', methods=['POST'])
+@jwt_required
 def upload_profile_picture():
     """Upload or replace a user's profile picture.
-    Expects multipart/form-data with 'file' and 'email' fields.
-    Saves as <username>.<ext> in the profile_pictures folder.
+    Expects multipart/form-data with 'file' field. User determined from JWT.
     """
-    email = request.form.get('email')
-    if not email:
-        return jsonify({'success': False, 'message': 'Email is required'}), 400
+    user = request.current_user
 
     if 'file' not in request.files:
         return jsonify({'success': False, 'message': 'No file provided'}), 400
@@ -272,13 +533,7 @@ def upload_profile_picture():
     if not allowed_file(file.filename):
         return jsonify({'success': False, 'message': 'File type not allowed. Use png, jpg, jpeg, gif, or webp'}), 400
 
-    # Look up the username from the email
-    query = text("SELECT username FROM users WHERE email = :email")
-    result = db.session.execute(query, {'email': email}).mappings().first()
-    if not result:
-        return jsonify({'success': False, 'message': 'User not found'}), 404
-
-    username = result['username']
+    username = user['username']
     ext = file.filename.rsplit('.', 1)[1].lower()
 
     # Remove any existing profile picture for this user
@@ -316,6 +571,7 @@ def get_profile_picture(username):
 
 
 @main_bp.route('/books/image', methods=['POST'])
+@bibliotecar_required
 def upload_book_image():
     """Upload or replace a book cover image.
     Expects multipart/form-data with 'file' and 'carte_id' fields.

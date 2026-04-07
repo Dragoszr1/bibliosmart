@@ -96,20 +96,29 @@ export default {
     }
   },
   mounted() {
-    this.isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
+    this.checkAuth()
   },
   watch: {
     '$route'() {
-      this.isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
+      this.checkAuth()
     }
   },
   methods: {
-    handleAuthClick() {
-      if (this.isLoggedIn) {
-        // Deconectare
+    async checkAuth() {
+      try {
+        const response = await fetch('/api/auth/me', { credentials: 'include' })
+        this.isLoggedIn = response.ok
+      } catch {
         this.isLoggedIn = false
-        localStorage.removeItem('isLoggedIn')
-        console.log('Utilizatorul s-a deconectat')
+      }
+    },
+    async handleAuthClick() {
+      if (this.isLoggedIn) {
+        // Deconectare — call backend to clear the cookie
+        try {
+          await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+        } catch { /* ignore */ }
+        this.isLoggedIn = false
         this.mobileMenuOpen = false
         this.$router.push('/')
       } else {

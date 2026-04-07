@@ -6,6 +6,11 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JSON_SORT_KEYS = False
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or SECRET_KEY
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=7)
+    JWT_COOKIE_NAME = 'access_token'
+    JWT_COOKIE_SAMESITE = 'Lax'
+    JWT_COOKIE_SECURE = False  # Set True in production with HTTPS
 
 class DevelopmentConfig(Config):
     """Development configuration"""
