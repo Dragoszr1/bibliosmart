@@ -9,7 +9,7 @@ import os
 import glob
 
 from app.database import db
-from app.models import Carti, Users, CartiCitite, Recenzii
+from app.models import Carti, Users, CartiCitite, Recenzii, Anunturi, AnunturiAprecieri
 
 main_bp = Blueprint('main', __name__, url_prefix='/api')
 
@@ -631,3 +631,156 @@ def get_book_image(carte_id):
         return jsonify({'success': False, 'message': 'No book image found'}), 404
 
     return send_from_directory(BOOK_IMAGES_DIR, os.path.basename(matches[0]))
+
+
+# ── Announcement Routes ──────────────────────────────────────
+
+@main_bp.route('/anunturi', methods=['GET'])
+def get_anunturi():
+    """Get all announcements, newest first. Includes whether current user liked each."""
+    user = get_current_user()
+    user_id = user['user_id'] if user else None
+
+    try:
+        query = text("""
+            SELECT a.anunt_id, a.titlu, a.anunt, a.data_publicare, a.aprecieri
+            FROM anunturi a
+            ORDER BY a.data_publicare DESC
+        """)
+        rows = db.session.execute(query).fetchall()
+
+        liked_set = set()
+        if user_id:
+            liked_rows = db.session.execute(
+                text("SELECT anunt_id FROM anunturi_aprecieri WHERE user_id = :uid"),
+                {'uid': user_id}
+            ).fetchall()
+            liked_set = {r[0] for r in liked_rows}
+
+        anunturi = []
+        for row in rows:
+            anunturi.append({
+                'anunt_id': row[0],
+                'titlu': row[1],
+                'anunt': row[2],
+                'data_publicare': row[3].strftime('%d %B %Y, %H:%M') if row[3] else None,
+                'aprecieri': row[4] or 0,
+                'liked': row[0] in liked_set
+            })
+
+        return jsonify({'success': True, 'anunturi': anunturi}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@main_bp.route('/anunturi', methods=['POST'])
+@bibliotecar_required
+def create_anunt():
+    """Create a new announcement. Requires bibliotecar role."""
+    data = request.get_json(silent=True) or {}
+    titlu = data.get('titlu', '').strip()
+    anunt = data.get('anunt', '').strip()
+
+    if not titlu or not anunt:
+        return jsonify({'success': False, 'message': 'titlu and anunt are required'}), 400
+
+    try:
+        db.session.execute(
+            text("INSERT INTO anunturi (titlu, anunt, data_publicare, aprecieri) VALUES (:titlu, :anunt, NOW(), 0)"),
+            {'titlu': titlu, 'anunt': anunt}
+        )
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Announcement created'}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@main_bp.route('/anunturi/<int:anunt_id>', methods=['PUT'])
+@bibliotecar_required
+def update_anunt(anunt_id):
+    """Update an announcement. Requires bibliotecar role."""
+    data = request.get_json(silent=True) or {}
+
+    fields = {}
+    for key in ['titlu', 'anunt']:
+        if key in data and data[key] is not None:
+            fields[key] = data[key].strip()
+
+    if not fields:
+        return jsonify({'success': False, 'message': 'No fields to update'}), 400
+
+    set_clause = ', '.join(f"{k} = :{k}" for k in fields)
+    fields['anunt_id'] = anunt_id
+
+    try:
+        result = db.session.execute(text(f"UPDATE anunturi SET {set_clause} WHERE anunt_id = :anunt_id"), fields)
+        db.session.commit()
+        if result.rowcount == 0:
+            return jsonify({'success': False, 'message': 'Announcement not found'}), 404
+        return jsonify({'success': True, 'message': 'Announcement updated'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@main_bp.route('/anunturi/<int:anunt_id>', methods=['DELETE'])
+@bibliotecar_required
+def delete_anunt(anunt_id):
+    """Delete an announcement. Requires bibliotecar role. Cascade deletes likes."""
+    try:
+        result = db.session.execute(text("DELETE FROM anunturi WHERE anunt_id = :id"), {'id': anunt_id})
+        db.session.commit()
+        if result.rowcount == 0:
+            return jsonify({'success': False, 'message': 'Announcement not found'}), 404
+        return jsonify({'success': True, 'message': 'Announcement deleted'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@main_bp.route('/anunturi/<int:anunt_id>/like', methods=['POST'])
+@jwt_required
+def toggle_like_anunt(anunt_id):
+    """Toggle like on an announcement. Logged-in users only."""
+    user = request.current_user
+    user_id = user['user_id']
+
+    try:
+        existing = db.session.execute(
+            text("SELECT id FROM anunturi_aprecieri WHERE anunt_id = :aid AND user_id = :uid"),
+            {'aid': anunt_id, 'uid': user_id}
+        ).fetchone()
+
+        if existing:
+            db.session.execute(
+                text("DELETE FROM anunturi_aprecieri WHERE anunt_id = :aid AND user_id = :uid"),
+                {'aid': anunt_id, 'uid': user_id}
+            )
+            db.session.execute(
+                text("UPDATE anunturi SET aprecieri = GREATEST(aprecieri - 1, 0) WHERE anunt_id = :aid"),
+                {'aid': anunt_id}
+            )
+            db.session.commit()
+            liked = False
+        else:
+            db.session.execute(
+                text("INSERT INTO anunturi_aprecieri (anunt_id, user_id) VALUES (:aid, :uid)"),
+                {'aid': anunt_id, 'uid': user_id}
+            )
+            db.session.execute(
+                text("UPDATE anunturi SET aprecieri = aprecieri + 1 WHERE anunt_id = :aid"),
+                {'aid': anunt_id}
+            )
+            db.session.commit()
+            liked = True
+
+        count = db.session.execute(
+            text("SELECT aprecieri FROM anunturi WHERE anunt_id = :aid"),
+            {'aid': anunt_id}
+        ).fetchone()
+
+        return jsonify({'success': True, 'liked': liked, 'aprecieri': count[0] if count else 0}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500

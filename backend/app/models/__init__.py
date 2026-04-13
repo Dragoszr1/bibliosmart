@@ -57,3 +57,27 @@ class Recenzii(db.Model):
 
     def __repr__(self):
         return f'<Recenzii user:{self.user_id} carte:{self.carte_id} nota:{self.nota}>'
+
+class Anunturi(db.Model):
+    """Announcements table model"""
+    __tablename__ = 'anunturi'
+
+    anunt_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    titlu = db.Column(db.String(255), nullable=False)
+    anunt = db.Column(db.Text, nullable=True)
+    data_publicare = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    aprecieri = db.Column(db.Integer, default=0)
+
+    def __repr__(self):
+        return f'<Anunturi {self.anunt_id}: {self.titlu}>'
+
+class AnunturiAprecieri(db.Model):
+    """Announcement likes tracking table"""
+    __tablename__ = 'anunturi_aprecieri'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    anunt_id = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return f'<AnunturiAprecieri anunt:{self.anunt_id} user:{self.user_id}>'
