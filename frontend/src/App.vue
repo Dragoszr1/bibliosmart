@@ -1,16 +1,12 @@
 <template>
-  <div id="app" class="min-h-screen bg-gradient-to-b from-white to-gray-200">
-    <!-- Bare de navigare globală -->
+  <div id="app" class="min-h-screen bg-cream flex flex-col">
     <Navbar />
-
-    <!-- Vizualizare rutieră -->
-    <router-view />
-
-    <!-- Subsol -->
-    <footer class="bg-dark border-t-2 border-secondary/40 mt-16 py-8">
-      <div class="max-w-7xl mx-auto px-4 text-center">
-        <p class="text-cream/70 text-sm mb-1">© 2026 Sistemul de Gestiune a Bibliotecii Școlii</p>
-        <p class="text-cream/50 text-xs">Construind o comunitate de cititori și învățători</p>
+    <div class="flex-1">
+      <router-view />
+    </div>
+    <footer class="bg-dark border-t border-white/5 py-8 mt-auto">
+      <div class="max-w-7xl mx-auto px-6 text-center">
+        <p class="text-white/40 text-sm">© 2026 Biblioteca — Sistem Școlar</p>
       </div>
     </footer>
   </div>

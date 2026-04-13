@@ -1,240 +1,177 @@
 <template>
   <div class="min-h-screen">
     <!-- Hero Section -->
-    <section class="bg-gradient-to-br from-secondary via-dark to-accent py-8 sm:py-16 shadow-elegant relative overflow-hidden">
-      <div class="absolute inset-0 gradient-overlay opacity-30"></div>
-      <div class="max-w-full mx-auto px-4 text-center relative z-10">
-        <h2 class="text-2xl sm:text-4xl font-bold text-white mb-2 sm:mb-4 glow-white tracking-tight">Explorează Cărțile</h2>
-        <p class="text-cream/80 text-sm sm:text-lg mb-4 sm:mb-8 font-light">Descoperă cărți din colecția noastră</p>
+    <section class="bg-dark py-16 sm:py-24 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-secondary/20 via-transparent to-accent/10"></div>
+      <div class="max-w-3xl mx-auto px-6 text-center relative z-10">
+        <h2 class="text-3xl sm:text-5xl font-bold text-white mb-3 tracking-tight">Explorează Cărțile</h2>
+        <p class="text-white/50 text-sm sm:text-lg font-normal">Descoperă cărți din colecția noastră</p>
       </div>
     </section>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-3 sm:px-4 py-8 sm:py-12">
-      <!-- Fancy Search Bar -->
-      <div class="mb-8 sm:mb-12">
-        <div class="relative">
-          <div class="bg-cream rounded-lg sm:rounded-2xl shadow-elegant border-2 border-secondary/60 p-4 sm:p-8 card-hover">
-            <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
-              <i class="pi pi-search hidden sm:block text-5xl text-secondary"></i>
-              <div class="flex-1 w-full sm:w-auto">
-                <input
-                  v-model="searchQuery"
-                  @input="filterBooks"
-                  type="text"
-                  placeholder="Caută după titlu, autor..."
-                  class="w-full px-4 sm:px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-cream-dark border-2 border-secondary/30 text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all duration-200 text-sm sm:text-lg"
-                >
-                <p class="text-gray-500 text-xs sm:text-sm mt-2 sm:mt-3 hidden sm:block">💡 Sugestie: Caută după titlu, autor sau gen</p>
-              </div>
-              <button class="w-full sm:w-auto bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-lg sm:rounded-xl transition-all duration-300  text-sm sm:text-base">
-                Caută
-              </button>
-            </div>
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+      <!-- Search Bar -->
+      <div class="mb-10">
+        <div class="flex items-center gap-3 bg-white rounded-xl shadow-card border border-gray-100 px-5 py-3">
+          <i class="pi pi-search text-gray-400"></i>
+          <input
+            v-model="searchQuery"
+            @input="filterBooks"
+            type="text"
+            placeholder="Caută după titlu, autor sau gen..."
+            class="flex-1 bg-transparent text-dark placeholder-gray-400 focus:outline-none text-sm sm:text-base"
+          >
+          <span v-if="searchQuery" @click="searchQuery = ''; filterBooks()" class="text-gray-400 hover:text-gray-600 cursor-pointer">
+            <i class="pi pi-times text-sm"></i>
+          </span>
+        </div>
+      </div>
+
+      <!-- Results Info & Sort -->
+      <div class="mb-6 flex items-center justify-between">
+        <p class="text-gray-500 text-sm">
+          <span class="text-dark font-semibold">{{ filteredBooks.length }}</span> cărți găsite
+        </p>
+        <div class="flex gap-1.5">
+          <button 
+            v-for="s in [{ key: 'title', label: 'A-Z' }, { key: 'available', icon: 'pi-check-circle' }, { key: 'newest', icon: 'pi-clock' }]"
+            :key="s.key"
+            @click="sortBy(s.key)"
+            :class="[
+              'px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150',
+              sortType === s.key 
+                ? 'bg-secondary text-white' 
+                : 'bg-white text-gray-500 border border-gray-200 hover:border-secondary/30 hover:text-secondary'
+            ]"
+          >
+            <i v-if="s.icon" :class="'pi ' + s.icon"></i>
+            <span v-else>{{ s.label }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Books Grid -->
+      <div v-if="filteredBooks.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div 
+          v-for="book in filteredBooks"
+          :key="book.id"
+          @click="openBookDetail(book)"
+          class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden hover:shadow-elevated transition-all duration-200 cursor-pointer group"
+        >
+          <!-- Book Cover -->
+          <div class="relative h-48 bg-cream flex items-center justify-center">
+            <i class="pi pi-book text-5xl text-secondary/20 group-hover:text-secondary/30 transition-colors"></i>
+            <!-- Availability Badge -->
+            <span 
+              :class="[
+                'absolute top-3 right-3 text-xs px-2.5 py-1 rounded-full font-medium',
+                book.available ? 'bg-green-50 text-green-700' : 'bg-red-50 text-accent'
+              ]"
+            >
+              {{ book.available ? 'Disponibil' : 'Indisponibil' }}
+            </span>
+            <!-- Stock Badge -->
+            <span class="absolute top-3 left-3 bg-dark/80 text-white text-xs px-2.5 py-1 rounded-full font-medium">
+              {{ book.stoc_disponibil }}/{{ book.stoc_total }}
+            </span>
+          </div>
+
+          <!-- Book Info -->
+          <div class="p-4">
+            <h3 class="text-sm font-semibold text-dark mb-1 line-clamp-2 group-hover:text-secondary transition-colors">
+              {{ book.title }}
+            </h3>
+            <p class="text-gray-400 text-xs mb-3">{{ book.author }}</p>
+            <span class="inline-block text-xs bg-cream text-secondary/80 px-2 py-0.5 rounded-md font-medium">
+              {{ book.genre }}
+            </span>
           </div>
         </div>
       </div>
 
-      <!-- Content -->
-      <div>
-        <!-- Results Info -->
-        <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <p class="text-dark font-semibold text-sm sm:text-base">
-            S-au găsit <span class="text-secondary text-lg sm:text-xl">{{ filteredBooks.length }}</span> cărți
-          </p>
-          <div class="flex gap-2 flex-wrap sm:flex-nowrap items-center">
-            <button 
-              @click="sortBy('title')"
-              :class="['px-3 sm:px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300', sortType === 'title' ? 'bg-secondary text-white shadow-sm' : 'bg-cream text-secondary border-2 border-secondary/40 hover:bg-secondary hover:text-white']"
-            >
-              A-Z
-            </button>
-            <button 
-              @click="sortBy('available')"
-              :class="['px-3 sm:px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300', sortType === 'available' ? 'bg-secondary text-white shadow-sm' : 'bg-cream text-secondary border-2 border-secondary/40 hover:bg-secondary hover:text-white']"
-            >
-              <i class="pi pi-check-circle"></i>
-            </button>
-            <button 
-              @click="sortBy('newest')"
-              :class="['px-3 sm:px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300', sortType === 'newest' ? 'bg-secondary text-white shadow-sm' : 'bg-cream text-secondary border-2 border-secondary/40 hover:bg-secondary hover:text-white']"
-            >
-              <i class="pi pi-clock"></i>
-            </button>
-          </div>
+      <!-- Empty State -->
+      <div v-else class="text-center py-20">
+        <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+          <i class="pi pi-book text-2xl text-gray-300"></i>
         </div>
-
-        <!-- Books Grid -->
-        <div v-if="filteredBooks.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            <div 
-              v-for="(book, index) in filteredBooks"
-              :key="index"
-              class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 overflow-hidden card-hover transition-all duration-300 group cursor-pointer flex flex-col"
-            >
-              <!-- Book Cover -->
-              <div class="relative overflow-hidden h-48 sm:h-56 md:h-64 bg-cream-dark flex items-center justify-center">
-                <i class="pi pi-book text-6xl text-secondary/30"></i>
-                <!-- Availability Badge -->
-                <div 
-                  :class="[
-                    'absolute top-2 right-2 text-xs sm:text-sm px-2 sm:px-3 py-1 rounded-full font-bold shadow-sm',
-                    book.available ? 'bg-green-600 text-white' : 'bg-accent text-white'
-                  ]"
-                >
-                  <i :class="book.available ? 'pi pi-check-circle' : 'pi pi-times-circle'"></i>
-                </div>
-                <!-- Stock Badge -->
-                <div class="absolute top-2 left-2 bg-secondary text-white text-xs sm:text-sm px-2 sm:px-3 py-1 rounded-full font-bold shadow-sm">
-                  {{ book.stoc_disponibil }}/{{ book.stoc_total }}
-                </div>
-              </div>
-
-              <!-- Book Info -->
-              <div class="p-3 sm:p-4 md:p-6 flex-1 flex flex-col">
-                <!-- Title -->
-                <h3 class="text-sm sm:text-base md:text-lg font-bold text-dark mb-1 line-clamp-2 group-hover:text-secondary transition-colors duration-200">
-                  {{ book.title }}
-                </h3>
-
-                <!-- Author -->
-                <p class="text-gray-500 text-xs sm:text-sm mb-2">de {{ book.author }}</p>
-
-                <!-- Genre Badge -->
-                <div class="mb-2 sm:mb-3 flex flex-wrap gap-1">
-                  <span class="text-xs bg-cream-dark text-secondary px-2 py-1 rounded-full border-l-2 border-secondary">
-                    {{ book.genre }}
-                  </span>
-                </div>
-
-                <!-- Stats -->
-                <div class="grid grid-cols-2 gap-2 my-2 sm:my-3">
-                  <div class="text-center p-1 sm:p-2 bg-cream-dark rounded-lg border-l-2 border-secondary text-xs">
-                    <p class="text-secondary font-bold">{{ book.stoc_disponibil }}</p>
-                    <p class="text-gray-500 text-xs" style="font-size: 0.65rem;">Disponibil</p>
-                  </div>
-                  <div class="text-center p-1 sm:p-2 bg-cream-dark rounded-lg border-l-2 border-secondary text-xs">
-                    <p class="text-secondary font-bold">{{ book.imprumutat }}</p>
-                    <p class="text-gray-500 text-xs" style="font-size: 0.65rem;">Împrumutat</p>
-                  </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex gap-2">
-                  <button 
-                    :disabled="!book.available"
-                    :class="[
-                      'flex-1 font-bold py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm transition-all duration-300 ',
-                      book.available 
-                        ? 'bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white' 
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    ]"
-                  >
-                    {{ book.available ? '📥' : '❌' }}
-                  </button>
-                  <button @click="openBookDetail(book)" class="flex-1 bg-cream-dark hover:bg-cream border-2 border-secondary/30 text-secondary font-bold py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm transition-all duration-300 ">
-                    <i class="pi pi-info-circle"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Empty State -->
-          <div v-else class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 p-8 sm:p-12 text-center">
-            <i class="pi pi-book text-4xl mb-4 text-secondary"></i>
-            <h3 class="text-xl sm:text-2xl font-bold text-dark mb-3">Nicio carte găsită</h3>
-            <p class="text-gray-600 mb-6 text-sm sm:text-base">Încearcă să modifici filtrele sau cauta cu alt cuvânt cheie</p>
-            <button 
-              @click="clearFilters"
-              class="bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 sm:py-3 px-6 sm:px-8 rounded-lg text-sm sm:text-base transition-all duration-300 "
-            >
-              Șterge Filtre
-            </button>
-          </div>
+        <h3 class="text-lg font-semibold text-dark mb-2">Nicio carte găsită</h3>
+        <p class="text-gray-500 text-sm mb-6">Modifică filtrele sau caută cu alt cuvânt cheie</p>
+        <button 
+          @click="clearFilters"
+          class="btn-secondary text-sm"
+        >
+          Șterge Filtre
+        </button>
       </div>
     </main>
 
     <!-- Book Detail Modal -->
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showModal = false">
-      <!-- Backdrop -->
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showModal = false"></div>
+      <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="showModal = false"></div>
       
-      <!-- Modal Content -->
-      <div class="relative bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 w-full max-w-lg max-h-[85vh] overflow-y-auto z-10">
+      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-lg max-h-[85vh] overflow-y-auto z-10">
         <!-- Header -->
-        <div class="sticky top-0 bg-dark p-4 sm:p-6 rounded-t-lg border-b border-secondary/30">
-          <button @click="showModal = false" class="absolute top-3 right-3 text-cream/60 hover:text-white transition-colors">
-            <i class="pi pi-times text-xl"></i>
+        <div class="sticky top-0 bg-dark px-6 py-5 rounded-t-2xl">
+          <button @click="showModal = false" class="absolute top-4 right-4 text-white/40 hover:text-white transition-colors">
+            <i class="pi pi-times"></i>
           </button>
-          <h3 class="text-lg sm:text-xl font-bold text-white pr-8">{{ selectedBook?.title }}</h3>
-          <p class="text-cream/60 text-sm mt-1">de {{ selectedBook?.author }}</p>
+          <h3 class="text-lg font-bold text-white pr-8">{{ selectedBook?.title }}</h3>
+          <p class="text-white/40 text-sm mt-1">de {{ selectedBook?.author }}</p>
         </div>
 
         <!-- Book Info -->
-        <div class="p-4 sm:p-6 border-b border-secondary/20">
+        <div class="px-6 py-4 border-b border-gray-100">
           <div class="flex flex-wrap gap-2 mb-3">
-            <span class="text-xs bg-cream-dark text-secondary px-2 py-1 rounded-full border-l-2 border-secondary">
-              {{ selectedBook?.genre }}
-            </span>
-            <span class="text-xs bg-cream-dark text-secondary px-2 py-1 rounded-full border-l-2 border-secondary">
-              ISBN: {{ selectedBook?.ISBN }}
-            </span>
+            <span class="text-xs bg-cream text-secondary/80 px-2.5 py-1 rounded-md font-medium">{{ selectedBook?.genre }}</span>
+            <span class="text-xs bg-gray-100 text-gray-500 px-2.5 py-1 rounded-md font-medium">ISBN: {{ selectedBook?.ISBN }}</span>
           </div>
-          <div class="flex items-center gap-4 text-sm">
-            <div class="flex items-center gap-1">
-              <span class="text-secondary font-bold">{{ selectedBook?.stoc_disponibil }}</span>
-              <span class="text-gray-500">disponibil</span>
-            </div>
-            <div class="flex items-center gap-1">
-              <span class="text-secondary font-bold">{{ selectedBook?.stoc_total }}</span>
-              <span class="text-gray-500">total</span>
-            </div>
+          <div class="flex items-center gap-4 text-sm text-gray-500">
+            <span><strong class="text-dark">{{ selectedBook?.stoc_disponibil }}</strong> disponibil</span>
+            <span><strong class="text-dark">{{ selectedBook?.stoc_total }}</strong> total</span>
           </div>
         </div>
 
-        <!-- Rating Summary -->
-        <div class="p-4 sm:p-6 border-b border-secondary/20">
+        <!-- Rating -->
+        <div class="px-6 py-4 border-b border-gray-100">
           <div class="flex items-center gap-3">
-            <div class="text-3xl font-bold text-secondary">{{ avgRating }}</div>
+            <span class="text-3xl font-bold text-dark">{{ avgRating }}</span>
             <div>
               <div class="flex items-center gap-0.5">
-                <span v-for="star in 5" :key="star" :class="star <= Math.round(avgRating) ? 'text-accent' : 'text-gray-300'" class="text-lg">★</span>
+                <span v-for="star in 5" :key="star" :class="star <= Math.round(avgRating) ? 'text-amber-400' : 'text-gray-200'" class="text-lg">★</span>
               </div>
-              <p class="text-gray-500 text-xs mt-0.5">{{ totalReviews }} {{ totalReviews === 1 ? 'recenzie' : 'recenzii' }}</p>
+              <p class="text-gray-400 text-xs mt-0.5">{{ totalReviews }} {{ totalReviews === 1 ? 'recenzie' : 'recenzii' }}</p>
             </div>
           </div>
         </div>
 
-        <!-- Reviews List -->
-        <div class="p-4 sm:p-6">
-          <h4 class="font-bold text-dark mb-4">Recenzii</h4>
+        <!-- Reviews -->
+        <div class="px-6 py-5">
+          <h4 class="font-semibold text-dark mb-4 text-sm">Recenzii</h4>
 
           <div v-if="loadingReviews" class="text-center py-8">
-            <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
+            <i class="pi pi-spin pi-spinner text-xl text-secondary"></i>
           </div>
 
           <div v-else-if="reviews.length === 0" class="text-center py-8">
-            <i class="pi pi-comments text-3xl text-gray-300 mb-2"></i>
-            <p class="text-gray-500 text-sm">Nicio recenzie încă</p>
+            <p class="text-gray-400 text-sm">Nicio recenzie încă</p>
           </div>
 
-          <div v-else class="space-y-4">
-            <div v-for="review in reviews" :key="review.id" class="bg-cream-dark rounded-lg p-3 sm:p-4 border border-secondary/15">
+          <div v-else class="space-y-3">
+            <div v-for="review in reviews" :key="review.id" class="bg-cream rounded-xl p-4">
               <div class="flex items-center justify-between mb-2">
-                <span class="font-semibold text-dark text-sm">{{ review.username }}</span>
+                <span class="font-medium text-dark text-sm">{{ review.username }}</span>
                 <div class="flex items-center gap-0.5">
-                  <span v-for="star in 5" :key="star" :class="star <= review.nota ? 'text-accent' : 'text-gray-300'" class="text-sm">★</span>
+                  <span v-for="star in 5" :key="star" :class="star <= review.nota ? 'text-amber-400' : 'text-gray-200'" class="text-xs">★</span>
                 </div>
               </div>
-              <p class="text-gray-700 text-sm">{{ review.comentariu }}</p>
+              <p class="text-gray-600 text-sm">{{ review.comentariu }}</p>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-
-
 </template>
 
 <script>

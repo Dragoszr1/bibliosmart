@@ -1,27 +1,27 @@
 <template>
   <div id="app" class="min-h-screen">
     <!-- Hero Section -->
-    <section class="bg-gradient-to-br from-secondary via-dark to-accent py-8 sm:py-16 shadow-elegant relative overflow-hidden">
-      <div class="absolute inset-0 gradient-overlay opacity-30"></div>
-      <div class="max-w-full mx-auto px-3 sm:px-4 text-center relative z-10">
-        <h2 class="text-2xl sm:text-4xl font-bold text-white mb-2 sm:mb-4 glow-white tracking-tight">
+    <section class="bg-dark py-16 sm:py-24 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-secondary/20 via-transparent to-accent/10"></div>
+      <div class="max-w-3xl mx-auto px-6 text-center relative z-10">
+        <h2 class="text-3xl sm:text-5xl font-bold text-white mb-3 tracking-tight">
           {{ isBibliotecar ? 'Panou Bibliotecar' : 'Profilul Meu' }}
         </h2>
-        <p class="text-cream/80 text-xs sm:text-lg mb-4 sm:mb-8 font-light">Bine ai revenit, {{ user.name }}</p>
+        <p class="text-white/50 text-sm sm:text-lg font-normal">Bine ai revenit, {{ user.name }}</p>
       </div>
     </section>
 
     <!-- Main Content -->
-    <main class="max-w-6xl mx-auto px-3 sm:px-4 py-8 sm:py-12">
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
       <!-- Top Row: Profile + Reviews side by side -->
       <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6 sm:mb-8">
         <!-- Left: Profile Card -->
         <div class="lg:col-span-2">
-          <div class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 p-4 sm:p-6 h-full">
+          <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-5 sm:p-6 h-full">
             <!-- Profile Picture -->
             <div class="flex flex-col items-center mb-4">
               <div class="relative group mb-3">
-                <div class="w-24 sm:w-28 h-24 sm:h-28 rounded-full bg-cream-dark shadow-elegant border-4 border-secondary/40 overflow-hidden">
+                <div class="w-24 sm:w-28 h-24 sm:h-28 rounded-full bg-cream shadow-card border-2 border-gray-100 overflow-hidden">
                   <img 
                     :src="user.profilePicture" 
                     :alt="user.name"
@@ -73,7 +73,7 @@
             </div>
 
             <!-- Edit Button -->
-            <button @click="openProfileEditModal" class="w-full mt-4 bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-semibold py-2 rounded-lg text-xs sm:text-sm transition-all duration-300">
+            <button @click="openProfileEditModal" class="btn-primary w-full mt-4 text-xs sm:text-sm">
               Editează Profil
             </button>
           </div>
@@ -81,7 +81,7 @@
 
         <!-- Right: User Reviews -->
         <div class="lg:col-span-3">
-          <div class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 p-4 sm:p-6 h-full flex flex-col">
+          <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-5 sm:p-6 h-full flex flex-col">
             <h2 class="text-lg sm:text-xl font-bold text-dark mb-4 flex items-center gap-2">
               <i class="pi pi-star text-secondary"></i> Recenziile Mele
             </h2>
@@ -99,7 +99,7 @@
 
             <!-- Reviews list -->
             <div v-else class="flex-1 space-y-3 overflow-y-auto max-h-[400px] pr-1">
-              <div v-for="review in user.userReviews" :key="review.id" class="bg-cream-dark rounded-lg p-3 sm:p-4 border border-secondary/15">
+              <div v-for="review in user.userReviews" :key="review.id" class="bg-cream rounded-xl p-3 sm:p-4">
                 <div class="flex items-start justify-between gap-2 mb-1">
                   <div class="min-w-0">
                     <h3 class="text-sm font-bold text-dark truncate">{{ review.titlu }}</h3>
@@ -122,7 +122,7 @@
           <i class="pi pi-book text-secondary"></i> Cărțile Citite
         </h2>
 
-        <div v-if="user.booksRead.length === 0" class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 p-8 sm:p-12 text-center">
+        <div v-if="user.booksRead.length === 0" class="bg-white rounded-2xl shadow-card border border-gray-100 p-8 sm:p-12 text-center">
           <i class="pi pi-book text-4xl sm:text-5xl text-secondary mb-4"></i>
           <p class="text-gray-600 text-sm sm:text-lg">Nici o carte citită</p>
         </div>
@@ -131,9 +131,9 @@
           <div 
             v-for="(book, index) in user.booksRead" 
             :key="index"
-            class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 p-3 sm:p-6 card-hover text-center"
+            class="bg-white rounded-xl shadow-card border border-gray-100 p-3 sm:p-6 text-center hover:shadow-elevated transition-shadow"
           >
-            <div class="mb-3 sm:mb-4 h-32 sm:h-40 rounded-lg bg-cream-dark border border-secondary/20 flex items-center justify-center">
+            <div class="mb-3 sm:mb-4 h-32 sm:h-40 rounded-lg bg-cream border border-gray-100 flex items-center justify-center">
               <i class="pi pi-book text-5xl sm:text-6xl text-secondary"></i>
             </div>
             <h3 class="text-sm sm:text-lg font-bold text-dark mb-1">{{ book.titlu }}</h3>
@@ -153,14 +153,14 @@
             <i class="pi pi-cog text-secondary"></i> Gestionare Cărți
           </h2>
           <div class="flex gap-2">
-            <button @click="openAddBookModal" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg text-xs sm:text-sm transition-all duration-300">
+            <button @click="openAddBookModal" class="px-4 py-2 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-lg text-xs sm:text-sm transition-all">
               <i class="pi pi-plus mr-1"></i> Adaugă Carte
             </button>
           </div>
         </div>
 
         <!-- Search / Filter Bar -->
-        <div class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 p-4 mb-6">
+        <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-4 mb-6">
           <div class="flex flex-col sm:flex-row gap-3">
             <div class="flex-1">
               <input
@@ -168,7 +168,7 @@
                 @input="filterLibBooks"
                 type="text"
                 placeholder="Caută carte după titlu, autor, ISBN..."
-                class="w-full px-4 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-secondary/50 text-sm"
+                class="input-field"
               >
             </div>
             <div class="text-sm text-gray-600 flex items-center">
@@ -178,7 +178,7 @@
         </div>
 
         <!-- Books Table -->
-        <div class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
           <!-- Loading -->
           <div v-if="loadingBooks" class="flex items-center justify-center py-12">
             <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
@@ -202,11 +202,11 @@
                 <tr 
                   v-for="book in filteredLibBooks" 
                   :key="book.carte_id"
-                  class="border-t border-secondary/15 hover:bg-cream-dark/50 transition-colors text-xs sm:text-sm"
+                  class="border-t border-gray-100 hover:bg-cream/50 transition-colors text-xs sm:text-sm"
                 >
                   <!-- Image -->
                   <td class="px-3 sm:px-4 py-3">
-                    <div class="w-12 h-16 rounded bg-cream-dark border border-secondary/20 overflow-hidden flex items-center justify-center relative group cursor-pointer" @click="triggerBookImageInput(book.carte_id)">
+                    <div class="w-12 h-16 rounded bg-cream border border-gray-100 overflow-hidden flex items-center justify-center relative group cursor-pointer" @click="triggerBookImageInput(book.carte_id)">
                       <img 
                         :src="'/api/books/image/' + book.carte_id + '?t=' + imageCacheBust" 
                         class="w-full h-full object-cover"
@@ -228,7 +228,7 @@
                   <td class="px-3 sm:px-4 py-3 hidden sm:table-cell text-gray-700">{{ book.autor }}</td>
                   <!-- Genre -->
                   <td class="px-3 sm:px-4 py-3 hidden md:table-cell">
-                    <span class="bg-cream-dark text-secondary px-2 py-1 rounded-full text-xs border-l-2 border-secondary">{{ book.gen }}</span>
+                    <span class="bg-cream text-secondary px-2 py-1 rounded-md text-xs font-medium">{{ book.gen }}</span>
                   </td>
                   <!-- Stock Total -->
                   <td class="px-3 sm:px-4 py-3 text-center font-bold text-secondary">{{ book.stoc_total }}</td>
@@ -270,13 +270,13 @@
             <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
               <i class="pi pi-megaphone text-secondary"></i> Gestionare Anunțuri
             </h2>
-            <button @click="openAddAnuntModal" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg text-xs sm:text-sm transition-all duration-300">
+            <button @click="openAddAnuntModal" class="px-4 py-2 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-lg text-xs sm:text-sm transition-all">
               <i class="pi pi-plus mr-1"></i> Anunț Nou
             </button>
           </div>
 
           <!-- Loading -->
-          <div v-if="loadingAnunturi" class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 p-8 text-center">
+          <div v-if="loadingAnunturi" class="bg-white rounded-2xl shadow-card border border-gray-100 p-8 text-center">
             <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
           </div>
 
@@ -285,7 +285,7 @@
             <div 
               v-for="a in allAnunturi" 
               :key="a.anunt_id"
-              class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 p-4 sm:p-6"
+              class="bg-white rounded-xl shadow-card border border-gray-100 p-4 sm:p-6"
             >
               <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
                 <div class="min-w-0 flex-1">
@@ -308,7 +308,7 @@
             </div>
 
             <!-- Empty -->
-            <div v-if="allAnunturi.length === 0" class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 p-8 text-center">
+            <div v-if="allAnunturi.length === 0" class="bg-white rounded-2xl shadow-card border border-gray-100 p-8 text-center">
               <i class="pi pi-megaphone text-3xl text-gray-300 mb-2"></i>
               <p class="text-gray-500 text-sm">Niciun anunț încă</p>
             </div>
@@ -323,10 +323,10 @@
     <!-- ═══════════ MODALS ═══════════ -->
 
     <!-- Edit Profile Modal -->
-    <div v-if="editProfileOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" @click.self="editProfileOpen = false">
-      <div class="w-full max-w-lg bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 p-6 sm:p-8">
+    <div v-if="editProfileOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="editProfileOpen = false">
+      <div class="w-full max-w-lg bg-white rounded-2xl shadow-modal p-6 sm:p-8">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl sm:text-2xl font-bold text-secondary">Editează Profil</h2>
+          <h2 class="text-xl font-bold text-dark">Editează Profil</h2>
           <button @click="editProfileOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold transition-colors duration-200">&times;</button>
         </div>
         <label class="block text-dark font-semibold mb-2 text-sm sm:text-base">Descriere</label>
@@ -335,7 +335,7 @@
           rows="5"
           maxlength="255"
           placeholder="Scrie ceva despre tine..."
-          class="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all duration-200 text-xs sm:text-base resize-none"
+          class="input-field resize-none"
         ></textarea>
         <p class="text-gray-500 text-xs mt-1 text-right">{{ editDescription.length }} / 255</p>
         <div v-if="profileMsg.error" class="mt-3 bg-accent/10 border-l-4 border-accent rounded-lg p-3">
@@ -345,10 +345,10 @@
           <p class="text-green-700 text-xs sm:text-sm">{{ profileMsg.success }}</p>
         </div>
         <div class="mt-6 flex flex-col sm:flex-row gap-3">
-          <button @click="saveDescription" :disabled="savingDescription" class="flex-1 bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+          <button @click="saveDescription" :disabled="savingDescription" class="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed">
             {{ savingDescription ? 'Se salvează...' : 'Modifică' }}
           </button>
-          <button @click="editProfileOpen = false" class="flex-1 border-2 border-secondary text-secondary hover:bg-secondary hover:text-white font-bold py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base transition-all duration-300">
+          <button @click="editProfileOpen = false" class="btn-secondary flex-1">
             Anulează
           </button>
         </div>
@@ -358,36 +358,36 @@
     <!-- Add Book Modal -->
     <div v-if="addBookOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="addBookOpen = false">
       <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="addBookOpen = false"></div>
-      <div class="relative bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl sm:text-2xl font-bold text-secondary">Adaugă Carte Nouă</h2>
+          <h2 class="text-xl font-bold text-dark">Adaugă Carte Nouă</h2>
           <button @click="addBookOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold">&times;</button>
         </div>
         <form @submit.prevent="submitAddBook" class="space-y-4">
           <div>
             <label class="block text-dark font-semibold mb-1 text-sm">Titlu *</label>
-            <input v-model="addForm.titlu" type="text" required class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+            <input v-model="addForm.titlu" type="text" required class="input-field text-sm">
           </div>
           <div>
             <label class="block text-dark font-semibold mb-1 text-sm">Autor *</label>
-            <input v-model="addForm.autor" type="text" required class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+            <input v-model="addForm.autor" type="text" required class="input-field text-sm">
           </div>
           <div>
             <label class="block text-dark font-semibold mb-1 text-sm">ISBN *</label>
-            <input v-model="addForm.ISBN" type="text" required maxlength="13" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+            <input v-model="addForm.ISBN" type="text" required maxlength="13" class="input-field text-sm">
           </div>
           <div>
             <label class="block text-dark font-semibold mb-1 text-sm">Gen *</label>
-            <input v-model="addForm.gen" type="text" required class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+            <input v-model="addForm.gen" type="text" required class="input-field text-sm">
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-dark font-semibold mb-1 text-sm">Stoc Total</label>
-              <input v-model.number="addForm.stoc_total" type="number" min="0" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+              <input v-model.number="addForm.stoc_total" type="number" min="0" class="input-field text-sm">
             </div>
             <div>
               <label class="block text-dark font-semibold mb-1 text-sm">Stoc Disponibil</label>
-              <input v-model.number="addForm.stoc_disponibil" type="number" min="0" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+              <input v-model.number="addForm.stoc_disponibil" type="number" min="0" class="input-field text-sm">
             </div>
           </div>
           <div v-if="addMsg.error" class="bg-accent/10 border-l-4 border-accent rounded-lg p-3">
@@ -396,7 +396,7 @@
           <div v-if="addMsg.success" class="bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
             <p class="text-green-700 text-xs sm:text-sm">{{ addMsg.success }}</p>
           </div>
-          <button type="submit" class="w-full bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-3 px-4 rounded-lg transition-all duration-300">
+          <button type="submit" class="w-full btn-primary">
             Adaugă Carte
           </button>
         </form>
@@ -406,36 +406,36 @@
     <!-- Edit Book Modal -->
     <div v-if="editBookOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="editBookOpen = false">
       <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="editBookOpen = false"></div>
-      <div class="relative bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl sm:text-2xl font-bold text-secondary">Editează Carte</h2>
+          <h2 class="text-xl font-bold text-dark">Editează Carte</h2>
           <button @click="editBookOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold">&times;</button>
         </div>
         <form @submit.prevent="submitEditBook" class="space-y-4">
           <div>
             <label class="block text-dark font-semibold mb-1 text-sm">Titlu</label>
-            <input v-model="editBookForm.titlu" type="text" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+            <input v-model="editBookForm.titlu" type="text" class="input-field text-sm">
           </div>
           <div>
             <label class="block text-dark font-semibold mb-1 text-sm">Autor</label>
-            <input v-model="editBookForm.autor" type="text" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+            <input v-model="editBookForm.autor" type="text" class="input-field text-sm">
           </div>
           <div>
             <label class="block text-dark font-semibold mb-1 text-sm">ISBN</label>
-            <input v-model="editBookForm.ISBN" type="text" maxlength="13" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+            <input v-model="editBookForm.ISBN" type="text" maxlength="13" class="input-field text-sm">
           </div>
           <div>
             <label class="block text-dark font-semibold mb-1 text-sm">Gen</label>
-            <input v-model="editBookForm.gen" type="text" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+            <input v-model="editBookForm.gen" type="text" class="input-field text-sm">
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-dark font-semibold mb-1 text-sm">Stoc Total</label>
-              <input v-model.number="editBookForm.stoc_total" type="number" min="0" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+              <input v-model.number="editBookForm.stoc_total" type="number" min="0" class="input-field text-sm">
             </div>
             <div>
               <label class="block text-dark font-semibold mb-1 text-sm">Stoc Disponibil</label>
-              <input v-model.number="editBookForm.stoc_disponibil" type="number" min="0" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+              <input v-model.number="editBookForm.stoc_disponibil" type="number" min="0" class="input-field text-sm">
             </div>
           </div>
           <div v-if="editBookMsg.error" class="bg-accent/10 border-l-4 border-accent rounded-lg p-3">
@@ -444,7 +444,7 @@
           <div v-if="editBookMsg.success" class="bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
             <p class="text-green-700 text-xs sm:text-sm">{{ editBookMsg.success }}</p>
           </div>
-          <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg text-white font-bold py-3 px-4 rounded-lg transition-all duration-300">
+          <button type="submit" class="w-full btn-primary">
             Salvează Modificări
           </button>
         </form>
@@ -454,7 +454,7 @@
     <!-- Quick Stock Modal -->
     <div v-if="stockModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="stockModalOpen = false">
       <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="stockModalOpen = false"></div>
-      <div class="relative bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 w-full max-w-sm z-10 p-6 sm:p-8">
+      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-sm z-10 p-6 sm:p-8">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-lg sm:text-xl font-bold text-secondary">Actualizare Stoc</h2>
           <button @click="stockModalOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold">&times;</button>
@@ -463,11 +463,11 @@
         <div class="grid grid-cols-2 gap-4 mb-4">
           <div>
             <label class="block text-dark font-semibold mb-1 text-xs">Stoc Total</label>
-            <input v-model.number="stockForm.stoc_total" type="number" min="0" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+            <input v-model.number="stockForm.stoc_total" type="number" min="0" class="input-field text-sm">
           </div>
           <div>
             <label class="block text-dark font-semibold mb-1 text-xs">Disponibil</label>
-            <input v-model.number="stockForm.stoc_disponibil" type="number" min="0" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+            <input v-model.number="stockForm.stoc_disponibil" type="number" min="0" class="input-field text-sm">
           </div>
         </div>
         <div v-if="stockMsg.error" class="mb-3 bg-accent/10 border-l-4 border-accent rounded-lg p-3">
@@ -476,7 +476,7 @@
         <div v-if="stockMsg.success" class="mb-3 bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
           <p class="text-green-700 text-xs">{{ stockMsg.success }}</p>
         </div>
-        <button @click="submitStock" class="w-full bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 px-4 rounded-lg text-sm transition-all duration-300">
+        <button @click="submitStock" class="w-full btn-primary text-sm">
           Actualizează
         </button>
       </div>
@@ -485,7 +485,7 @@
     <!-- Delete Confirmation Modal -->
     <div v-if="deleteBookOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="deleteBookOpen = false">
       <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="deleteBookOpen = false"></div>
-      <div class="relative bg-cream rounded-lg shadow-elegant border-2 border-accent/60 w-full max-w-md z-10 p-6 sm:p-8 text-center">
+      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-md z-10 p-6 sm:p-8 text-center">
         <i class="pi pi-exclamation-triangle text-4xl text-accent mb-4"></i>
         <h2 class="text-xl font-bold text-dark mb-2">Șterge Cartea?</h2>
         <p class="text-gray-600 text-sm mb-6">
@@ -495,7 +495,7 @@
           <p class="text-accent text-xs sm:text-sm">{{ deleteMsg.error }}</p>
         </div>
         <div class="flex gap-3">
-          <button @click="deleteBookOpen = false" class="flex-1 border-2 border-secondary text-secondary hover:bg-secondary hover:text-white font-bold py-2 px-4 rounded-lg transition-all duration-300">
+          <button @click="deleteBookOpen = false" class="flex-1 btn-secondary">
             Anulează
           </button>
           <button @click="submitDeleteBook" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300">
@@ -508,19 +508,19 @@
     <!-- Add Announcement Modal -->
     <div v-if="addAnuntOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="addAnuntOpen = false">
       <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="addAnuntOpen = false"></div>
-      <div class="relative bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl sm:text-2xl font-bold text-secondary">Anunț Nou</h2>
+          <h2 class="text-xl font-bold text-dark">Anunț Nou</h2>
           <button @click="addAnuntOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold">&times;</button>
         </div>
         <form @submit.prevent="submitAddAnunt" class="space-y-4">
           <div>
             <label class="block text-dark font-semibold mb-1 text-sm">Titlu *</label>
-            <input v-model="addAnuntForm.titlu" type="text" required maxlength="255" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+            <input v-model="addAnuntForm.titlu" type="text" required maxlength="255" class="input-field text-sm">
           </div>
           <div>
             <label class="block text-dark font-semibold mb-1 text-sm">Conținut *</label>
-            <textarea v-model="addAnuntForm.anunt" required rows="6" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50 resize-none"></textarea>
+            <textarea v-model="addAnuntForm.anunt" required rows="6" class="input-field text-sm resize-none"></textarea>
           </div>
           <div v-if="addAnuntMsg.error" class="bg-accent/10 border-l-4 border-accent rounded-lg p-3">
             <p class="text-accent text-xs sm:text-sm">{{ addAnuntMsg.error }}</p>
@@ -528,7 +528,7 @@
           <div v-if="addAnuntMsg.success" class="bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
             <p class="text-green-700 text-xs sm:text-sm">{{ addAnuntMsg.success }}</p>
           </div>
-          <button type="submit" class="w-full bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-3 px-4 rounded-lg transition-all duration-300">
+          <button type="submit" class="w-full btn-primary">
             Publică Anunț
           </button>
         </form>
@@ -538,19 +538,19 @@
     <!-- Edit Announcement Modal -->
     <div v-if="editAnuntOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="editAnuntOpen = false">
       <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="editAnuntOpen = false"></div>
-      <div class="relative bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl sm:text-2xl font-bold text-secondary">Editează Anunț</h2>
+          <h2 class="text-xl font-bold text-dark">Editează Anunț</h2>
           <button @click="editAnuntOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold">&times;</button>
         </div>
         <form @submit.prevent="submitEditAnunt" class="space-y-4">
           <div>
             <label class="block text-dark font-semibold mb-1 text-sm">Titlu</label>
-            <input v-model="editAnuntForm.titlu" type="text" maxlength="255" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+            <input v-model="editAnuntForm.titlu" type="text" maxlength="255" class="input-field text-sm">
           </div>
           <div>
             <label class="block text-dark font-semibold mb-1 text-sm">Conținut</label>
-            <textarea v-model="editAnuntForm.anunt" rows="6" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50 resize-none"></textarea>
+            <textarea v-model="editAnuntForm.anunt" rows="6" class="input-field text-sm resize-none"></textarea>
           </div>
           <div v-if="editAnuntMsg.error" class="bg-accent/10 border-l-4 border-accent rounded-lg p-3">
             <p class="text-accent text-xs sm:text-sm">{{ editAnuntMsg.error }}</p>
@@ -558,7 +558,7 @@
           <div v-if="editAnuntMsg.success" class="bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
             <p class="text-green-700 text-xs sm:text-sm">{{ editAnuntMsg.success }}</p>
           </div>
-          <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg text-white font-bold py-3 px-4 rounded-lg transition-all duration-300">
+          <button type="submit" class="w-full btn-primary">
             Salvează Modificări
           </button>
         </form>
@@ -568,7 +568,7 @@
     <!-- Delete Announcement Modal -->
     <div v-if="deleteAnuntOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="deleteAnuntOpen = false">
       <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="deleteAnuntOpen = false"></div>
-      <div class="relative bg-cream rounded-lg shadow-elegant border-2 border-accent/60 w-full max-w-md z-10 p-6 sm:p-8 text-center">
+      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-md z-10 p-6 sm:p-8 text-center">
         <i class="pi pi-exclamation-triangle text-4xl text-accent mb-4"></i>
         <h2 class="text-xl font-bold text-dark mb-2">Șterge Anunțul?</h2>
         <p class="text-gray-600 text-sm mb-6">
@@ -578,7 +578,7 @@
           <p class="text-accent text-xs sm:text-sm">{{ deleteAnuntMsg.error }}</p>
         </div>
         <div class="flex gap-3">
-          <button @click="deleteAnuntOpen = false" class="flex-1 border-2 border-secondary text-secondary hover:bg-secondary hover:text-white font-bold py-2 px-4 rounded-lg transition-all duration-300">
+          <button @click="deleteAnuntOpen = false" class="flex-1 btn-secondary">
             Anulează
           </button>
           <button @click="submitDeleteAnunt" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300">

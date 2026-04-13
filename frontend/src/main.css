@@ -2,22 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 * {
-  scrollbar-color: #9B1B30 #4A1C2A;
+  scrollbar-color: #9B1B30 #2D1018;
   scrollbar-width: thin;
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #4A1C2A;
+  background: #2D1018;
 }
 
 ::-webkit-scrollbar-thumb {
   background: #9B1B30;
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -29,114 +31,62 @@ html {
 }
 
 html, body {
-  @apply bg-gradient-to-b from-white to-gray-200 text-gray-800;
-  background-attachment: fixed;
+  @apply bg-cream text-gray-800 antialiased;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
-/* Enhanced Shadows and Effects */
-.shadow-dark-lg {
-  box-shadow:
-    0 10px 15px -3px rgba(74, 28, 42, 0.1),
-    0 20px 25px -5px rgba(74, 28, 42, 0.1),
-    0 25px 50px -12px rgba(74, 28, 42, 0.25);
-}
-
-.shadow-elegant {
-  box-shadow:
-    0 1px 3px 0 rgba(0, 0, 0, 0.08),
-    0 1px 2px 0 rgba(0, 0, 0, 0.04),
-    0 4px 12px -2px rgba(74, 28, 42, 0.08);
-}
-
-.card-hover {
+/* Card interactions */
+.card-lift {
   @apply transition-all duration-300 ease-out;
 }
-
-.card-hover:hover {
-  @apply shadow-dark-lg;
+.card-lift:hover {
   transform: translateY(-2px);
-  box-shadow:
-    0 12px 20px -5px rgba(74, 28, 42, 0.1),
-    0 16px 30px -8px rgba(74, 28, 42, 0.15);
+  @apply shadow-elevated;
 }
 
-/* Modern Glassmorphism Effects */
-.glass-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    0 8px 32px 0 rgba(31, 38, 135, 0.37),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+/* Focus ring for accessibility */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-secondary/40 focus:ring-offset-2 focus:ring-offset-cream;
 }
 
-.glass-border {
-  background: linear-gradient(135deg,
-    rgba(155, 27, 48, 0.08) 0%,
-    rgba(220, 20, 60, 0.06) 50%,
-    rgba(155, 27, 48, 0.08) 100%);
-  border: 1px solid rgba(155, 27, 48, 0.15);
-  backdrop-filter: blur(5px);
+/* Input base style */
+.input-field {
+  @apply w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-dark placeholder-gray-400
+    focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50
+    transition-all duration-200 text-sm;
 }
 
-/* Enhanced Glow Effects */
-.glow-white {
-  text-shadow:
-    0 0 10px rgba(255, 255, 255, 0.4),
-    0 0 20px rgba(255, 255, 255, 0.2);
+/* Button base styles */
+.btn-primary {
+  @apply bg-secondary hover:bg-secondary/90 text-white font-semibold py-3 px-6 rounded-xl
+    transition-all duration-200 shadow-soft hover:shadow-card active:scale-[0.98];
 }
 
-/* Modern Button Effects */
-.btn-glow:hover {
-  box-shadow:
-    0 0 15px rgba(155, 27, 48, 0.3),
-    0 0 30px rgba(155, 27, 48, 0.15);
-  transform: translateY(-2px);
+.btn-secondary {
+  @apply bg-white hover:bg-cream-dark text-dark font-semibold py-3 px-6 rounded-xl
+    border border-gray-200 hover:border-secondary/30
+    transition-all duration-200 active:scale-[0.98];
 }
 
-/* Subtle Animations */
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 1;
-  }
+/* Badge styles */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
 }
 
-.animate-pulse-glow {
-  animation: pulse-glow 3s ease-in-out infinite;
+.badge-success {
+  @apply bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10;
 }
 
-/* Modern Gradient Backgrounds */
-.gradient-modern {
-  background: linear-gradient(135deg,
-    rgba(155, 27, 48, 0.95) 0%,
-    rgba(74, 28, 42, 0.95) 50%,
-    rgba(220, 20, 60, 0.95) 100%);
+.badge-danger {
+  @apply bg-red-50 text-red-700 ring-1 ring-red-600/10;
 }
 
-.gradient-overlay {
-  background: linear-gradient(45deg,
-    rgba(0, 0, 0, 0.1) 0%,
-    rgba(0, 0, 0, 0.05) 50%,
-    rgba(0, 0, 0, 0.1) 100%);
+/* Smooth page transitions */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.2s ease;
 }
-
-/* Enhanced Typography */
-.text-gradient {
-  color: white;
-  -webkit-text-fill-color: white;
-}
-
-/* Modern Border Effects */
-.border-modern {
-  border: 1px solid transparent;
-  background: linear-gradient(white, white) padding-box,
-              linear-gradient(135deg, rgba(155, 27, 48, 0.2), rgba(220, 20, 60, 0.2)) border-box;
-}
-
-/* Smooth Transitions */
-* {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
 }
