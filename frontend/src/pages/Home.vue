@@ -56,55 +56,48 @@
                 <i class="pi pi-megaphone text-2xl sm:text-4xl text-accent"></i>
                 Anunțuri
               </h2>
-              <button class="w-full sm:w-auto bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg text-xs sm:text-base transition-all duration-300 ">
-                + Anunț Nou
-              </button>
+            </div>
+
+            <!-- Loading -->
+            <div v-if="loadingAnunturi" class="text-center py-12">
+              <i class="pi pi-spin pi-spinner text-3xl text-secondary"></i>
             </div>
 
             <!-- Announcements List -->
-            <div class="space-y-4 sm:space-y-6">
+            <div v-else class="space-y-4 sm:space-y-6">
               <div 
-                v-for="(announcement, index) in announcements" 
-                :key="index"
+                v-for="a in anunturi" 
+                :key="a.anunt_id"
                 class="bg-cream-dark rounded-lg p-4 sm:p-6 border border-secondary/20 shadow-sm card-hover"
               >
                 <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2 sm:mb-3 gap-2">
                   <div>
-                    <h3 class="text-base sm:text-xl font-bold text-dark">{{ announcement.title }}</h3>
+                    <h3 class="text-base sm:text-xl font-bold text-dark">{{ a.titlu }}</h3>
                     <p class="text-gray-500 text-xs sm:text-sm mt-1">
-                      De: <span class="font-semibold text-secondary">{{ announcement.author }}</span> • {{ announcement.date }}
+                      <i class="pi pi-calendar mr-1"></i>{{ a.data_publicare }}
                     </p>
                   </div>
-                  <span 
+                </div>
+                <p class="text-gray-700 mb-3 sm:mb-4 text-xs sm:text-base whitespace-pre-line">{{ a.anunt }}</p>
+                <div class="flex items-center gap-4 text-xs sm:text-sm">
+                  <button 
+                    @click="toggleLike(a)"
                     :class="[
-                      'px-3 sm:px-4 py-1 sm:py-2 rounded-full text-xs font-semibold whitespace-nowrap',
-                      announcement.category === 'Event' ? 'bg-accent text-white' :
-                      announcement.category === 'Update' ? 'bg-secondary text-white' :
-                      'bg-dark text-white'
+                      'flex items-center gap-1.5 font-medium transition-all duration-200 px-3 py-1.5 rounded-full border',
+                      a.liked 
+                        ? 'bg-secondary/10 text-secondary border-secondary/40' 
+                        : 'text-gray-500 hover:text-secondary border-transparent hover:border-secondary/30'
                     ]"
                   >
-                    {{ announcement.category }}
-                  </span>
-                </div>
-                <p class="text-gray-700 mb-3 sm:mb-4 text-xs sm:text-base">{{ announcement.content }}</p>
-                <div class="flex flex-wrap items-center gap-2 sm:gap-4 text-secondary text-xs sm:text-sm">
-                  <button class="hover:text-accent transition-colors duration-200 font-medium  transform flex items-center gap-1">
-                    <i class="pi pi-thumbs-up"></i>
-                    Apreciază
-                  </button>
-                  <button class="hover:text-accent transition-colors duration-200 font-medium  transform flex items-center gap-1">
-                    <i class="pi pi-comments"></i>
-                    Comentează
-                  </button>
-                  <button class="hover:text-accent transition-colors duration-200 font-medium  transform flex items-center gap-1">
-                    <i class="pi pi-bookmark"></i>
-                    Salvează
+                    <i :class="a.liked ? 'pi pi-thumbs-up-fill' : 'pi pi-thumbs-up'"></i>
+                    <span>{{ a.aprecieri }}</span>
                   </button>
                 </div>
               </div>
 
               <!-- Empty State -->
-              <div v-if="announcements.length === 0" class="text-center py-8 sm:py-12">
+              <div v-if="anunturi.length === 0" class="text-center py-8 sm:py-12">
+                <i class="pi pi-megaphone text-4xl text-gray-300 mb-3"></i>
                 <p class="text-gray-600 text-xs sm:text-lg">Nu sunt anunțuri deocamdată. Revino în curând!</p>
               </div>
             </div>
@@ -198,29 +191,56 @@ export default {
           progress: 58
         }
       ],
-      announcements: [
-        {
-          title: 'Noua Colecție de Fiction Știintific Disponibilă',
-          author: 'Asistent Bibliotecă',
-          date: '20 martie 2026',
-          category: 'Update',
-          content: 'Suntem entuziasă să anunțăm adaugarea a 50 de romane noi de ficțiune știintifică la colecția noastră. De la autori clasici la lucrari contemporane, explorează lumi amazante și povești futuriste. Vizitează secțiunea Fiction Știintifică pentru mai multe detalii!'
-        },
-        {
-          title: 'Baza anuală de Cărți - 5 aprilie',
-          author: 'Administrator',
-          date: '18 martie 2026',
-          category: 'Event',
-          content: 'Notează-ți în calendar! Baza anuală de cărți va avea loc pe 5 aprilie de la 9 AM la 6 PM. Întretiș-te cu autori locali, participă la concursuri de citire și bucură-te de reduceri exclusive la achiziț ionarea de cărți. Toți studenții și personalul sunt bine veniț!'
-        },
-        {
-          title: 'Notificare de Íntreținere a Bibliotecii',
-          author: 'Administrator',
-          date: '15 martie 2026',
-          category: 'Notice',
-          content: 'Biblioteca va fi închisă pe 22 martie pentru íntreținere de sistem și actualizări. Îno s-a părut pentru orice inconvenient și ță mulțumim pentru răbdare. Biblioteca se va redeschide pe 23 martie.'
+      anunturi: [],
+      loadingAnunturi: false,
+      isLoggedIn: false
+    }
+  },
+  mounted() {
+    this.fetchAnunturi()
+    this.checkAuth()
+  },
+  methods: {
+    async checkAuth() {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' })
+        this.isLoggedIn = res.ok
+      } catch {
+        this.isLoggedIn = false
+      }
+    },
+    async fetchAnunturi() {
+      this.loadingAnunturi = true
+      try {
+        const res = await fetch('/api/anunturi', { credentials: 'include' })
+        const data = await res.json()
+        if (data.success) {
+          this.anunturi = data.anunturi
         }
-      ]
+      } catch (error) {
+        console.error('Error fetching announcements:', error)
+      } finally {
+        this.loadingAnunturi = false
+      }
+    },
+    async toggleLike(a) {
+      if (!this.isLoggedIn) {
+        this.$router.push('/login')
+        return
+      }
+      try {
+        const res = await fetch(`/api/anunturi/${a.anunt_id}/like`, {
+          method: 'POST',
+          credentials: 'include'
+        })
+        const data = await res.json()
+        if (data.success) {
+          a.liked = data.liked
+          a.aprecieri = data.aprecieri
+        }
+      } catch (error) {
+        console.error('Like error:', error)
+      }
     }
   }
 }

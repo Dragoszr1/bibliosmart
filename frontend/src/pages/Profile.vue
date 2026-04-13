@@ -261,6 +261,59 @@
             </div>
           </div>
         </div>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- ANNOUNCEMENTS MANAGEMENT (bibliotecar only) -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="mt-8">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+            <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
+              <i class="pi pi-megaphone text-secondary"></i> Gestionare Anunțuri
+            </h2>
+            <button @click="openAddAnuntModal" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg text-xs sm:text-sm transition-all duration-300">
+              <i class="pi pi-plus mr-1"></i> Anunț Nou
+            </button>
+          </div>
+
+          <!-- Loading -->
+          <div v-if="loadingAnunturi" class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 p-8 text-center">
+            <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
+          </div>
+
+          <!-- Announcements list -->
+          <div v-else class="space-y-4">
+            <div 
+              v-for="a in allAnunturi" 
+              :key="a.anunt_id"
+              class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 p-4 sm:p-6"
+            >
+              <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                <div class="min-w-0 flex-1">
+                  <h3 class="text-sm sm:text-lg font-bold text-dark">{{ a.titlu }}</h3>
+                  <p class="text-gray-500 text-xs mt-1">
+                    <i class="pi pi-calendar mr-1"></i>{{ a.data_publicare }}
+                    <span class="ml-3"><i class="pi pi-thumbs-up mr-1"></i>{{ a.aprecieri }} aprecieri</span>
+                  </p>
+                </div>
+                <div class="flex gap-1 flex-shrink-0">
+                  <button @click="openEditAnuntModal(a)" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editează">
+                    <i class="pi pi-pencil text-sm"></i>
+                  </button>
+                  <button @click="confirmDeleteAnunt(a)" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Șterge">
+                    <i class="pi pi-trash text-sm"></i>
+                  </button>
+                </div>
+              </div>
+              <p class="text-gray-700 text-xs sm:text-sm leading-relaxed whitespace-pre-line">{{ a.anunt }}</p>
+            </div>
+
+            <!-- Empty -->
+            <div v-if="allAnunturi.length === 0" class="bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 p-8 text-center">
+              <i class="pi pi-megaphone text-3xl text-gray-300 mb-2"></i>
+              <p class="text-gray-500 text-sm">Niciun anunț încă</p>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
 
@@ -451,6 +504,89 @@
         </div>
       </div>
     </div>
+
+    <!-- Add Announcement Modal -->
+    <div v-if="addAnuntOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="addAnuntOpen = false">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="addAnuntOpen = false"></div>
+      <div class="relative bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl sm:text-2xl font-bold text-secondary">Anunț Nou</h2>
+          <button @click="addAnuntOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold">&times;</button>
+        </div>
+        <form @submit.prevent="submitAddAnunt" class="space-y-4">
+          <div>
+            <label class="block text-dark font-semibold mb-1 text-sm">Titlu *</label>
+            <input v-model="addAnuntForm.titlu" type="text" required maxlength="255" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+          </div>
+          <div>
+            <label class="block text-dark font-semibold mb-1 text-sm">Conținut *</label>
+            <textarea v-model="addAnuntForm.anunt" required rows="6" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50 resize-none"></textarea>
+          </div>
+          <div v-if="addAnuntMsg.error" class="bg-accent/10 border-l-4 border-accent rounded-lg p-3">
+            <p class="text-accent text-xs sm:text-sm">{{ addAnuntMsg.error }}</p>
+          </div>
+          <div v-if="addAnuntMsg.success" class="bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
+            <p class="text-green-700 text-xs sm:text-sm">{{ addAnuntMsg.success }}</p>
+          </div>
+          <button type="submit" class="w-full bg-gradient-to-r from-secondary to-accent hover:shadow-lg text-white font-bold py-3 px-4 rounded-lg transition-all duration-300">
+            Publică Anunț
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Edit Announcement Modal -->
+    <div v-if="editAnuntOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="editAnuntOpen = false">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="editAnuntOpen = false"></div>
+      <div class="relative bg-cream rounded-lg shadow-elegant border-2 border-secondary/60 w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl sm:text-2xl font-bold text-secondary">Editează Anunț</h2>
+          <button @click="editAnuntOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold">&times;</button>
+        </div>
+        <form @submit.prevent="submitEditAnunt" class="space-y-4">
+          <div>
+            <label class="block text-dark font-semibold mb-1 text-sm">Titlu</label>
+            <input v-model="editAnuntForm.titlu" type="text" maxlength="255" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50">
+          </div>
+          <div>
+            <label class="block text-dark font-semibold mb-1 text-sm">Conținut</label>
+            <textarea v-model="editAnuntForm.anunt" rows="6" class="w-full px-3 py-2 rounded-lg bg-cream-dark border-2 border-secondary/30 text-dark text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50 resize-none"></textarea>
+          </div>
+          <div v-if="editAnuntMsg.error" class="bg-accent/10 border-l-4 border-accent rounded-lg p-3">
+            <p class="text-accent text-xs sm:text-sm">{{ editAnuntMsg.error }}</p>
+          </div>
+          <div v-if="editAnuntMsg.success" class="bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
+            <p class="text-green-700 text-xs sm:text-sm">{{ editAnuntMsg.success }}</p>
+          </div>
+          <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg text-white font-bold py-3 px-4 rounded-lg transition-all duration-300">
+            Salvează Modificări
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete Announcement Modal -->
+    <div v-if="deleteAnuntOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="deleteAnuntOpen = false">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="deleteAnuntOpen = false"></div>
+      <div class="relative bg-cream rounded-lg shadow-elegant border-2 border-accent/60 w-full max-w-md z-10 p-6 sm:p-8 text-center">
+        <i class="pi pi-exclamation-triangle text-4xl text-accent mb-4"></i>
+        <h2 class="text-xl font-bold text-dark mb-2">Șterge Anunțul?</h2>
+        <p class="text-gray-600 text-sm mb-6">
+          Ești sigur că vrei să ștergi <strong>{{ deleteAnuntTarget?.titlu }}</strong>?
+        </p>
+        <div v-if="deleteAnuntMsg.error" class="mb-4 bg-accent/10 border-l-4 border-accent rounded-lg p-3">
+          <p class="text-accent text-xs sm:text-sm">{{ deleteAnuntMsg.error }}</p>
+        </div>
+        <div class="flex gap-3">
+          <button @click="deleteAnuntOpen = false" class="flex-1 border-2 border-secondary text-secondary hover:bg-secondary hover:text-white font-bold py-2 px-4 rounded-lg transition-all duration-300">
+            Anulează
+          </button>
+          <button @click="submitDeleteAnunt" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300">
+            Șterge
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -498,7 +634,22 @@ export default {
       // Delete book
       deleteBookOpen: false,
       deleteTarget: null,
-      deleteMsg: { error: '' }
+      deleteMsg: { error: '' },
+      // ── Announcements ──
+      allAnunturi: [],
+      loadingAnunturi: false,
+      // Add announcement
+      addAnuntOpen: false,
+      addAnuntForm: { titlu: '', anunt: '' },
+      addAnuntMsg: { error: '', success: '' },
+      // Edit announcement
+      editAnuntOpen: false,
+      editAnuntForm: { anunt_id: null, titlu: '', anunt: '' },
+      editAnuntMsg: { error: '', success: '' },
+      // Delete announcement
+      deleteAnuntOpen: false,
+      deleteAnuntTarget: null,
+      deleteAnuntMsg: { error: '' }
     }
   },
   mounted() {
@@ -588,6 +739,7 @@ export default {
         // Load librarian panel data
         if (this.isBibliotecar) {
           this.fetchAllBooks()
+          this.fetchAllAnunturi()
         }
       } catch (error) {
         console.error('Profile fetch error:', error)
@@ -802,6 +954,108 @@ export default {
       }
       this.$refs.bookImageInput.value = ''
       this.bookImageCarteId = null
+    },
+
+    // ═══════════ ANNOUNCEMENT METHODS ═══════════
+    async fetchAllAnunturi() {
+      this.loadingAnunturi = true
+      try {
+        const res = await fetch('/api/anunturi', { credentials: 'include' })
+        const data = await res.json()
+        if (data.success) {
+          this.allAnunturi = data.anunturi
+        }
+      } catch (error) {
+        console.error('Error fetching announcements:', error)
+      } finally {
+        this.loadingAnunturi = false
+      }
+    },
+
+    // ── Add Announcement ──
+    openAddAnuntModal() {
+      this.addAnuntForm = { titlu: '', anunt: '' }
+      this.addAnuntMsg = { error: '', success: '' }
+      this.addAnuntOpen = true
+    },
+    async submitAddAnunt() {
+      this.addAnuntMsg = { error: '', success: '' }
+      try {
+        const res = await fetch('/api/anunturi', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.addAnuntForm)
+        })
+        const data = await res.json()
+        if (res.ok) {
+          this.addAnuntMsg.success = 'Anunț publicat cu succes!'
+          await this.fetchAllAnunturi()
+          setTimeout(() => { this.addAnuntOpen = false }, 1200)
+        } else {
+          this.addAnuntMsg.error = data.message || 'Eroare la publicare'
+        }
+      } catch {
+        this.addAnuntMsg.error = 'Eroare de rețea.'
+      }
+    },
+
+    // ── Edit Announcement ──
+    openEditAnuntModal(a) {
+      this.editAnuntForm = {
+        anunt_id: a.anunt_id,
+        titlu: a.titlu,
+        anunt: a.anunt
+      }
+      this.editAnuntMsg = { error: '', success: '' }
+      this.editAnuntOpen = true
+    },
+    async submitEditAnunt() {
+      this.editAnuntMsg = { error: '', success: '' }
+      const { anunt_id, ...fields } = this.editAnuntForm
+      try {
+        const res = await fetch(`/api/anunturi/${anunt_id}`, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fields)
+        })
+        const data = await res.json()
+        if (res.ok) {
+          this.editAnuntMsg.success = 'Anunț actualizat cu succes!'
+          await this.fetchAllAnunturi()
+          setTimeout(() => { this.editAnuntOpen = false }, 1200)
+        } else {
+          this.editAnuntMsg.error = data.message || 'Eroare la actualizare'
+        }
+      } catch {
+        this.editAnuntMsg.error = 'Eroare de rețea.'
+      }
+    },
+
+    // ── Delete Announcement ──
+    confirmDeleteAnunt(a) {
+      this.deleteAnuntTarget = a
+      this.deleteAnuntMsg = { error: '' }
+      this.deleteAnuntOpen = true
+    },
+    async submitDeleteAnunt() {
+      this.deleteAnuntMsg = { error: '' }
+      try {
+        const res = await fetch(`/api/anunturi/${this.deleteAnuntTarget.anunt_id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        })
+        const data = await res.json()
+        if (res.ok) {
+          this.deleteAnuntOpen = false
+          await this.fetchAllAnunturi()
+        } else {
+          this.deleteAnuntMsg.error = data.message || 'Eroare la ștergere'
+        }
+      } catch {
+        this.deleteAnuntMsg.error = 'Eroare de rețea.'
+      }
     }
   }
 }
