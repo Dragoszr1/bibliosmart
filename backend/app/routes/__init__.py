@@ -340,6 +340,9 @@ def login():
     if not email or not password:
         return jsonify({'success': False, 'message': 'Email and password are required'}), 400
 
+    if not email.endswith('@cni-sv.ro'):
+        return jsonify({'success': False, 'message': 'Doar emailurile @cni-sv.ro sunt permise'}), 400
+
     query = text(
         "SELECT user_id, username, email, hashed_password, rol FROM users WHERE email = :email"
     )
@@ -473,6 +476,9 @@ def register():
 
     if not username or not email or not password:
         return jsonify({'success': False, 'message': 'User, email, and password are required'}), 400
+
+    if not email.endswith('@cni-sv.ro'):
+        return jsonify({'success': False, 'message': 'Doar emailurile @cni-sv.ro sunt permise'}), 400
 
     if len(password) < 8:
         return jsonify({'success': False, 'message': 'Password must be at least 8 characters'}), 400
