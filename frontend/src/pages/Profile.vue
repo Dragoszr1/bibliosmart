@@ -728,7 +728,7 @@ export default {
         const meRes = await fetch('/api/auth/me', { credentials: 'include' })
         if (meRes.ok) {
           const me = await meRes.json()
-          this.isBibliotecar = String(me.rol) === '1'
+          this.isBibliotecar = me.rol === 'bibliotecar'
         }
 
         if (data.user_id) {

@@ -132,6 +132,39 @@
           </div>
         </div>
 
+        <!-- Action Buttons -->
+        <div class="px-6 py-4 border-b border-gray-100 flex gap-3">
+          <button
+            @click="requestFizic"
+            :disabled="requestingFizic || !selectedBook?.available"
+            :class="[
+              'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150',
+              selectedBook?.available
+                ? 'bg-secondary text-white hover:bg-secondary/90 active:scale-[0.98]'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            ]"
+          >
+            <i :class="requestingFizic ? 'pi pi-spin pi-spinner' : 'pi pi-book'" class="text-sm"></i>
+            {{ requestingFizic ? 'Se trimite...' : 'Împrumută Fizic' }}
+          </button>
+          <button
+            disabled
+            class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 text-gray-400 cursor-not-allowed"
+            title="Disponibil în curând"
+          >
+            <i class="pi pi-file-pdf text-sm"></i>
+            PDF (în curând)
+          </button>
+        </div>
+
+        <!-- Request feedback toast -->
+        <div v-if="requestMessage" :class="[
+          'mx-6 mt-4 px-4 py-2.5 rounded-xl text-sm font-medium transition-all',
+          requestSuccess ? 'bg-green-50 text-green-700' : 'bg-red-50 text-accent'
+        ]">
+          {{ requestMessage }}
+        </div>
+
         <!-- Rating -->
         <div class="px-6 py-4 border-b border-gray-100">
           <div class="flex items-center gap-3">
@@ -188,7 +221,10 @@ export default {
       reviews: [],
       avgRating: 0,
       totalReviews: 0,
-      loadingReviews: false
+      loadingReviews: false,
+      requestingFizic: false,
+      requestMessage: '',
+      requestSuccess: false
     }
   },
   methods: {
@@ -255,6 +291,9 @@ export default {
       this.avgRating = 0;
       this.totalReviews = 0;
       this.loadingReviews = true;
+      this.requestMessage = '';
+      this.requestSuccess = false;
+      this.requestingFizic = false;
       this.showModal = true;
       try {
         const response = await fetch(`/api/reviews?carte_id=${book.id}`);
@@ -268,6 +307,25 @@ export default {
         console.error('Error fetching reviews:', error);
       } finally {
         this.loadingReviews = false;
+      }
+    },
+    async requestFizic() {
+      if (!this.selectedBook || this.requestingFizic) return;
+      this.requestingFizic = true;
+      this.requestMessage = '';
+      try {
+        const response = await fetch(`/api/books/${this.selectedBook.id}/request-fizic`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+        const data = await response.json();
+        this.requestSuccess = data.success;
+        this.requestMessage = data.message || (data.success ? 'Cerere trimisă!' : 'Eroare la trimitere');
+      } catch (error) {
+        this.requestSuccess = false;
+        this.requestMessage = 'Eroare de rețea';
+      } finally {
+        this.requestingFizic = false;
       }
     }
   },

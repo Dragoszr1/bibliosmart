@@ -12,6 +12,13 @@ class Config:
     JWT_COOKIE_SAMESITE = 'Lax'
     JWT_COOKIE_SECURE = False  # Set True in production with HTTPS
 
+    # SMTP / Email configuration (Gmail App Password)
+    SMTP_HOST = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
+    SMTP_PORT = int(os.environ.get('SMTP_PORT', 587))
+    SMTP_USER = os.environ.get('SMTP_USER', '')       # e.g. yourname@gmail.com
+    SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '') # Gmail App Password
+    SMTP_FROM = os.environ.get('SMTP_FROM', '')         # defaults to SMTP_USER if blank
+
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True

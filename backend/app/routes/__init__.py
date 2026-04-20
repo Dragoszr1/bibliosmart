@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, send_from_directory, current_app
+from flask import Blueprint, jsonify, request, send_from_directory, current_app, g
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from functools import wraps
@@ -6,17 +6,24 @@ import bcrypt
 import jwt
 import datetime
 import os
-import glob
+import logging
 import re
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 from app.database import db
 from app.models import Carti, Users, CartiCitite, Recenzii, Anunturi, AnunturiAprecieri
 
 main_bp = Blueprint('main', __name__, url_prefix='/api')
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_EXTENSIONS = frozenset({'png', 'jpg', 'jpeg', 'gif', 'webp'})
 ALLOWED_EMAIL_DOMAIN = 'cni-sv.ro'
-VALID_ROLES = {'user', 'bibliotecar'}
+VALID_ROLES = frozenset({'user', 'bibliotecar'})
+ALLOWED_BOOK_FIELDS = frozenset({'titlu', 'autor', 'ISBN', 'stoc_total', 'stoc_disponibil', 'gen'})
+ALLOWED_ANUNT_FIELDS = frozenset({'titlu', 'anunt'})
+
+logger = logging.getLogger(__name__)
 ROLE_ALIASES = {
     '1': 'bibliotecar',
     'administrator': 'bibliotecar',
@@ -30,6 +37,61 @@ BOOK_IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(o
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def _find_files_by_prefix(directory, prefix):
+    """Safely find files in directory matching prefix.<allowed_ext>.
+    Uses os.listdir instead of glob to avoid glob injection from
+    user-controlled strings containing *, ?, or [] characters.
+    """
+    os.makedirs(directory, exist_ok=True)
+    matches = []
+    for entry in os.listdir(directory):
+        if not entry.startswith(prefix + '.'):
+            continue
+        ext = entry.rsplit('.', 1)[1].lower() if '.' in entry else ''
+        if ext in ALLOWED_EXTENSIONS:
+            matches.append(entry)
+    return matches
+
+
+# ── Email Helper ─────────────────────────────────────────────
+
+def send_email(recipients, subject, html_body):
+    """Send an email via SMTP (Gmail).
+
+    Reads SMTP_* settings from the current Flask app config.
+    Returns True on success, False on failure (logged, never raises).
+    """
+    cfg = current_app.config
+    host = cfg.get('SMTP_HOST', 'smtp.gmail.com')
+    port = cfg.get('SMTP_PORT', 587)
+    user = cfg.get('SMTP_USER', '')
+    password = cfg.get('SMTP_PASSWORD', '')
+    sender = cfg.get('SMTP_FROM', '') or user
+
+    if not user or not password:
+        logger.error('SMTP credentials not configured — email not sent')
+        return False
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = sender
+    msg['To'] = ', '.join(recipients)
+    msg.attach(MIMEText(html_body, 'html'))
+
+    try:
+        with smtplib.SMTP(host, port, timeout=10) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(user, password)
+            server.sendmail(sender, recipients, msg.as_string())
+        logger.info('Email sent to %s', recipients)
+        return True
+    except Exception:
+        logger.exception('Failed to send email')
+        return False
 
 
 # ── JWT Helpers ──────────────────────────────────────────────
@@ -128,21 +190,31 @@ def decode_jwt_token(token):
 
 
 def get_current_user():
-    """Resolve the authenticated user from the JWT cookie and database."""
+    """Resolve the authenticated user from the JWT cookie and database.
+    Caches the result on flask.g so repeated calls in the same request
+    don't hit the database again.
+    """
+    if hasattr(g, '_current_user'):
+        return g._current_user
+
     token = request.cookies.get(current_app.config['JWT_COOKIE_NAME'])
     if not token:
+        g._current_user = None
         return None
 
     payload = decode_jwt_token(token)
     if not payload:
+        g._current_user = None
         return None
 
     try:
         user_id = int(payload.get('user_id'))
     except (TypeError, ValueError):
+        g._current_user = None
         return None
 
-    return fetch_user_by_id(user_id)
+    g._current_user = fetch_user_by_id(user_id)
+    return g._current_user
 
 
 def jwt_required(f):
@@ -157,18 +229,23 @@ def jwt_required(f):
     return decorated
 
 
-def bibliotecar_required(f):
-    """Decorator that enforces librarian privileges from the database."""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        user = get_current_user()
-        if not user:
-            return jsonify({'success': False, 'message': 'Authentication required'}), 401
-        if user.get('rol') != 'bibliotecar':
-            return jsonify({'success': False, 'message': 'Librarian privileges required'}), 403
-        request.current_user = user
-        return f(*args, **kwargs)
-    return decorated
+def role_required(role):
+    """Decorator factory that enforces a specific role from the database."""
+    if role not in VALID_ROLES:
+        raise ValueError(f"Unknown role: {role}")
+
+    def decorator(f):
+        @wraps(f)
+        @jwt_required
+        def decorated(*args, **kwargs):
+            if request.current_user.get('rol') != role:
+                return jsonify({'success': False, 'message': f'{role.capitalize()} privileges required'}), 403
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
+
+
+bibliotecar_required = role_required('bibliotecar')
 
 @main_bp.route('/health', methods=['GET'])
 def health_check():
@@ -203,8 +280,9 @@ def get_books():
                 'gen': row[7]
             })
         return jsonify({'books': books}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        logger.exception('Failed to fetch books')
+        return jsonify({'error': 'Failed to fetch books'}), 500
 
 
 @main_bp.route('/books', methods=['POST'])
@@ -255,8 +333,7 @@ def update_book(carte_id):
 
     # Build dynamic update
     fields = {}
-    allowed = ['titlu', 'autor', 'ISBN', 'stoc_total', 'stoc_disponibil', 'gen']
-    for key in allowed:
+    for key in ALLOWED_BOOK_FIELDS:
         if key in data:
             fields[key] = data[key]
 
@@ -303,6 +380,60 @@ def delete_book(carte_id):
         return jsonify({'success': False, 'message': 'Failed to delete book'}), 500
 
     return jsonify({'success': True, 'message': 'Book deleted successfully'}), 200
+
+
+@main_bp.route('/books/<int:carte_id>/request-fizic', methods=['POST'])
+@jwt_required
+def request_book_fizic(carte_id):
+    """Request a physical copy of a book.
+
+    Sends an email to every user with the 'bibliotecar' role
+    informing them that this user wants to pick up the book.
+    """
+    user = request.current_user
+
+    # Look up the book
+    book_row = db.session.execute(
+        text("SELECT titlu, autor, stoc_disponibil FROM carti WHERE carte_id = :id"),
+        {'id': carte_id}
+    ).fetchone()
+
+    if not book_row:
+        return jsonify({'success': False, 'message': 'Book not found'}), 404
+
+    titlu, autor, stoc_disponibil = book_row
+    if stoc_disponibil <= 0:
+        return jsonify({'success': False, 'message': 'Book is not available'}), 409
+
+    # Fetch all librarian emails
+    rows = db.session.execute(
+        text("SELECT email FROM users WHERE rol = 'bibliotecar'")
+    ).fetchall()
+    librarian_emails = [r[0] for r in rows if r[0]]
+
+    if not librarian_emails:
+        logger.warning('No librarians found to notify for book request %d', carte_id)
+        return jsonify({'success': False, 'message': 'No librarians available to process your request'}), 503
+
+    subject = f'Cerere împrumut carte — {titlu}'
+    html_body = (
+        f'<h2>Cerere nouă de împrumut</h2>'
+        f'<p>Utilizatorul <strong>{user["username"]}</strong> '
+        f'(<a href="mailto:{user["email"]}">{user["email"]}</a>) '
+        f'dorește să împrumute cartea:</p>'
+        f'<ul>'
+        f'<li><strong>Titlu:</strong> {titlu}</li>'
+        f'<li><strong>Autor:</strong> {autor}</li>'
+        f'<li><strong>ID carte:</strong> {carte_id}</li>'
+        f'</ul>'
+        f'<p>Stoc disponibil: {stoc_disponibil}</p>'
+    )
+
+    ok = send_email(librarian_emails, subject, html_body)
+    if not ok:
+        return jsonify({'success': False, 'message': 'Failed to send request email'}), 500
+
+    return jsonify({'success': True, 'message': 'Request sent to librarians'}), 200
 
 
 @main_bp.route('/users', methods=['GET'])
@@ -353,8 +484,9 @@ def get_reviews():
             'avg_rating': avg_rating,
             'total_reviews': len(reviews)
         }), 200
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception:
+        logger.exception('Failed to fetch reviews')
+        return jsonify({'success': False, 'error': 'Failed to fetch reviews'}), 500
 
 
 @main_bp.route('/reviews/user', methods=['GET'])
@@ -390,8 +522,9 @@ def get_user_reviews():
             'reviews': reviews,
             'total_reviews': len(reviews)
         }), 200
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception:
+        logger.exception('Failed to fetch user reviews')
+        return jsonify({'success': False, 'error': 'Failed to fetch reviews'}), 500
 
 
 # Authentication routes structure
@@ -610,9 +743,8 @@ def upload_profile_picture():
     ext = file.filename.rsplit('.', 1)[1].lower()
 
     # Remove any existing profile picture for this user
-    os.makedirs(PROFILE_PICTURES_DIR, exist_ok=True)
-    for old_file in glob.glob(os.path.join(PROFILE_PICTURES_DIR, f"{username}.*")):
-        os.remove(old_file)
+    for old_file in _find_files_by_prefix(PROFILE_PICTURES_DIR, username):
+        os.remove(os.path.join(PROFILE_PICTURES_DIR, old_file))
 
     # Save the new file as username.ext
     filename = f"{username}.{ext}"
@@ -631,16 +763,12 @@ def get_profile_picture(username):
     """Serve a user's profile picture by username.
     Looks for <username>.* in the profile_pictures folder.
     """
-    os.makedirs(PROFILE_PICTURES_DIR, exist_ok=True)
-    matches = glob.glob(os.path.join(PROFILE_PICTURES_DIR, f"{username}.*"))
-
-    # Filter to only allowed extensions
-    matches = [m for m in matches if m.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS]
+    matches = _find_files_by_prefix(PROFILE_PICTURES_DIR, username)
 
     if not matches:
         return jsonify({'success': False, 'message': 'No profile picture found'}), 404
 
-    return send_from_directory(PROFILE_PICTURES_DIR, os.path.basename(matches[0]))
+    return send_from_directory(PROFILE_PICTURES_DIR, matches[0])
 
 
 @main_bp.route('/books/image', methods=['POST'])
@@ -673,9 +801,8 @@ def upload_book_image():
     ext = file.filename.rsplit('.', 1)[1].lower()
 
     # Remove any existing image for this book
-    os.makedirs(BOOK_IMAGES_DIR, exist_ok=True)
-    for old_file in glob.glob(os.path.join(BOOK_IMAGES_DIR, f"{carte_id}.*")):
-        os.remove(old_file)
+    for old_file in _find_files_by_prefix(BOOK_IMAGES_DIR, str(carte_id)):
+        os.remove(os.path.join(BOOK_IMAGES_DIR, old_file))
 
     # Save the new file as carte_id.ext
     filename = f"{carte_id}.{ext}"
@@ -694,16 +821,12 @@ def get_book_image(carte_id):
     """Serve a book's cover image by carte_id.
     Looks for <carte_id>.* in the book_images folder.
     """
-    os.makedirs(BOOK_IMAGES_DIR, exist_ok=True)
-    matches = glob.glob(os.path.join(BOOK_IMAGES_DIR, f"{carte_id}.*"))
-
-    # Filter to only allowed extensions
-    matches = [m for m in matches if m.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS]
+    matches = _find_files_by_prefix(BOOK_IMAGES_DIR, str(carte_id))
 
     if not matches:
         return jsonify({'success': False, 'message': 'No book image found'}), 404
 
-    return send_from_directory(BOOK_IMAGES_DIR, os.path.basename(matches[0]))
+    return send_from_directory(BOOK_IMAGES_DIR, matches[0])
 
 
 # ── Announcement Routes ──────────────────────────────────────
@@ -742,8 +865,9 @@ def get_anunturi():
             })
 
         return jsonify({'success': True, 'anunturi': anunturi}), 200
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception:
+        logger.exception('Failed to fetch announcements')
+        return jsonify({'success': False, 'error': 'Failed to fetch announcements'}), 500
 
 
 @main_bp.route('/anunturi', methods=['POST'])
@@ -764,9 +888,10 @@ def create_anunt():
         )
         db.session.commit()
         return jsonify({'success': True, 'message': 'Announcement created'}), 201
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logger.exception('Failed to create announcement')
+        return jsonify({'success': False, 'message': 'Failed to create announcement'}), 500
 
 
 @main_bp.route('/anunturi/<int:anunt_id>', methods=['PUT'])
@@ -776,7 +901,7 @@ def update_anunt(anunt_id):
     data = request.get_json(silent=True) or {}
 
     fields = {}
-    for key in ['titlu', 'anunt']:
+    for key in ALLOWED_ANUNT_FIELDS:
         if key in data and data[key] is not None:
             fields[key] = data[key].strip()
 
@@ -792,9 +917,10 @@ def update_anunt(anunt_id):
         if result.rowcount == 0:
             return jsonify({'success': False, 'message': 'Announcement not found'}), 404
         return jsonify({'success': True, 'message': 'Announcement updated'}), 200
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logger.exception('Failed to update announcement %d', anunt_id)
+        return jsonify({'success': False, 'message': 'Failed to update announcement'}), 500
 
 
 @main_bp.route('/anunturi/<int:anunt_id>', methods=['DELETE'])
@@ -807,9 +933,10 @@ def delete_anunt(anunt_id):
         if result.rowcount == 0:
             return jsonify({'success': False, 'message': 'Announcement not found'}), 404
         return jsonify({'success': True, 'message': 'Announcement deleted'}), 200
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logger.exception('Failed to delete announcement %d', anunt_id)
+        return jsonify({'success': False, 'message': 'Failed to delete announcement'}), 500
 
 
 @main_bp.route('/anunturi/<int:anunt_id>/like', methods=['POST'])
@@ -854,6 +981,7 @@ def toggle_like_anunt(anunt_id):
         ).fetchone()
 
         return jsonify({'success': True, 'liked': liked, 'aprecieri': count[0] if count else 0}), 200
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logger.exception('Failed to toggle like on announcement %d', anunt_id)
+        return jsonify({'success': False, 'message': 'Failed to toggle like'}), 500
