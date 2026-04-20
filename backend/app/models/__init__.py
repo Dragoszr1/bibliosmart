@@ -27,7 +27,7 @@ class Users(db.Model):
     username = db.Column(db.String(50), nullable=False, unique=True)
     email = db.Column(db.String(50), nullable=False, unique=True)
     hashed_password = db.Column(db.String(255), nullable=False)
-    rol = db.Column(db.String(50), nullable=False, default='user')
+    rol = db.Column(db.Enum('user', 'bibliotecar', name='user_role'), nullable=False, default='user')
     telefon = db.Column(db.String(50), nullable=True, unique=True)
     description = db.Column(db.String(255), nullable=True)
 

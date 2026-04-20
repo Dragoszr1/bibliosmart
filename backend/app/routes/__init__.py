@@ -7,6 +7,7 @@ import jwt
 import datetime
 import os
 import glob
+import re
 
 from app.database import db
 from app.models import Carti, Users, CartiCitite, Recenzii, Anunturi, AnunturiAprecieri
@@ -14,6 +15,16 @@ from app.models import Carti, Users, CartiCitite, Recenzii, Anunturi, AnunturiAp
 main_bp = Blueprint('main', __name__, url_prefix='/api')
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_EMAIL_DOMAIN = 'cni-sv.ro'
+VALID_ROLES = {'user', 'bibliotecar'}
+ROLE_ALIASES = {
+    '1': 'bibliotecar',
+    'administrator': 'bibliotecar',
+    'admin': 'bibliotecar',
+    'bibliotecar': 'bibliotecar',
+    'user': 'user'
+}
+EMAIL_REGEX = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9._%+\-]{0,62}[A-Za-z0-9])?@([A-Za-z0-9\-]+\.)+[A-Za-z]{2,63}$")
 PROFILE_PICTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'profile_pictures')
 BOOK_IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'book_images')
 
@@ -23,13 +34,57 @@ def allowed_file(filename):
 
 # ── JWT Helpers ──────────────────────────────────────────────
 
-def create_jwt_token(user_id, username, email, rol):
-    """Create a JWT token with user claims."""
+def normalize_role(raw_role):
+    """Normalize legacy role values to the supported set."""
+    if raw_role is None:
+        return 'user'
+
+    normalized_role = ROLE_ALIASES.get(str(raw_role).strip().lower())
+    return normalized_role if normalized_role in VALID_ROLES else 'user'
+
+
+def normalize_cni_email(email):
+    """Return a normalized school email address or None if invalid."""
+    if not isinstance(email, str):
+        return None
+
+    normalized_email = email.strip().lower()
+    if not normalized_email or len(normalized_email) > 254:
+        return None
+
+    if not EMAIL_REGEX.fullmatch(normalized_email):
+        return None
+
+    local_part, _, domain = normalized_email.rpartition('@')
+    if not local_part or '..' in local_part or domain != ALLOWED_EMAIL_DOMAIN:
+        return None
+
+    return normalized_email
+
+
+def fetch_user_by_id(user_id):
+    """Load the current user from the database for authorization decisions."""
+    query = text(
+        "SELECT user_id, username, email, rol FROM users WHERE user_id = :user_id"
+    )
+    result = db.session.execute(query, {'user_id': user_id}).mappings().first()
+    if not result:
+        return None
+
+    return {
+        'user_id': result['user_id'],
+        'username': result['username'],
+        'email': result['email'],
+        'rol': normalize_role(result['rol'])
+    }
+
+
+def create_jwt_token(user_id, username, email):
+    """Create a JWT token with identity claims only."""
     payload = {
         'user_id': user_id,
         'username': username,
         'email': email,
-        'rol': rol,
         'iat': datetime.datetime.now(datetime.timezone.utc),
         'exp': datetime.datetime.now(datetime.timezone.utc) + current_app.config['JWT_ACCESS_TOKEN_EXPIRES']
     }
@@ -73,11 +128,21 @@ def decode_jwt_token(token):
 
 
 def get_current_user():
-    """Extract user from the JWT cookie. Returns payload dict or None."""
+    """Resolve the authenticated user from the JWT cookie and database."""
     token = request.cookies.get(current_app.config['JWT_COOKIE_NAME'])
     if not token:
         return None
-    return decode_jwt_token(token)
+
+    payload = decode_jwt_token(token)
+    if not payload:
+        return None
+
+    try:
+        user_id = int(payload.get('user_id'))
+    except (TypeError, ValueError):
+        return None
+
+    return fetch_user_by_id(user_id)
 
 
 def jwt_required(f):
@@ -93,13 +158,13 @@ def jwt_required(f):
 
 
 def bibliotecar_required(f):
-    """Decorator that enforces a valid JWT cookie AND rol='1' (bibliotecar)."""
+    """Decorator that enforces librarian privileges from the database."""
     @wraps(f)
     def decorated(*args, **kwargs):
         user = get_current_user()
         if not user:
             return jsonify({'success': False, 'message': 'Authentication required'}), 401
-        if str(user.get('rol')) != '1':
+        if user.get('rol') != 'bibliotecar':
             return jsonify({'success': False, 'message': 'Librarian privileges required'}), 403
         request.current_user = user
         return f(*args, **kwargs)
@@ -334,13 +399,14 @@ def get_user_reviews():
 def login():
     """Login route with bcrypt password verification. Sets JWT httpOnly cookie."""
     data = request.get_json(silent=True) or {}
-    email = data.get('email')
+    raw_email = data.get('email')
     password = data.get('password')
 
-    if not email or not password:
+    if not raw_email or not password:
         return jsonify({'success': False, 'message': 'Email and password are required'}), 400
 
-    if not email.endswith('@cni-sv.ro'):
+    email = normalize_cni_email(raw_email)
+    if not email:
         return jsonify({'success': False, 'message': 'Doar emailurile @cni-sv.ro sunt permise'}), 400
 
     query = text(
@@ -358,9 +424,10 @@ def login():
     token = create_jwt_token(
         user_id=result['user_id'],
         username=result['username'],
-        email=result['email'],
-        rol=result['rol']
+        email=result['email']
     )
+
+    normalized_role = normalize_role(result['rol'])
 
     resp = jsonify({
         'success': True,
@@ -369,7 +436,7 @@ def login():
             'user_id': result['user_id'],
             'username': result['username'],
             'email': result['email'],
-            'rol': result['rol']
+            'rol': normalized_role
         }
     })
     set_jwt_cookie(resp, token)
@@ -471,13 +538,14 @@ def register():
     """Registration route with bcrypt password hashing. Sets JWT cookie on success."""
     data = request.get_json(silent=True) or {}
     username = data.get('user') or data.get('username') or data.get('fullName')
-    email = data.get('email')
+    raw_email = data.get('email')
     password = data.get('password')
 
-    if not username or not email or not password:
+    if not username or not raw_email or not password:
         return jsonify({'success': False, 'message': 'User, email, and password are required'}), 400
 
-    if not email.endswith('@cni-sv.ro'):
+    email = normalize_cni_email(raw_email)
+    if not email:
         return jsonify({'success': False, 'message': 'Doar emailurile @cni-sv.ro sunt permise'}), 400
 
     if len(password) < 8:
@@ -512,8 +580,7 @@ def register():
     token = create_jwt_token(
         user_id=new_user['user_id'],
         username=username,
-        email=email,
-        rol='user'
+        email=email
     )
 
     resp = jsonify({'success': True, 'message': 'Registration successful'})
