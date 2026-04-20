@@ -13,7 +13,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 from app.database import db
-from app.models import Carti, Users, CartiCitite, Recenzii, Anunturi, AnunturiAprecieri
+from app.models import Carti, Users, CartiCitite, Recenzii, Anunturi, AnunturiAprecieri, CereriCarti
 
 main_bp = Blueprint('main', __name__, url_prefix='/api')
 
@@ -429,11 +429,85 @@ def request_book_fizic(carte_id):
         f'<p>Stoc disponibil: {stoc_disponibil}</p>'
     )
 
-    ok = send_email(librarian_emails, subject, html_body)
-    if not ok:
-        return jsonify({'success': False, 'message': 'Failed to send request email'}), 500
+    # Save the request in the database
+    try:
+        db.session.execute(
+            text("INSERT INTO cereri_carti (user_id, carte_id) VALUES (:uid, :cid)"),
+            {'uid': user['user_id'], 'cid': carte_id}
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception('Failed to save book request to DB')
+        return jsonify({'success': False, 'message': 'Failed to save request'}), 500
 
-    return jsonify({'success': True, 'message': 'Request sent to librarians'}), 200
+    # Send email notification (best-effort, don't fail the request if email fails)
+    send_email(librarian_emails, subject, html_body)
+
+    return jsonify({'success': True, 'message': 'Cererea a fost trimisă!'}), 200
+
+
+@main_bp.route('/book-requests', methods=['GET'])
+@bibliotecar_required
+def get_book_requests():
+    """List all book borrow requests. Librarians only."""
+    status_filter = request.args.get('status')  # optional: pending, approved, rejected
+    try:
+        sql = (
+            "SELECT c.cerere_id, c.user_id, c.carte_id, c.status, c.created_at, "
+            "u.username, u.email, ca.titlu, ca.autor "
+            "FROM cereri_carti c "
+            "JOIN users u ON c.user_id = u.user_id "
+            "JOIN carti ca ON c.carte_id = ca.carte_id "
+        )
+        params = {}
+        if status_filter in ('pending', 'approved', 'rejected'):
+            sql += "WHERE c.status = :status "
+            params['status'] = status_filter
+        sql += "ORDER BY c.created_at DESC"
+
+        rows = db.session.execute(text(sql), params).fetchall()
+        cereri = []
+        for r in rows:
+            cereri.append({
+                'cerere_id': r[0],
+                'user_id': r[1],
+                'carte_id': r[2],
+                'status': r[3],
+                'created_at': r[4].isoformat() if r[4] else None,
+                'username': r[5],
+                'email': r[6],
+                'titlu': r[7],
+                'autor': r[8]
+            })
+        return jsonify({'success': True, 'cereri': cereri}), 200
+    except Exception:
+        logger.exception('Failed to fetch book requests')
+        return jsonify({'success': False, 'error': 'Failed to fetch requests'}), 500
+
+
+@main_bp.route('/book-requests/<int:cerere_id>', methods=['PUT'])
+@bibliotecar_required
+def update_book_request(cerere_id):
+    """Approve or reject a book request. Librarians only."""
+    data = request.get_json(silent=True) or {}
+    new_status = data.get('status')
+    if new_status not in ('approved', 'rejected'):
+        return jsonify({'success': False, 'message': 'Status must be approved or rejected'}), 400
+
+    try:
+        result = db.session.execute(
+            text("UPDATE cereri_carti SET status = :status WHERE cerere_id = :id"),
+            {'status': new_status, 'id': cerere_id}
+        )
+        db.session.commit()
+        if result.rowcount == 0:
+            return jsonify({'success': False, 'message': 'Request not found'}), 404
+        return jsonify({'success': True, 'message': f'Request {new_status}'}), 200
+    except Exception:
+        db.session.rollback()
+        logger.exception('Failed to update book request %d', cerere_id)
+        return jsonify({'success': False, 'message': 'Failed to update request'}), 500
 
 
 @main_bp.route('/users', methods=['GET'])

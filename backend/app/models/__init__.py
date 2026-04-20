@@ -79,5 +79,20 @@ class AnunturiAprecieri(db.Model):
     anunt_id = db.Column(db.Integer, nullable=False)
     user_id = db.Column(db.Integer, nullable=False)
 
+
+class CereriCarti(db.Model):
+    """Book borrow requests table"""
+    __tablename__ = 'cereri_carti'
+
+    cerere_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    carte_id = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.Enum('pending', 'approved', 'rejected', name='cerere_status'), nullable=False, default='pending')
+    created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    updated_at = db.Column(db.DateTime, nullable=False, default=db.func.now(), onupdate=db.func.now())
+
+    def __repr__(self):
+        return f'<CereriCarti {self.cerere_id}: user={self.user_id} carte={self.carte_id} status={self.status}>'
+
     def __repr__(self):
         return f'<AnunturiAprecieri anunt:{self.anunt_id} user:{self.user_id}>'

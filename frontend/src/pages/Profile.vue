@@ -147,6 +147,96 @@
       <!-- LIBRARIAN PANEL (only when rol='1') -->
       <!-- ═══════════════════════════════════════════════════════════ -->
       <div v-if="isBibliotecar" class="mt-2">
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- BOOK REQUESTS (bibliotecar only) -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="mb-8">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+            <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
+              <i class="pi pi-inbox text-secondary"></i> Cereri Împrumut
+              <span v-if="pendingRequestsCount > 0" class="ml-1 bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ pendingRequestsCount }}</span>
+            </h2>
+            <div class="flex gap-1.5">
+              <button
+                v-for="f in [{ key: 'all', label: 'Toate' }, { key: 'pending', label: 'În așteptare' }, { key: 'approved', label: 'Aprobate' }, { key: 'rejected', label: 'Respinse' }]"
+                :key="f.key"
+                @click="requestFilter = f.key; fetchBookRequests()"
+                :class="[
+                  'px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150',
+                  requestFilter === f.key
+                    ? 'bg-secondary text-white'
+                    : 'bg-white text-gray-500 border border-gray-200 hover:border-secondary/30 hover:text-secondary'
+                ]"
+              >
+                {{ f.label }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Loading -->
+          <div v-if="loadingRequests" class="bg-white rounded-2xl shadow-card border border-gray-100 p-8 text-center">
+            <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
+          </div>
+
+          <!-- Empty -->
+          <div v-else-if="bookRequests.length === 0" class="bg-white rounded-2xl shadow-card border border-gray-100 p-8 text-center">
+            <i class="pi pi-inbox text-3xl text-gray-300 mb-2"></i>
+            <p class="text-gray-500 text-sm">Nicio cerere {{ requestFilter !== 'all' ? 'cu acest status' : '' }}</p>
+          </div>
+
+          <!-- Requests List -->
+          <div v-else class="space-y-3">
+            <div
+              v-for="req in bookRequests"
+              :key="req.cerere_id"
+              :class="[
+                'bg-white rounded-xl shadow-card border overflow-hidden transition-all duration-150',
+                req.status === 'pending' ? 'border-amber-200' : req.status === 'approved' ? 'border-green-200' : 'border-red-200'
+              ]"
+            >
+              <div class="flex flex-col sm:flex-row sm:items-center gap-3 p-4">
+                <!-- Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span :class="[
+                      'text-xs px-2 py-0.5 rounded-full font-medium',
+                      req.status === 'pending' ? 'bg-amber-50 text-amber-700' :
+                      req.status === 'approved' ? 'bg-green-50 text-green-700' :
+                      'bg-red-50 text-red-700'
+                    ]">
+                      {{ req.status === 'pending' ? 'În așteptare' : req.status === 'approved' ? 'Aprobat' : 'Respins' }}
+                    </span>
+                    <span class="text-gray-400 text-xs">{{ formatDate(req.created_at) }}</span>
+                  </div>
+                  <p class="text-sm font-bold text-dark truncate">{{ req.titlu }}</p>
+                  <p class="text-xs text-gray-500">de {{ req.autor }}</p>
+                  <p class="text-xs text-gray-500 mt-1">
+                    <i class="pi pi-user mr-1"></i>{{ req.username }}
+                    <span class="ml-2 text-gray-400">({{ req.email }})</span>
+                  </p>
+                </div>
+
+                <!-- Actions (only for pending) -->
+                <div v-if="req.status === 'pending'" class="flex gap-2 flex-shrink-0">
+                  <button
+                    @click="handleRequest(req.cerere_id, 'approved')"
+                    class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                  >
+                    <i class="pi pi-check text-xs"></i> Aprobă
+                  </button>
+                  <button
+                    @click="handleRequest(req.cerere_id, 'rejected')"
+                    class="px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                  >
+                    <i class="pi pi-times text-xs"></i> Respinge
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Section Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
@@ -613,6 +703,9 @@ export default {
       profileMsg: { error: '', success: '' },
       savingDescription: false,
       // ── Librarian panel ──
+      bookRequests: [],
+      loadingRequests: false,
+      requestFilter: 'pending',
       allBooks: [],
       filteredLibBooks: [],
       libSearch: '',
@@ -650,6 +743,11 @@ export default {
       deleteAnuntOpen: false,
       deleteAnuntTarget: null,
       deleteAnuntMsg: { error: '' }
+    }
+  },
+  computed: {
+    pendingRequestsCount() {
+      return this.bookRequests.filter(r => r.status === 'pending').length
     }
   },
   mounted() {
@@ -738,6 +836,7 @@ export default {
 
         // Load librarian panel data
         if (this.isBibliotecar) {
+          this.fetchBookRequests()
           this.fetchAllBooks()
           this.fetchAllAnunturi()
         }
@@ -774,6 +873,45 @@ export default {
     },
 
     // ═══════════ LIBRARIAN METHODS ═══════════
+
+    // ── Book Requests ──
+    async fetchBookRequests() {
+      this.loadingRequests = true
+      try {
+        const qs = this.requestFilter !== 'all' ? `?status=${this.requestFilter}` : ''
+        const res = await fetch(`/api/book-requests${qs}`, { credentials: 'include' })
+        const data = await res.json()
+        if (data.success) {
+          this.bookRequests = data.cereri
+        }
+      } catch (error) {
+        console.error('Error fetching book requests:', error)
+      } finally {
+        this.loadingRequests = false
+      }
+    },
+    async handleRequest(cerereId, status) {
+      try {
+        const res = await fetch(`/api/book-requests/${cerereId}`, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        })
+        if (res.ok) {
+          await this.fetchBookRequests()
+        }
+      } catch (error) {
+        console.error('Error updating request:', error)
+      }
+    },
+    formatDate(isoStr) {
+      if (!isoStr) return ''
+      const d = new Date(isoStr)
+      return d.toLocaleDateString('ro-RO', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    },
+
+    // ── Books ──
     async fetchAllBooks() {
       this.loadingBooks = true
       try {
