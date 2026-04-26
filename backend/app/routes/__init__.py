@@ -8,6 +8,7 @@ import datetime
 import os
 import logging
 import re
+from groq import Groq
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -515,6 +516,128 @@ def get_users():
     """Basic users route - implement your queries here"""
     return jsonify({'message': 'Users endpoint - implement your database queries here'}), 200
 
+
+@main_bp.route('/admin/users', methods=['GET'])
+@bibliotecar_required
+def admin_get_users():
+    """List all user accounts. Bibliotecar only."""
+    try:
+        rows = db.session.execute(
+            text("SELECT user_id, username, email, rol, telefon FROM users ORDER BY username ASC")
+        ).fetchall()
+        users = [
+            {
+                'user_id': r[0],
+                'username': r[1],
+                'email': r[2],
+                'rol': normalize_role(r[3]),
+                'telefon': r[4]
+            }
+            for r in rows
+        ]
+        return jsonify({'success': True, 'users': users}), 200
+    except Exception:
+        logger.exception('Failed to fetch users list')
+        return jsonify({'success': False, 'error': 'Failed to fetch users'}), 500
+
+
+@main_bp.route('/admin/users/<int:user_id>', methods=['GET'])
+@bibliotecar_required
+def admin_get_user_detail(user_id):
+    """Get full details for a specific user. Bibliotecar only."""
+    try:
+        user_row = db.session.execute(
+            text("SELECT user_id, username, email, rol, telefon, description FROM users WHERE user_id = :uid"),
+            {'uid': user_id}
+        ).fetchone()
+        if not user_row:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        # Books currently borrowed (approved borrow requests)
+        borrowed_rows = db.session.execute(
+            text("""
+                SELECT c.carte_id, c.titlu, c.autor, c.ISBN, cc.created_at
+                FROM cereri_carti cc
+                JOIN carti c ON cc.carte_id = c.carte_id
+                WHERE cc.user_id = :uid AND cc.status = 'approved'
+                ORDER BY cc.created_at DESC
+            """),
+            {'uid': user_id}
+        ).fetchall()
+
+        # Books read / returned
+        read_rows = db.session.execute(
+            text("""
+                SELECT c.carte_id, c.titlu, c.autor, c.ISBN
+                FROM carti_citite cc
+                JOIN carti c ON cc.carte_id = c.carte_id
+                WHERE cc.user_id = :uid
+            """),
+            {'uid': user_id}
+        ).fetchall()
+
+        # Full borrow request history
+        history_rows = db.session.execute(
+            text("""
+                SELECT cc.cerere_id, c.titlu, c.autor, cc.status, cc.created_at
+                FROM cereri_carti cc
+                JOIN carti c ON cc.carte_id = c.carte_id
+                WHERE cc.user_id = :uid
+                ORDER BY cc.created_at DESC
+            """),
+            {'uid': user_id}
+        ).fetchall()
+
+        # Reviews
+        review_rows = db.session.execute(
+            text("""
+                SELECT r.id, c.titlu, c.autor, r.nota, r.comentariu
+                FROM recenzii r
+                JOIN carti c ON r.carte_id = c.carte_id
+                WHERE r.user_id = :uid
+                ORDER BY r.id DESC
+            """),
+            {'uid': user_id}
+        ).fetchall()
+
+        return jsonify({
+            'success': True,
+            'user': {
+                'user_id': user_row[0],
+                'username': user_row[1],
+                'email': user_row[2],
+                'rol': normalize_role(user_row[3]),
+                'telefon': user_row[4],
+                'description': user_row[5]
+            },
+            'books_borrowed': [
+                {
+                    'carte_id': r[0], 'titlu': r[1], 'autor': r[2], 'ISBN': r[3],
+                    'borrowed_at': r[4].isoformat() if r[4] else None
+                }
+                for r in borrowed_rows
+            ],
+            'books_read': [
+                {'carte_id': r[0], 'titlu': r[1], 'autor': r[2], 'ISBN': r[3]}
+                for r in read_rows
+            ],
+            'borrow_history': [
+                {
+                    'cerere_id': r[0], 'titlu': r[1], 'autor': r[2],
+                    'status': r[3],
+                    'created_at': r[4].isoformat() if r[4] else None
+                }
+                for r in history_rows
+            ],
+            'reviews': [
+                {'id': r[0], 'titlu': r[1], 'autor': r[2], 'nota': r[3], 'comentariu': r[4]}
+                for r in review_rows
+            ]
+        }), 200
+    except Exception:
+        logger.exception('Failed to fetch user detail for %d', user_id)
+        return jsonify({'success': False, 'error': 'Failed to fetch user details'}), 500
+
 @main_bp.route('/books-read', methods=['GET'])
 def get_books_read():
     """Basic books read route - implement your queries here"""
@@ -561,6 +684,57 @@ def get_reviews():
     except Exception:
         logger.exception('Failed to fetch reviews')
         return jsonify({'success': False, 'error': 'Failed to fetch reviews'}), 500
+
+
+@main_bp.route('/reviews', methods=['POST'])
+@jwt_required
+def submit_review():
+    """Submit a review for a book. Requires authentication."""
+    user = request.current_user
+    data = request.get_json(silent=True) or {}
+    carte_id = data.get('carte_id')
+    nota = data.get('nota')
+    comentariu = (data.get('comentariu') or '').strip()
+
+    if not carte_id or nota is None or not comentariu:
+        return jsonify({'success': False, 'message': 'carte_id, nota, and comentariu are required'}), 400
+
+    try:
+        nota = int(nota)
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'message': 'nota must be an integer 1-5'}), 400
+
+    if nota < 1 or nota > 5:
+        return jsonify({'success': False, 'message': 'nota must be between 1 and 5'}), 400
+
+    # Check book exists
+    book = db.session.execute(text("SELECT carte_id FROM carti WHERE carte_id = :id"), {'id': carte_id}).fetchone()
+    if not book:
+        return jsonify({'success': False, 'message': 'Book not found'}), 404
+
+    try:
+        # Upsert: one review per user per book
+        existing = db.session.execute(
+            text("SELECT id FROM recenzii WHERE user_id = :uid AND carte_id = :cid"),
+            {'uid': user['user_id'], 'cid': carte_id}
+        ).fetchone()
+
+        if existing:
+            db.session.execute(
+                text("UPDATE recenzii SET nota = :nota, comentariu = :comentariu WHERE id = :id"),
+                {'nota': nota, 'comentariu': comentariu, 'id': existing[0]}
+            )
+        else:
+            db.session.execute(
+                text("INSERT INTO recenzii (user_id, carte_id, nota, comentariu) VALUES (:uid, :cid, :nota, :com)"),
+                {'uid': user['user_id'], 'cid': carte_id, 'nota': nota, 'com': comentariu}
+            )
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Review submitted'}), 200
+    except Exception:
+        db.session.rollback()
+        logger.exception('Failed to submit review')
+        return jsonify({'success': False, 'message': 'Failed to submit review'}), 500
 
 
 @main_bp.route('/reviews/user', methods=['GET'])
@@ -1059,3 +1233,173 @@ def toggle_like_anunt(anunt_id):
         db.session.rollback()
         logger.exception('Failed to toggle like on announcement %d', anunt_id)
         return jsonify({'success': False, 'message': 'Failed to toggle like'}), 500
+
+
+# ── AI Helper ────────────────────────────────────────────────
+
+GROQ_MODEL = 'llama-3.3-70b-versatile'
+
+def _get_groq_client():
+    """Return a Groq client, or None if the API key is missing."""
+    api_key = current_app.config.get('GROQ_API_KEY', '')
+    if not api_key:
+        return None
+    return Groq(api_key=api_key)
+
+def _groq_chat(client, prompt):
+    """Send a single-turn prompt to Groq and return the text response."""
+    logger.info('Groq prompt: %s', prompt[:300])
+    resp = client.chat.completions.create(
+        model=GROQ_MODEL,
+        messages=[{'role': 'user', 'content': prompt}],
+        max_tokens=512,
+        temperature=0.7
+    )
+    return resp.choices[0].message.content.strip()
+
+
+@main_bp.route('/ai/recommend', methods=['GET'])
+@jwt_required
+def ai_recommend():
+    """Return personalised book recommendations based on read history."""
+    user = request.current_user
+    user_id = user['user_id']
+
+    client = _get_groq_client()
+    if not client:
+        return jsonify({'success': False, 'message': 'AI not configured'}), 503
+
+    try:
+        # Books the user has already read
+        read_rows = db.session.execute(
+            text("SELECT c.titlu, c.autor, c.gen FROM carti_citite cc JOIN carti c ON cc.carte_id = c.carte_id WHERE cc.user_id = :uid"),
+            {'uid': user_id}
+        ).fetchall()
+
+        # Available books in the library
+        all_rows = db.session.execute(
+            text("SELECT titlu, autor, gen, stoc_disponibil FROM carti ORDER BY titlu LIMIT 30")
+        ).fetchall()
+
+        if not read_rows:
+            return jsonify({'success': True, 'recommendations': '', 'no_history': True}), 200
+
+        read_list = '\n'.join(f'- {r[0]} de {r[1]} ({r[2]})' for r in read_rows)
+        avail_list = '\n'.join(
+            f'- {r[0]} de {r[1]} ({r[2]}){"" if r[3] > 0 else " [indisponibil]"}'
+            for r in all_rows
+        )
+
+        prompt = (
+            f"Ești un bibliotecar de liceu. Elevul a citit:\n{read_list}\n\n"
+            f"Biblioteca are aceste cărți:\n{avail_list}\n\n"
+            "Recomandă 3-4 cărți DISPONIBILE din biblioteca de mai sus pe care nu le-a citit încă, "
+            "bazate pe preferințele lui. Pentru fiecare, spune de ce o recomanzi în 1-2 propoziții. "
+            "Răspunde în română, concis și prietenos."
+        )
+
+        reply = _groq_chat(client, prompt)
+        return jsonify({'success': True, 'recommendations': reply}), 200
+    except Exception:
+        logger.exception('AI recommend failed')
+        return jsonify({'success': False, 'message': 'AI request failed'}), 500
+
+
+@main_bp.route('/ai/review-assist', methods=['POST'])
+@jwt_required
+def ai_review_assist():
+    """Polish a rough review draft into a well-written review."""
+    data = request.get_json(silent=True) or {}
+    draft = (data.get('draft') or '').strip()
+    book_title = (data.get('titlu') or '').strip()
+    rating = data.get('nota', 0)
+
+    if not draft:
+        return jsonify({'success': False, 'message': 'draft is required'}), 400
+
+    client = _get_groq_client()
+    if not client:
+        return jsonify({'success': False, 'message': 'AI not configured'}), 503
+
+    try:
+        prompt = (
+            f"Ești un asistent pentru recenzii de carte. Elevul vrea să scrie o recenzie pentru "
+            f'"{book_title}" cu nota {rating}/5. Gândul lui brut:\n"{draft}"\n\n'
+            "Rescrie-l ca o recenzie coerentă, bine scrisă, de 2-4 propoziții. "
+            "Păstrează opinia originală, nu adăuga informații inventate. Răspunde DOAR cu textul recenziei, fără explicații."
+        )
+        reply = _groq_chat(client, prompt)
+        return jsonify({'success': True, 'review': reply}), 200
+    except Exception:
+        logger.exception('AI review-assist failed')
+        return jsonify({'success': False, 'message': 'AI request failed'}), 500
+
+
+@main_bp.route('/ai/book-summary/<int:carte_id>', methods=['GET'])
+def ai_book_summary(carte_id):
+    """Summarise all reviews for a book into a short opinion summary."""
+    client = _get_groq_client()
+    if not client:
+        return jsonify({'success': False, 'message': 'AI not configured'}), 503
+
+    try:
+        book_row = db.session.execute(
+            text("SELECT titlu, autor FROM carti WHERE carte_id = :id"), {'id': carte_id}
+        ).fetchone()
+        if not book_row:
+            return jsonify({'success': False, 'message': 'Book not found'}), 404
+
+        reviews = db.session.execute(
+            text("SELECT nota, comentariu FROM recenzii WHERE carte_id = :id LIMIT 20"), {'id': carte_id}
+        ).fetchall()
+
+        if not reviews:
+            return jsonify({'success': True, 'summary': '', 'no_reviews': True}), 200
+
+        review_text = '\n'.join(f'- Nota {r[0]}/5: {r[1]}' for r in reviews)
+        prompt = (
+            f'Carte: "{book_row[0]}" de {book_row[1]}\n'
+            f"Recenzii de la cititori:\n{review_text}\n\n"
+            "Scrie un rezumat de 2-3 propoziții al opiniei generale a cititorilor despre această carte. "
+            "Menționează dacă e apreciată sau nu și de ce. Răspunde în română."
+        )
+        reply = _groq_chat(client, prompt)
+        return jsonify({'success': True, 'summary': reply}), 200
+    except Exception:
+        logger.exception('AI book-summary failed for carte_id=%d', carte_id)
+        return jsonify({'success': False, 'message': 'AI request failed'}), 500
+
+
+@main_bp.route('/ai/chat', methods=['POST'])
+def ai_chat():
+    """General library chatbot. Answers questions using library context."""
+    data = request.get_json(silent=True) or {}
+    message = (data.get('message') or '').strip()
+    if not message:
+        return jsonify({'success': False, 'message': 'message is required'}), 400
+
+    client = _get_groq_client()
+    if not client:
+        return jsonify({'success': False, 'message': 'AI not configured'}), 503
+
+    try:
+        # Give the AI context about the library's books
+        books = db.session.execute(
+            text("SELECT titlu, autor, gen, stoc_disponibil FROM carti ORDER BY titlu LIMIT 25")
+        ).fetchall()
+        book_list = '\n'.join(
+            f'- {r[0]} de {r[1]} ({r[2]}) — {"disponibil" if r[3] > 0 else "indisponibil"}'
+            for r in books
+        )
+
+        prompt = (
+            "Ești un asistent virtual al bibliotecii școlii CNI Suceava. "
+            "Răspunzi scurt, prietenos și în română.\n\n"
+            f"Cărțile din bibliotecă:\n{book_list}\n\n"
+            f"Întrebarea utilizatorului: {message}"
+        )
+        reply = _groq_chat(client, prompt)
+        return jsonify({'success': True, 'reply': reply}), 200
+    except Exception:
+        logger.exception('AI chat failed')
+        return jsonify({'success': False, 'message': 'AI request failed'}), 500

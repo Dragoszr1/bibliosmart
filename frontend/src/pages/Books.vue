@@ -202,6 +202,74 @@
             </div>
           </div>
         </div>
+
+        <!-- AI Reviews Summary -->
+        <div v-if="reviews.length > 0" class="px-6 py-4 border-b border-gray-100">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-semibold text-dark text-sm flex items-center gap-2">
+              <i class="pi pi-sparkles text-secondary text-xs"></i> Rezumat AI
+            </h4>
+            <button
+              @click="loadAiSummary"
+              :disabled="loadingAiSummary"
+              class="text-xs text-secondary hover:underline disabled:opacity-50 flex items-center gap-1"
+            >
+              <i :class="loadingAiSummary ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'" class="text-xs"></i>
+              {{ aiSummary ? 'Reîmprospătează' : 'Generează' }}
+            </button>
+          </div>
+          <div v-if="loadingAiSummary" class="text-center py-3">
+            <i class="pi pi-spin pi-spinner text-secondary text-sm"></i>
+          </div>
+          <div v-if="aiSummary" class="bg-cream rounded-xl p-3 text-xs text-dark leading-relaxed">
+            {{ aiSummary }}
+          </div>
+        </div>
+
+        <!-- Submit Review -->
+        <div v-if="isLoggedIn" class="px-6 py-5">
+          <h4 class="font-semibold text-dark mb-4 text-sm">Scrie o Recenzie</h4>
+          <!-- Star picker -->
+          <div class="flex gap-1 mb-3">
+            <button
+              v-for="s in 5" :key="s"
+              @click="reviewNota = s"
+              :class="s <= reviewNota ? 'text-amber-400' : 'text-gray-300'"
+              class="text-2xl leading-none hover:scale-110 transition-transform"
+            >★</button>
+          </div>
+          <textarea
+            v-model="reviewText"
+            rows="3"
+            placeholder="Scrie părerea ta despre carte..."
+            class="w-full text-sm px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-secondary/50 resize-none bg-cream placeholder-gray-400"
+          ></textarea>
+
+          <!-- AI assist -->
+          <div class="flex items-center gap-2 mt-2 mb-3">
+            <button
+              @click="aiAssistReview"
+              :disabled="loadingAiReview || !reviewText.trim()"
+              class="text-xs text-secondary hover:underline disabled:opacity-50 flex items-center gap-1"
+            >
+              <i :class="loadingAiReview ? 'pi pi-spin pi-spinner' : 'pi pi-sparkles'" class="text-xs"></i>
+              {{ loadingAiReview ? 'Se îmbunătățește...' : 'Îmbunătățește cu AI' }}
+            </button>
+            <span v-if="aiReviewError" class="text-xs text-red-500">{{ aiReviewError }}</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              @click="submitReview"
+              :disabled="submittingReview || !reviewText.trim() || reviewNota === 0"
+              class="px-4 py-2 bg-secondary hover:bg-secondary/90 text-white text-xs font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            >
+              <i :class="submittingReview ? 'pi pi-spin pi-spinner' : 'pi pi-send'" class="text-xs"></i>
+              Trimite Recenzia
+            </button>
+            <span v-if="reviewMessage" :class="reviewSuccess ? 'text-green-600' : 'text-red-500'" class="text-xs">{{ reviewMessage }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -224,7 +292,20 @@ export default {
       loadingReviews: false,
       requestingFizic: false,
       requestMessage: '',
-      requestSuccess: false
+      requestSuccess: false,
+      // AI
+      aiSummary: '',
+      loadingAiSummary: false,
+      // Review form
+      reviewNota: 0,
+      reviewText: '',
+      submittingReview: false,
+      reviewMessage: '',
+      reviewSuccess: false,
+      loadingAiReview: false,
+      aiReviewError: '',
+      // Auth
+      isLoggedIn: false
     }
   },
   methods: {
@@ -294,6 +375,11 @@ export default {
       this.requestMessage = '';
       this.requestSuccess = false;
       this.requestingFizic = false;
+      this.aiSummary = '';
+      this.reviewNota = 0;
+      this.reviewText = '';
+      this.reviewMessage = '';
+      this.reviewSuccess = false;
       this.showModal = true;
       try {
         const response = await fetch(`/api/reviews?carte_id=${book.id}`);
@@ -327,10 +413,75 @@ export default {
       } finally {
         this.requestingFizic = false;
       }
+    },
+    async loadAiSummary() {
+      if (!this.selectedBook) return;
+      this.loadingAiSummary = true;
+      this.aiSummary = '';
+      try {
+        const res = await fetch(`/api/ai/book-summary/${this.selectedBook.id}`);
+        const data = await res.json();
+        if (data.success) {
+          this.aiSummary = data.no_reviews ? 'Nicio recenzie disponibilă pentru a genera un rezumat.' : data.summary;
+        }
+      } catch { /* silent */ }
+      finally { this.loadingAiSummary = false; }
+    },
+    async aiAssistReview() {
+      if (!this.reviewText.trim() || !this.selectedBook) return;
+      this.loadingAiReview = true;
+      this.aiReviewError = '';
+      try {
+        const res = await fetch('/api/ai/review-assist', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draft: this.reviewText, titlu: this.selectedBook.title, nota: this.reviewNota })
+        });
+        const data = await res.json();
+        if (data.success) {
+          this.reviewText = data.review;
+        } else {
+          this.aiReviewError = data.message || 'Eroare AI';
+        }
+      } catch { this.aiReviewError = 'Eroare de rețea'; }
+      finally { this.loadingAiReview = false; }
+    },
+    async submitReview() {
+      if (!this.reviewText.trim() || this.reviewNota === 0 || !this.selectedBook) return;
+      this.submittingReview = true;
+      this.reviewMessage = '';
+      try {
+        const res = await fetch('/api/reviews', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ carte_id: this.selectedBook.id, nota: this.reviewNota, comentariu: this.reviewText })
+        });
+        const data = await res.json();
+        this.reviewSuccess = data.success;
+        this.reviewMessage = data.message || (data.success ? 'Recenzie trimisă!' : 'Eroare');
+        if (data.success) {
+          this.reviewText = '';
+          this.reviewNota = 0;
+          // Reload reviews
+          const r2 = await fetch(`/api/reviews?carte_id=${this.selectedBook.id}`);
+          const d2 = await r2.json();
+          if (d2.success) { this.reviews = d2.reviews; this.avgRating = d2.avg_rating; this.totalReviews = d2.total_reviews; }
+        }
+      } catch {
+        this.reviewSuccess = false;
+        this.reviewMessage = 'Eroare de rețea';
+      } finally { this.submittingReview = false; }
     }
   },
-  mounted() {
+  async mounted() {
     this.fetchBooks();
+    try {
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      const data = await res.json();
+      this.isLoggedIn = data.success === true;
+    } catch { this.isLoggedIn = false; }
   }
 }
 </script>

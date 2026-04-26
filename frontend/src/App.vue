@@ -9,16 +9,19 @@
         <p class="text-white/40 text-sm">© 2026 Biblioteca — Sistem Școlar</p>
       </div>
     </footer>
+    <AiChat />
   </div>
 </template>
 
 <script>
 import Navbar from './components/Navbar.vue'
+import AiChat from './components/AiChat.vue'
 
 export default {
   name: 'App',
   components: {
-    Navbar
+    Navbar,
+    AiChat
   }
 }
 </script>

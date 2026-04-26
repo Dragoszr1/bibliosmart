@@ -26,7 +26,7 @@
                     :src="user.profilePicture" 
                     :alt="user.name"
                     class="w-full h-full object-cover"
-                    @error="user.profilePicture = 'https://api.dicebear.com/7.x/avataaars/svg?seed=Profile'"
+                    @error="user.profilePicture = 'https://api.dicebear.com/9.x/lorelei-neutral/svg?seed=default'"
                   >
                 </div>
                 <div 
@@ -139,6 +139,43 @@
             <h3 class="text-sm sm:text-lg font-bold text-dark mb-1">{{ book.titlu }}</h3>
             <p class="text-gray-500 text-xs sm:text-sm mb-1">{{ book.autor }}</p>
             <p class="text-gray-600 text-xs">ISBN: {{ book.ISBN }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Recommendations (regular users only) -->
+      <div v-if="!isBibliotecar" class="mt-4">
+        <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-5 sm:p-6">
+          <div class="flex items-center justify-between gap-3 mb-4">
+            <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
+              <i class="pi pi-sparkles text-secondary"></i> Recomandări AI
+            </h2>
+            <button
+              @click="loadAiRecommendations"
+              :disabled="loadingAi"
+              class="px-4 py-2 bg-secondary hover:bg-secondary/90 text-white text-xs font-semibold rounded-lg transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              <i :class="loadingAi ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'" class="text-xs"></i>
+              {{ aiRecommendations ? 'Reîmprospătează' : 'Generează recomandări' }}
+            </button>
+          </div>
+
+          <div v-if="!aiRecommendations && !loadingAi && !aiError" class="py-6 text-center">
+            <i class="pi pi-sparkles text-4xl text-gray-300 mb-3"></i>
+            <p class="text-gray-500 text-sm">Apasă butonul pentru a primi recomandări personalizate bazate pe cărțile tale.</p>
+          </div>
+
+          <div v-if="loadingAi" class="py-6 text-center">
+            <i class="pi pi-spin pi-spinner text-2xl text-secondary mb-2"></i>
+            <p class="text-gray-500 text-sm">Gemini analizează istoricul tău...</p>
+          </div>
+
+          <div v-if="aiError" class="py-4 text-center text-red-500 text-sm">
+            <i class="pi pi-exclamation-triangle mr-2"></i>{{ aiError }}
+          </div>
+
+          <div v-if="aiRecommendations && !loadingAi" class="bg-cream rounded-xl p-4">
+            <p class="text-dark text-sm leading-relaxed whitespace-pre-line">{{ aiRecommendations }}</p>
           </div>
         </div>
       </div>
@@ -404,6 +441,25 @@
             </div>
           </div>
         </div>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- USER ACCOUNTS (bibliotecar only) -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="mt-8">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+            <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
+              <i class="pi pi-users text-secondary"></i> Conturi Utilizatori
+            </h2>
+            <button @click="openUsersListModal" class="px-4 py-2 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-lg text-xs sm:text-sm transition-all">
+              <i class="pi pi-list mr-1"></i> Vezi Toate Conturile
+            </button>
+          </div>
+          <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-6 text-center text-gray-400 text-sm">
+            <i class="pi pi-users text-3xl mb-2 block text-gray-200"></i>
+            Apasă butonul pentru a vizualiza și gestiona conturile elevilor.
+          </div>
+        </div>
+
       </div>
     </main>
 
@@ -677,6 +733,204 @@
         </div>
       </div>
     </div>
+
+    <!-- ═══════════ USERS LIST MODAL ═══════════ -->
+    <div v-if="usersListOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="usersListOpen = false">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="usersListOpen = false"></div>
+      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-2xl z-10 flex flex-col max-h-[90vh]">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+          <h2 class="text-xl font-bold text-dark flex items-center gap-2">
+            <i class="pi pi-users text-secondary"></i> Conturi Utilizatori
+            <span class="text-sm font-normal text-gray-400 ml-1">({{ filteredUsers.length }})</span>
+          </h2>
+          <button @click="usersListOpen = false" class="text-gray-400 hover:text-secondary text-2xl font-bold transition-colors">&times;</button>
+        </div>
+        <!-- Search -->
+        <div class="px-6 pt-4 pb-2">
+          <input
+            v-model="usersSearch"
+            type="text"
+            placeholder="Caută după nume sau email..."
+            class="input-field text-sm"
+          >
+        </div>
+        <!-- List -->
+        <div class="overflow-y-auto flex-1 px-6 pb-6">
+          <div v-if="loadingUsers" class="flex items-center justify-center py-12">
+            <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
+          </div>
+          <div v-else-if="filteredUsers.length === 0" class="text-center py-12 text-gray-400 text-sm">
+            <i class="pi pi-users text-3xl mb-2 block text-gray-200"></i>
+            Niciun utilizator găsit.
+          </div>
+          <div v-else class="space-y-2 mt-2">
+            <div
+              v-for="u in filteredUsers"
+              :key="u.user_id"
+              @click="openUserDetail(u)"
+              class="flex items-center gap-4 p-3 rounded-xl border border-gray-100 hover:border-secondary/30 hover:bg-cream/50 cursor-pointer transition-all"
+            >
+              <div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0">
+                <i class="pi pi-user text-secondary"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold text-dark text-sm truncate">{{ u.username }}</p>
+                <p class="text-gray-400 text-xs truncate">{{ u.email }}</p>
+              </div>
+              <span :class="u.rol === 'bibliotecar' ? 'bg-secondary text-white' : 'bg-cream text-secondary'" class="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0">
+                {{ u.rol === 'bibliotecar' ? 'Bibliotecar' : 'Elev' }}
+              </span>
+              <i class="pi pi-chevron-right text-gray-300 text-sm flex-shrink-0"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ USER DETAIL MODAL ═══════════ -->
+    <div v-if="userDetailOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="userDetailOpen = false">
+      <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="userDetailOpen = false"></div>
+      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-2xl z-10 flex flex-col max-h-[90vh]">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+          <h2 class="text-xl font-bold text-dark flex items-center gap-2">
+            <i class="pi pi-user text-secondary"></i>
+            {{ userDetail ? userDetail.user.username : 'Detalii Cont' }}
+          </h2>
+          <button @click="userDetailOpen = false" class="text-gray-400 hover:text-secondary text-2xl font-bold transition-colors">&times;</button>
+        </div>
+
+        <!-- Loading -->
+        <div v-if="loadingUserDetail" class="flex items-center justify-center py-16">
+          <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
+        </div>
+
+        <!-- Content -->
+        <div v-else-if="userDetail" class="overflow-y-auto flex-1 p-6 space-y-6">
+
+          <!-- Profile Info -->
+          <div class="flex items-center gap-4 p-4 bg-cream rounded-xl">
+            <img
+              :src="`/api/auth/profile-picture/${encodeURIComponent(userDetail.user.username)}?t=${Date.now()}`"
+              class="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
+              @error="$event.target.src='https://api.dicebear.com/7.x/avataaars/svg?seed=' + userDetail.user.username"
+            >
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <p class="font-bold text-dark text-base">{{ userDetail.user.username }}</p>
+                <span :class="userDetail.user.rol === 'bibliotecar' ? 'bg-secondary text-white' : 'bg-white text-secondary border border-secondary/20'" class="text-xs font-bold px-2 py-0.5 rounded-full">
+                  {{ userDetail.user.rol === 'bibliotecar' ? 'Bibliotecar' : 'Elev' }}
+                </span>
+              </div>
+              <p class="text-gray-500 text-sm">{{ userDetail.user.email }}</p>
+              <p v-if="userDetail.user.telefon" class="text-gray-400 text-xs mt-0.5"><i class="pi pi-phone mr-1"></i>{{ userDetail.user.telefon }}</p>
+            </div>
+          </div>
+
+          <p v-if="userDetail.user.description" class="text-gray-600 text-sm italic px-1">
+            "{{ userDetail.user.description }}"
+          </p>
+
+          <!-- Stats row -->
+          <div class="grid grid-cols-3 gap-3 text-center">
+            <div class="bg-cream rounded-xl p-3">
+              <p class="text-xl font-bold text-secondary">{{ userDetail.books_borrowed.length }}</p>
+              <p class="text-gray-500 text-xs">Împrumutate</p>
+            </div>
+            <div class="bg-cream rounded-xl p-3">
+              <p class="text-xl font-bold text-secondary">{{ userDetail.books_read.length }}</p>
+              <p class="text-gray-500 text-xs">Citite</p>
+            </div>
+            <div class="bg-cream rounded-xl p-3">
+              <p class="text-xl font-bold text-secondary">{{ userDetail.reviews.length }}</p>
+              <p class="text-gray-500 text-xs">Recenzii</p>
+            </div>
+          </div>
+
+          <!-- Currently Borrowed -->
+          <div>
+            <h3 class="text-sm font-bold text-dark mb-2 flex items-center gap-2">
+              <i class="pi pi-book text-secondary"></i> Cărți Împrumutate Curent
+            </h3>
+            <div v-if="userDetail.books_borrowed.length === 0" class="text-gray-400 text-xs italic px-1">Nicio carte împrumutată momentan.</div>
+            <div v-else class="space-y-2">
+              <div v-for="b in userDetail.books_borrowed" :key="b.carte_id" class="flex items-center gap-3 p-3 border border-green-100 bg-green-50 rounded-xl">
+                <i class="pi pi-book text-green-600 flex-shrink-0"></i>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-dark truncate">{{ b.titlu }}</p>
+                  <p class="text-xs text-gray-500">{{ b.autor }} · ISBN: {{ b.ISBN }}</p>
+                </div>
+                <span class="text-xs text-gray-400 flex-shrink-0">{{ formatDate(b.borrowed_at) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Books Read -->
+          <div>
+            <h3 class="text-sm font-bold text-dark mb-2 flex items-center gap-2">
+              <i class="pi pi-check-circle text-secondary"></i> Cărți Citite / Returnate
+            </h3>
+            <div v-if="userDetail.books_read.length === 0" class="text-gray-400 text-xs italic px-1">Nicio carte returnată înregistrată.</div>
+            <div v-else class="space-y-2">
+              <div v-for="b in userDetail.books_read" :key="b.carte_id" class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl">
+                <i class="pi pi-check text-secondary flex-shrink-0"></i>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-dark truncate">{{ b.titlu }}</p>
+                  <p class="text-xs text-gray-500">{{ b.autor }} · ISBN: {{ b.ISBN }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Borrow History -->
+          <div>
+            <h3 class="text-sm font-bold text-dark mb-2 flex items-center gap-2">
+              <i class="pi pi-history text-secondary"></i> Istoric Cereri Împrumut
+            </h3>
+            <div v-if="userDetail.borrow_history.length === 0" class="text-gray-400 text-xs italic px-1">Nicio cerere înregistrată.</div>
+            <div v-else class="space-y-2">
+              <div v-for="r in userDetail.borrow_history" :key="r.cerere_id" class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl">
+                <span :class="[
+                  'text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0',
+                  r.status === 'pending' ? 'bg-amber-50 text-amber-700' :
+                  r.status === 'approved' ? 'bg-green-50 text-green-700' :
+                  'bg-red-50 text-red-700'
+                ]">
+                  {{ r.status === 'pending' ? 'Așteptare' : r.status === 'approved' ? 'Aprobat' : 'Respins' }}
+                </span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-dark truncate">{{ r.titlu }}</p>
+                  <p class="text-xs text-gray-500">{{ r.autor }}</p>
+                </div>
+                <span class="text-xs text-gray-400 flex-shrink-0">{{ formatDate(r.created_at) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reviews -->
+          <div>
+            <h3 class="text-sm font-bold text-dark mb-2 flex items-center gap-2">
+              <i class="pi pi-star text-secondary"></i> Recenzii
+            </h3>
+            <div v-if="userDetail.reviews.length === 0" class="text-gray-400 text-xs italic px-1">Nicio recenzie scrisă.</div>
+            <div v-else class="space-y-2">
+              <div v-for="r in userDetail.reviews" :key="r.id" class="p-3 border border-gray-100 rounded-xl">
+                <div class="flex items-center justify-between gap-2 mb-1">
+                  <p class="text-sm font-semibold text-dark truncate">{{ r.titlu }}</p>
+                  <div class="flex items-center gap-0.5 flex-shrink-0">
+                    <span v-for="star in 5" :key="star" :class="star <= r.nota ? 'text-accent' : 'text-gray-200'" class="text-sm">★</span>
+                  </div>
+                </div>
+                <p class="text-xs text-gray-500 mb-1">{{ r.autor }}</p>
+                <p class="text-xs text-gray-700 leading-relaxed">{{ r.comentariu }}</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -688,7 +942,7 @@ export default {
       // ── User profile ──
       user: {
         name: '',
-        profilePicture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Profile',
+        profilePicture: 'https://api.dicebear.com/9.x/lorelei-neutral/svg?seed=default',
         joinDate: 'Ianuarie 2023',
         description: null,
         totalBooksRead: 0,
@@ -697,6 +951,10 @@ export default {
       },
       isBibliotecar: false,
       loadingReviews: false,
+      // AI recommendations
+      aiRecommendations: '',
+      loadingAi: false,
+      aiError: '',
       // Edit profile
       editProfileOpen: false,
       editDescription: '',
@@ -742,12 +1000,29 @@ export default {
       // Delete announcement
       deleteAnuntOpen: false,
       deleteAnuntTarget: null,
-      deleteAnuntMsg: { error: '' }
+      deleteAnuntMsg: { error: '' },
+      // ── Users list (bibliotecar) ──
+      usersListOpen: false,
+      allUsers: [],
+      loadingUsers: false,
+      usersSearch: '',
+      // User detail modal
+      userDetailOpen: false,
+      loadingUserDetail: false,
+      userDetail: null
     }
   },
   computed: {
     pendingRequestsCount() {
       return this.bookRequests.filter(r => r.status === 'pending').length
+    },
+    filteredUsers() {
+      if (!this.usersSearch.trim()) return this.allUsers
+      const q = this.usersSearch.toLowerCase()
+      return this.allUsers.filter(u =>
+        u.username.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q)
+      )
     }
   },
   mounted() {
@@ -873,6 +1148,30 @@ export default {
     },
 
     // ═══════════ LIBRARIAN METHODS ═══════════
+
+    // ── AI Recommendations ──
+    async loadAiRecommendations() {
+      this.loadingAi = true
+      this.aiError = ''
+      this.aiRecommendations = ''
+      try {
+        const res = await fetch('/api/ai/recommend', { credentials: 'include' })
+        const data = await res.json()
+        if (data.success) {
+          if (data.no_history) {
+            this.aiRecommendations = 'Nu ai nicio carte citită încă. Încearcă să citești câteva cărți și revin cu recomandări personalizate!'
+          } else {
+            this.aiRecommendations = data.recommendations
+          }
+        } else {
+          this.aiError = data.message || 'Eroare la generarea recomandărilor.'
+        }
+      } catch {
+        this.aiError = 'Eroare de rețea. Încearcă din nou.'
+      } finally {
+        this.loadingAi = false
+      }
+    },
 
     // ── Book Requests ──
     async fetchBookRequests() {
@@ -1193,6 +1492,40 @@ export default {
         }
       } catch {
         this.deleteAnuntMsg.error = 'Eroare de rețea.'
+      }
+    },
+
+    // ═══════════ USER ACCOUNTS METHODS ═══════════
+    async openUsersListModal() {
+      this.usersSearch = ''
+      this.usersListOpen = true
+      this.loadingUsers = true
+      try {
+        const res = await fetch('/api/admin/users', { credentials: 'include' })
+        const data = await res.json()
+        if (data.success) {
+          this.allUsers = data.users
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error)
+      } finally {
+        this.loadingUsers = false
+      }
+    },
+    async openUserDetail(user) {
+      this.userDetail = null
+      this.userDetailOpen = true
+      this.loadingUserDetail = true
+      try {
+        const res = await fetch(`/api/admin/users/${user.user_id}`, { credentials: 'include' })
+        const data = await res.json()
+        if (data.success) {
+          this.userDetail = data
+        }
+      } catch (error) {
+        console.error('Error fetching user detail:', error)
+      } finally {
+        this.loadingUserDetail = false
       }
     }
   }
