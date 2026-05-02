@@ -1,13 +1,17 @@
-from flask import Blueprint, jsonify, request, send_from_directory, current_app, g
+from flask import Blueprint, jsonify, request, send_from_directory, current_app, g, send_file
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from functools import wraps
 import bcrypt
 import jwt
 import datetime
+import io
 import os
 import logging
 import re
+from docx import Document
+from docx.shared import Pt, RGBColor, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from groq import Groq
 import smtplib
 from email.mime.text import MIMEText
@@ -496,19 +500,213 @@ def update_book_request(cerere_id):
     if new_status not in ('approved', 'rejected'):
         return jsonify({'success': False, 'message': 'Status must be approved or rejected'}), 400
 
+    # Pickup interval (only required when approving)
+    pickup_from_str = (data.get('pickup_from') or '').strip()
+    pickup_until_str = (data.get('pickup_until') or '').strip()
+    if new_status == 'approved' and (not pickup_from_str or not pickup_until_str):
+        return jsonify({'success': False, 'message': 'pickup_from and pickup_until are required when approving'}), 400
+
     try:
-        result = db.session.execute(
+        # Fetch the request + student info in one join
+        row = db.session.execute(
+            text(
+                "SELECT cr.user_id, cr.carte_id, cr.status, "
+                "u.email, u.username, c.titlu, c.autor "
+                "FROM cereri_carti cr "
+                "JOIN users u ON cr.user_id = u.user_id "
+                "JOIN carti c ON cr.carte_id = c.carte_id "
+                "WHERE cr.cerere_id = :id"
+            ),
+            {'id': cerere_id}
+        ).fetchone()
+        if not row:
+            return jsonify({'success': False, 'message': 'Request not found'}), 404
+
+        user_id, carte_id, old_status, student_email, student_name, titlu, autor = row
+
+        db.session.execute(
             text("UPDATE cereri_carti SET status = :status WHERE cerere_id = :id"),
             {'status': new_status, 'id': cerere_id}
         )
+
+        # When approving, record the active borrow and send notification email
+        if new_status == 'approved' and old_status != 'approved':
+            now = datetime.datetime.utcnow()
+            due = now + datetime.timedelta(days=30)
+            db.session.execute(
+                text(
+                    "INSERT INTO imprumuturi_active (user_id, carte_id, data_imprumut, data_scadenta) "
+                    "VALUES (:uid, :cid, :now, :due)"
+                ),
+                {'uid': user_id, 'cid': carte_id, 'now': now, 'due': due}
+            )
+
+            # Send email notification to student
+            html_body = f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; background: #f5f0e8; margin: 0; padding: 0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0e8; padding: 32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background:#2c3e50; padding: 24px 32px; text-align:center;">
+            <h1 style="color:#f5f0e8; margin:0; font-size:22px;">📚 Biblioteca CNI Suceava</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 32px;">
+            <p style="font-size:16px; color:#333; margin-top:0;">Salut, <strong>{student_name}</strong>!</p>
+            <p style="font-size:15px; color:#333;">Cererea ta de împrumut pentru cartea:</p>
+            <div style="background:#f5f0e8; border-left:4px solid #e74c3c; padding:12px 16px; border-radius:6px; margin:16px 0;">
+              <strong style="font-size:16px; color:#2c3e50;">„{titlu}"</strong><br>
+              <span style="color:#555; font-size:14px;">de {autor}</span>
+            </div>
+            <p style="font-size:15px; color:#2c3e50; font-weight:bold;">✅ a fost <span style="color:#27ae60;">APROBATĂ</span>!</p>
+            <p style="font-size:15px; color:#333;">Poți ridica cartea de la bibliotecă în intervalul:</p>
+            <div style="background:#eaf7ec; border:1px solid #a8e6b8; border-radius:8px; padding:14px 20px; margin:16px 0; text-align:center;">
+              <span style="font-size:18px; font-weight:bold; color:#1a7a3c;">🕐 {pickup_from_str} — {pickup_until_str}</span>
+            </div>
+            <p style="font-size:13px; color:#888;">Dacă nu poți ridica cartea în acest interval, te rugăm să contactezi biblioteca.</p>
+            <hr style="border:none; border-top:1px solid #eee; margin:24px 0;">
+            <p style="font-size:12px; color:#aaa; text-align:center; margin:0;">Biblioteca CNI Suceava · Sistem automat, te rugăm nu răspunde la acest email.</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+            send_email(
+                recipients=[student_email],
+                subject=f'Cerere aprobată: „{titlu}"',
+                html_body=html_body
+            )
+
         db.session.commit()
-        if result.rowcount == 0:
-            return jsonify({'success': False, 'message': 'Request not found'}), 404
         return jsonify({'success': True, 'message': f'Request {new_status}'}), 200
     except Exception:
         db.session.rollback()
         logger.exception('Failed to update book request %d', cerere_id)
         return jsonify({'success': False, 'message': 'Failed to update request'}), 500
+
+
+# ── Word Report ──────────────────────────────────────────────
+
+@main_bp.route('/librarian/report/docx', methods=['GET'])
+@bibliotecar_required
+def librarian_report_docx():
+    """Generate a Word (.docx) report of all students with their read/borrowed books."""
+    try:
+        # All regular users (students)
+        students = db.session.execute(
+            text("SELECT user_id, username, email FROM users WHERE rol NOT IN ('1','bibliotecar','administrator') ORDER BY username ASC")
+        ).fetchall()
+
+        # Read books per user: {user_id: [(titlu, autor), ...]}
+        read_rows = db.session.execute(
+            text(
+                "SELECT cc.user_id, c.titlu, c.autor "
+                "FROM carti_citite cc JOIN carti c ON cc.carte_id = c.carte_id"
+            )
+        ).fetchall()
+        read_map = {}
+        for r in read_rows:
+            read_map.setdefault(r[0], []).append((r[1], r[2]))
+
+        # Active borrows per user: {user_id: [(titlu, autor, data_imprumut, data_scadenta), ...]}
+        borrow_rows = db.session.execute(
+            text(
+                "SELECT ia.user_id, c.titlu, c.autor, ia.data_imprumut, ia.data_scadenta "
+                "FROM imprumuturi_active ia JOIN carti c ON ia.carte_id = c.carte_id "
+                "ORDER BY ia.data_scadenta ASC"
+            )
+        ).fetchall()
+        borrow_map = {}
+        for r in borrow_rows:
+            borrow_map.setdefault(r[0], []).append((r[1], r[2], r[3], r[4]))
+
+        # Build the document
+        doc = Document()
+
+        # Title
+        title_para = doc.add_heading('Raport Bibliotecă – Elevi și Împrumuturi', level=0)
+        title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        generated_para = doc.add_paragraph(
+            f'Generat la: {datetime.datetime.now().strftime("%d.%m.%Y %H:%M")}'
+        )
+        generated_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        doc.add_paragraph()  # spacer
+
+        if not students:
+            doc.add_paragraph('Nu există elevi înregistrați.')
+        else:
+            for uid, username, email in students:
+                # Student heading
+                heading = doc.add_heading(username, level=1)
+                email_para = doc.add_paragraph()
+                email_run = email_para.add_run(f'Email: {email}')
+                email_run.italic = True
+
+                # Currently borrowed books
+                borrows = borrow_map.get(uid, [])
+                doc.add_heading('Cărți împrumutate în prezent', level=2)
+                if borrows:
+                    tbl = doc.add_table(rows=1, cols=4)
+                    tbl.style = 'Table Grid'
+                    hdr = tbl.rows[0].cells
+                    hdr[0].text = 'Titlu'
+                    hdr[1].text = 'Autor'
+                    hdr[2].text = 'Data împrumutului'
+                    hdr[3].text = 'Dată scadentă (30 zile)'
+                    for cell in hdr:
+                        run = cell.paragraphs[0].runs[0]
+                        run.bold = True
+                    for titlu, autor, data_imp, data_sc in borrows:
+                        row_cells = tbl.add_row().cells
+                        row_cells[0].text = titlu
+                        row_cells[1].text = autor
+                        row_cells[2].text = data_imp.strftime('%d.%m.%Y') if data_imp else '—'
+                        row_cells[3].text = data_sc.strftime('%d.%m.%Y') if data_sc else '—'
+                else:
+                    doc.add_paragraph('Niciun împrumut activ.')
+
+                # Books already read
+                reads = read_map.get(uid, [])
+                doc.add_heading('Cărți citite', level=2)
+                if reads:
+                    tbl2 = doc.add_table(rows=1, cols=2)
+                    tbl2.style = 'Table Grid'
+                    hdr2 = tbl2.rows[0].cells
+                    hdr2[0].text = 'Titlu'
+                    hdr2[1].text = 'Autor'
+                    for cell in hdr2:
+                        run = cell.paragraphs[0].runs[0]
+                        run.bold = True
+                    for titlu, autor in reads:
+                        row_cells = tbl2.add_row().cells
+                        row_cells[0].text = titlu
+                        row_cells[1].text = autor
+                else:
+                    doc.add_paragraph('Nicio carte citită înregistrată.')
+
+                doc.add_paragraph()  # spacer between students
+
+        buf = io.BytesIO()
+        doc.save(buf)
+        buf.seek(0)
+
+        filename = f'raport_biblioteca_{datetime.datetime.now().strftime("%Y%m%d_%H%M")}.docx'
+        return send_file(
+            buf,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+    except Exception:
+        logger.exception('Failed to generate Word report')
+        return jsonify({'success': False, 'message': 'Failed to generate report'}), 500
 
 
 @main_bp.route('/users', methods=['GET'])
@@ -1252,7 +1450,7 @@ def _groq_chat(client, prompt):
     resp = client.chat.completions.create(
         model=GROQ_MODEL,
         messages=[{'role': 'user', 'content': prompt}],
-        max_tokens=512,
+        max_tokens=1024,
         temperature=0.7
     )
     return resp.choices[0].message.content.strip()
@@ -1270,32 +1468,45 @@ def ai_recommend():
         return jsonify({'success': False, 'message': 'AI not configured'}), 503
 
     try:
-        # Books the user has already read
+        # All books in the library with real availability
+        all_rows = db.session.execute(
+            text("SELECT carte_id, titlu, autor, gen, stoc_disponibil FROM carti ORDER BY titlu")
+        ).fetchall()
+
+        # Books the user has already read/returned
         read_rows = db.session.execute(
-            text("SELECT c.titlu, c.autor, c.gen FROM carti_citite cc JOIN carti c ON cc.carte_id = c.carte_id WHERE cc.user_id = :uid"),
+            text("SELECT c.carte_id, c.titlu, c.autor, c.gen FROM carti_citite cc JOIN carti c ON cc.carte_id = c.carte_id WHERE cc.user_id = :uid"),
             {'uid': user_id}
         ).fetchall()
 
-        # Available books in the library
-        all_rows = db.session.execute(
-            text("SELECT titlu, autor, gen, stoc_disponibil FROM carti ORDER BY titlu LIMIT 30")
+        # Books the user currently has borrowed or requested
+        borrowed_rows = db.session.execute(
+            text("SELECT c.carte_id, c.titlu, c.autor FROM cereri_carti cc JOIN carti c ON cc.carte_id = c.carte_id WHERE cc.user_id = :uid AND cc.status IN ('pending', 'approved')"),
+            {'uid': user_id}
         ).fetchall()
 
         if not read_rows:
             return jsonify({'success': True, 'recommendations': '', 'no_history': True}), 200
 
-        read_list = '\n'.join(f'- {r[0]} de {r[1]} ({r[2]})' for r in read_rows)
-        avail_list = '\n'.join(
-            f'- {r[0]} de {r[1]} ({r[2]}){"" if r[3] > 0 else " [indisponibil]"}'
+        already_have_ids = {r[0] for r in read_rows} | {r[0] for r in borrowed_rows}
+
+        read_list = '\n'.join(f'- {r[1]} de {r[2]} (gen: {r[3]})' for r in read_rows)
+        borrowed_list = '\n'.join(f'- {r[1]} de {r[2]}' for r in borrowed_rows) or 'niciuna'
+        lib_list = '\n'.join(
+            f'- [ID:{r[0]}] {r[1]} de {r[2]} (gen: {r[3]}) — {"disponibil" if r[4] > 0 else "indisponibil"}'
             for r in all_rows
         )
 
         prompt = (
-            f"Ești un bibliotecar de liceu. Elevul a citit:\n{read_list}\n\n"
-            f"Biblioteca are aceste cărți:\n{avail_list}\n\n"
-            "Recomandă 3-4 cărți DISPONIBILE din biblioteca de mai sus pe care nu le-a citit încă, "
-            "bazate pe preferințele lui. Pentru fiecare, spune de ce o recomanzi în 1-2 propoziții. "
-            "Răspunde în română, concis și prietenos."
+            "Ești bibliotecar la o școală. Ai acces la catalogul COMPLET al bibliotecii de mai jos.\n"
+            "Recomandă DOAR cărți care există în catalog și sunt marcate ca 'disponibil'.\n"
+            "Nu inventa titluri sau autori care nu sunt în catalog.\n\n"
+            f"CATALOG COMPLET AL BIBLIOTECII:\n{lib_list}\n\n"
+            f"Cărți citite de elev (nu le recomanda din nou):\n{read_list}\n\n"
+            f"Cărți deja împrumutate/solicitate de elev:\n{borrowed_list}\n\n"
+            "Recomandă 3-4 cărți disponibile din catalog pe care elevul nu le-a citit și nu le are deja. "
+            "Pentru fiecare menționează titlul exact din catalog, autorul și de ce i-ar plăcea elevului (1-2 propoziții). "
+            "Răspunde în română, prietenos."
         )
 
         reply = _groq_chat(client, prompt)
@@ -1383,19 +1594,32 @@ def ai_chat():
         return jsonify({'success': False, 'message': 'AI not configured'}), 503
 
     try:
-        # Give the AI context about the library's books
+        # Full library catalog from DB
         books = db.session.execute(
-            text("SELECT titlu, autor, gen, stoc_disponibil FROM carti ORDER BY titlu LIMIT 25")
+            text("SELECT carte_id, titlu, autor, gen, stoc_disponibil FROM carti ORDER BY titlu")
         ).fetchall()
         book_list = '\n'.join(
-            f'- {r[0]} de {r[1]} ({r[2]}) — {"disponibil" if r[3] > 0 else "indisponibil"}'
+            f'- [ID:{r[0]}] {r[1]} de {r[2]} (gen: {r[3]}) — {"disponibil" if r[4] > 0 else "indisponibil"}'
             for r in books
         )
 
+        # If user is logged in, add their reading context
+        user = get_current_user()
+        user_context = ''
+        if user:
+            read_rows = db.session.execute(
+                text("SELECT c.titlu, c.autor FROM carti_citite cc JOIN carti c ON cc.carte_id = c.carte_id WHERE cc.user_id = :uid"),
+                {'uid': user['user_id']}
+            ).fetchall()
+            if read_rows:
+                user_context = '\nCărți citite de utilizatorul curent: ' + ', '.join(f'"{r[0]}"' for r in read_rows) + '\n'
+
         prompt = (
-            "Ești un asistent virtual al bibliotecii școlii CNI Suceava. "
-            "Răspunzi scurt, prietenos și în română.\n\n"
-            f"Cărțile din bibliotecă:\n{book_list}\n\n"
+            "Ești asistentul virtual al bibliotecii școlii CNI Suceava. "
+            "Răspunzi scurt, prietenos și în română. "
+            "Folosește DOAR informațiile din catalogul de mai jos — nu inventa cărți sau autori.\n\n"
+            f"CATALOG COMPLET:\n{book_list}\n"
+            f"{user_context}\n"
             f"Întrebarea utilizatorului: {message}"
         )
         reply = _groq_chat(client, prompt)

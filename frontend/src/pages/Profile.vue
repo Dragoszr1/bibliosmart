@@ -257,7 +257,7 @@
                 <!-- Actions (only for pending) -->
                 <div v-if="req.status === 'pending'" class="flex gap-2 flex-shrink-0">
                   <button
-                    @click="handleRequest(req.cerere_id, 'approved')"
+                    @click="openPickupModal(req)"
                     class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
                   >
                     <i class="pi pi-check text-xs"></i> Aprobă
@@ -280,6 +280,15 @@
             <i class="pi pi-cog text-secondary"></i> Gestionare Cărți
           </h2>
           <div class="flex gap-2">
+            <button
+              @click="downloadReport"
+              :disabled="downloadingReport"
+              class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold rounded-lg text-xs sm:text-sm transition-all flex items-center gap-1"
+              title="Descarcă raport Word cu toți elevii și împrumuturile lor"
+            >
+              <i :class="downloadingReport ? 'pi pi-spin pi-spinner' : 'pi pi-file-word'" class="mr-1"></i>
+              Raport Word
+            </button>
             <button @click="openAddBookModal" class="px-4 py-2 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-lg text-xs sm:text-sm transition-all">
               <i class="pi pi-plus mr-1"></i> Adaugă Carte
             </button>
@@ -467,6 +476,67 @@
     <input ref="bookImageInput" type="file" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" class="hidden" @change="uploadBookImage">
 
     <!-- ═══════════ MODALS ═══════════ -->
+
+    <!-- Pickup Interval Modal (approve book request) -->
+    <div v-if="pickupModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="pickupModalOpen = false">
+      <div class="w-full max-w-md bg-white rounded-2xl shadow-modal p-6">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-lg font-bold text-dark flex items-center gap-2">
+            <i class="pi pi-calendar-plus text-green-600"></i> Aprobă cerere
+          </h2>
+          <button @click="pickupModalOpen = false" class="text-gray-400 hover:text-secondary text-2xl font-bold leading-none">&times;</button>
+        </div>
+
+        <div class="bg-cream rounded-xl p-4 mb-5 border border-gray-100">
+          <p class="text-sm font-bold text-dark truncate">{{ pickupReq.titlu }}</p>
+          <p class="text-xs text-gray-500">de {{ pickupReq.autor }}</p>
+          <p class="text-xs text-gray-500 mt-1">
+            <i class="pi pi-user mr-1"></i>{{ pickupReq.username }}
+            <span class="ml-2 text-gray-400">({{ pickupReq.email }})</span>
+          </p>
+        </div>
+
+        <p class="text-sm text-gray-600 mb-4">Alege intervalul în care elevul poate ridica cartea. Un email de confirmare va fi trimis automat.</p>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">De la (dată și oră)</label>
+            <input
+              v-model="pickupFrom"
+              type="datetime-local"
+              class="input-field"
+            >
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Până la (dată și oră)</label>
+            <input
+              v-model="pickupUntil"
+              type="datetime-local"
+              class="input-field"
+            >
+          </div>
+        </div>
+
+        <p v-if="pickupError" class="text-xs text-red-500 mt-3">{{ pickupError }}</p>
+
+        <div class="flex gap-3 mt-6">
+          <button
+            @click="pickupModalOpen = false"
+            class="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition-colors"
+          >
+            Anulează
+          </button>
+          <button
+            @click="confirmApprove"
+            :disabled="approvingRequest"
+            class="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+          >
+            <i :class="approvingRequest ? 'pi pi-spin pi-spinner' : 'pi pi-check'" class="text-xs"></i>
+            Aprobă și trimite email
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Edit Profile Modal -->
     <div v-if="editProfileOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="editProfileOpen = false">
@@ -964,6 +1034,14 @@ export default {
       bookRequests: [],
       loadingRequests: false,
       requestFilter: 'pending',
+      downloadingReport: false,
+      // Pickup interval modal
+      pickupModalOpen: false,
+      pickupReq: {},
+      pickupFrom: '',
+      pickupUntil: '',
+      pickupError: '',
+      approvingRequest: false,
       allBooks: [],
       filteredLibBooks: [],
       libSearch: '',
@@ -1149,6 +1227,29 @@ export default {
 
     // ═══════════ LIBRARIAN METHODS ═══════════
 
+    async downloadReport() {
+      this.downloadingReport = true
+      try {
+        const res = await fetch('/api/librarian/report/docx')
+        if (!res.ok) throw new Error('Server error')
+        const blob = await res.blob()
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        const now = new Date()
+        const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`
+        a.href = url
+        a.download = `raport_biblioteca_${stamp}.docx`
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(url)
+      } catch (e) {
+        alert('Nu s-a putut genera raportul. Încearcă din nou.')
+      } finally {
+        this.downloadingReport = false
+      }
+    },
+
     // ── AI Recommendations ──
     async loadAiRecommendations() {
       this.loadingAi = true
@@ -1189,6 +1290,58 @@ export default {
         this.loadingRequests = false
       }
     },
+    openPickupModal(req) {
+      this.pickupReq = req
+      this.pickupError = ''
+      // Default: today at 08:00 → today at 14:00
+      const now = new Date()
+      const pad = n => String(n).padStart(2, '0')
+      const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`
+      this.pickupFrom = `${dateStr}T08:00`
+      this.pickupUntil = `${dateStr}T14:00`
+      this.pickupModalOpen = true
+    },
+
+    async confirmApprove() {
+      this.pickupError = ''
+      if (!this.pickupFrom || !this.pickupUntil) {
+        this.pickupError = 'Completează ambele câmpuri.'
+        return
+      }
+      if (this.pickupFrom >= this.pickupUntil) {
+        this.pickupError = 'Data de start trebuie să fie înainte de data de final.'
+        return
+      }
+      this.approvingRequest = true
+      try {
+        const fmt = iso => {
+          const d = new Date(iso)
+          return d.toLocaleString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        }
+        const res = await fetch(`/api/book-requests/${this.pickupReq.cerere_id}`, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'approved',
+            pickup_from: fmt(this.pickupFrom),
+            pickup_until: fmt(this.pickupUntil)
+          })
+        })
+        if (res.ok) {
+          this.pickupModalOpen = false
+          await this.fetchBookRequests()
+        } else {
+          const d = await res.json().catch(() => ({}))
+          this.pickupError = d.message || 'Eroare la aprobare.'
+        }
+      } catch (e) {
+        this.pickupError = 'Eroare de rețea.'
+      } finally {
+        this.approvingRequest = false
+      }
+    },
+
     async handleRequest(cerereId, status) {
       try {
         const res = await fetch(`/api/book-requests/${cerereId}`, {
