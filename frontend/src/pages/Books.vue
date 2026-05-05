@@ -130,6 +130,10 @@
             <span><strong class="text-dark">{{ selectedBook?.stoc_disponibil }}</strong> disponibil</span>
             <span><strong class="text-dark">{{ selectedBook?.stoc_total }}</strong> total</span>
           </div>
+          <div v-if="selectedBook?.pozitie" class="flex items-center gap-1.5 mt-2 text-sm text-gray-500">
+            <i class="pi pi-map-marker text-secondary text-xs"></i>
+            <span>Poziție: <strong class="text-dark">{{ selectedBook.pozitie }}</strong></span>
+          </div>
         </div>
 
         <!-- Action Buttons -->
@@ -293,10 +297,10 @@ export default {
       requestingFizic: false,
       requestMessage: '',
       requestSuccess: false,
-      // AI
+      // AI (inteligență artificială)
       aiSummary: '',
       loadingAiSummary: false,
-      // Review form
+      // Formular recenzie
       reviewNota: 0,
       reviewText: '',
       submittingReview: false,
@@ -304,7 +308,7 @@ export default {
       reviewSuccess: false,
       loadingAiReview: false,
       aiReviewError: '',
-      // Auth
+      // Autentificare
       isLoggedIn: false
     }
   },
@@ -323,7 +327,8 @@ export default {
             stoc_total: book.stoc_total,
             available: book.stoc_disponibil > 0,
             stoc_disponibil: book.stoc_disponibil,
-            imprumutat: book.imprumutat
+            imprumutat: book.imprumutat,
+            pozitie: book.pozitie || null
           }));
           this.filterBooks();
         }
@@ -464,7 +469,7 @@ export default {
         if (data.success) {
           this.reviewText = '';
           this.reviewNota = 0;
-          // Reload reviews
+          // Reîncărcăm recenziile
           const r2 = await fetch(`/api/reviews?carte_id=${this.selectedBook.id}`);
           const d2 = await r2.json();
           if (d2.success) { this.reviews = d2.reviews; this.avgRating = d2.avg_rating; this.totalReviews = d2.total_reviews; }

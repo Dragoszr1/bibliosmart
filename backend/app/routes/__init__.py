@@ -10,7 +10,6 @@ import os
 import logging
 import re
 from docx import Document
-from docx.shared import Pt, RGBColor, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from groq import Groq
 import smtplib
@@ -25,7 +24,7 @@ main_bp = Blueprint('main', __name__, url_prefix='/api')
 ALLOWED_EXTENSIONS = frozenset({'png', 'jpg', 'jpeg', 'gif', 'webp'})
 ALLOWED_EMAIL_DOMAIN = 'cni-sv.ro'
 VALID_ROLES = frozenset({'user', 'bibliotecar'})
-ALLOWED_BOOK_FIELDS = frozenset({'titlu', 'autor', 'ISBN', 'stoc_total', 'stoc_disponibil', 'gen'})
+ALLOWED_BOOK_FIELDS = frozenset({'titlu', 'autor', 'ISBN', 'stoc_total', 'stoc_disponibil', 'gen', 'pozitie'})
 ALLOWED_ANUNT_FIELDS = frozenset({'titlu', 'anunt'})
 
 logger = logging.getLogger(__name__)
@@ -45,28 +44,28 @@ def allowed_file(filename):
 
 
 def _find_files_by_prefix(directory, prefix):
-    """Safely find files in directory matching prefix.<allowed_ext>.
-    Uses os.listdir instead of glob to avoid glob injection from
-    user-controlled strings containing *, ?, or [] characters.
+    """Caută fișiere în director cu prefixul dat și extensie permisă.
+    Folosește os.listdir în loc de glob ca să evite glob injection din
+    șiruri controlate de utilizator care conțin *, ?, sau [].
     """
     os.makedirs(directory, exist_ok=True)
-    matches = []
-    for entry in os.listdir(directory):
-        if not entry.startswith(prefix + '.'):
+    rezultate = []
+    for fisier in os.listdir(directory):
+        if not fisier.startswith(prefix + '.'):
             continue
-        ext = entry.rsplit('.', 1)[1].lower() if '.' in entry else ''
+        ext = fisier.rsplit('.', 1)[1].lower() if '.' in fisier else ''
         if ext in ALLOWED_EXTENSIONS:
-            matches.append(entry)
-    return matches
+            rezultate.append(fisier)
+    return rezultate
 
 
-# ── Email Helper ─────────────────────────────────────────────
+# ── Helper email ─────────────────────────────────────────────
 
 def send_email(recipients, subject, html_body):
-    """Send an email via SMTP (Gmail).
+    """Trimite un email prin SMTP (Gmail).
 
-    Reads SMTP_* settings from the current Flask app config.
-    Returns True on success, False on failure (logged, never raises).
+    Citește setările SMTP_* din config-ul Flask.
+    Returnează True la succes, False la eroare (logat, nu aruncă excepție).
     """
     cfg = current_app.config
     host = cfg.get('SMTP_HOST', 'smtp.gmail.com')
@@ -76,7 +75,7 @@ def send_email(recipients, subject, html_body):
     sender = cfg.get('SMTP_FROM', '') or user
 
     if not user or not password:
-        logger.error('SMTP credentials not configured — email not sent')
+        logger.error('Credențiale SMTP lipsă — emailul nu a fost trimis')
         return False
 
     msg = MIMEMultipart('alternative')
@@ -92,45 +91,45 @@ def send_email(recipients, subject, html_body):
             server.ehlo()
             server.login(user, password)
             server.sendmail(sender, recipients, msg.as_string())
-        logger.info('Email sent to %s', recipients)
+        logger.info('Email trimis către %s', recipients)
         return True
     except Exception:
-        logger.exception('Failed to send email')
+        logger.exception('Eroare la trimiterea emailului')
         return False
 
 
-# ── JWT Helpers ──────────────────────────────────────────────
+# ── Helpers JWT ──────────────────────────────────────────────
 
 def normalize_role(raw_role):
-    """Normalize legacy role values to the supported set."""
+    """Normalizează valorile vechi de rol la setul suportat."""
     if raw_role is None:
         return 'user'
 
-    normalized_role = ROLE_ALIASES.get(str(raw_role).strip().lower())
-    return normalized_role if normalized_role in VALID_ROLES else 'user'
+    rol_normalizat = ROLE_ALIASES.get(str(raw_role).strip().lower())
+    return rol_normalizat if rol_normalizat in VALID_ROLES else 'user'
 
 
 def normalize_cni_email(email):
-    """Return a normalized school email address or None if invalid."""
+    """Returnează adresa de email școlară normalizată sau None dacă e invalidă."""
     if not isinstance(email, str):
         return None
 
-    normalized_email = email.strip().lower()
-    if not normalized_email or len(normalized_email) > 254:
+    email_normalizat = email.strip().lower()
+    if not email_normalizat or len(email_normalizat) > 254:
         return None
 
-    if not EMAIL_REGEX.fullmatch(normalized_email):
+    if not EMAIL_REGEX.fullmatch(email_normalizat):
         return None
 
-    local_part, _, domain = normalized_email.rpartition('@')
-    if not local_part or '..' in local_part or domain != ALLOWED_EMAIL_DOMAIN:
+    parte_locala, _, domeniu = email_normalizat.rpartition('@')
+    if not parte_locala or '..' in parte_locala or domeniu != ALLOWED_EMAIL_DOMAIN:
         return None
 
-    return normalized_email
+    return email_normalizat
 
 
 def fetch_user_by_id(user_id):
-    """Load the current user from the database for authorization decisions."""
+    """Încarcă utilizatorul curent din baza de date pentru verificări de autorizare."""
     query = text(
         "SELECT user_id, username, email, rol FROM users WHERE user_id = :user_id"
     )
@@ -147,7 +146,7 @@ def fetch_user_by_id(user_id):
 
 
 def create_jwt_token(user_id, username, email):
-    """Create a JWT token with identity claims only."""
+    """Creează un token JWT cu date de identitate."""
     payload = {
         'user_id': user_id,
         'username': username,
@@ -159,7 +158,7 @@ def create_jwt_token(user_id, username, email):
 
 
 def set_jwt_cookie(response, token):
-    """Set the JWT token as an httpOnly cookie on the response."""
+    """Setează tokenul JWT ca cookie httpOnly pe răspuns."""
     response.set_cookie(
         current_app.config['JWT_COOKIE_NAME'],
         token,
@@ -173,7 +172,7 @@ def set_jwt_cookie(response, token):
 
 
 def clear_jwt_cookie(response):
-    """Clear the JWT cookie."""
+    """Șterge cookie-ul JWT."""
     response.set_cookie(
         current_app.config['JWT_COOKIE_NAME'],
         '',
@@ -187,7 +186,7 @@ def clear_jwt_cookie(response):
 
 
 def decode_jwt_token(token):
-    """Decode and verify a JWT token. Returns payload or None."""
+    """Decodează și verifică un token JWT. Returnează payload sau None."""
     try:
         return jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
     except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
@@ -195,9 +194,9 @@ def decode_jwt_token(token):
 
 
 def get_current_user():
-    """Resolve the authenticated user from the JWT cookie and database.
-    Caches the result on flask.g so repeated calls in the same request
-    don't hit the database again.
+    """Rezolvă utilizatorul autentificat din cookie-ul JWT și baza de date.
+    Cachează rezultatul pe flask.g ca să nu se mai facă query la DB
+    pentru apeluri repetate în aceeași cerere.
     """
     if hasattr(g, '_current_user'):
         return g._current_user
@@ -223,28 +222,28 @@ def get_current_user():
 
 
 def jwt_required(f):
-    """Decorator that enforces a valid JWT cookie."""
+    """Decorator care impune prezența unui cookie JWT valid."""
     @wraps(f)
     def decorated(*args, **kwargs):
         user = get_current_user()
         if not user:
-            return jsonify({'success': False, 'message': 'Authentication required'}), 401
+            return jsonify({'success': False, 'message': 'Autentificare necesară'}), 401
         request.current_user = user
         return f(*args, **kwargs)
     return decorated
 
 
 def role_required(role):
-    """Decorator factory that enforces a specific role from the database."""
+    """Fabrică de decorator care impune un anumit rol verificat din baza de date."""
     if role not in VALID_ROLES:
-        raise ValueError(f"Unknown role: {role}")
+        raise ValueError(f"Rol necunoscut: {role}")
 
     def decorator(f):
         @wraps(f)
         @jwt_required
         def decorated(*args, **kwargs):
             if request.current_user.get('rol') != role:
-                return jsonify({'success': False, 'message': f'{role.capitalize()} privileges required'}), 403
+                return jsonify({'success': False, 'message': f'Necesită rol de {role}'}), 403
             return f(*args, **kwargs)
         return decorated
     return decorator
@@ -254,24 +253,23 @@ bibliotecar_required = role_required('bibliotecar')
 
 @main_bp.route('/health', methods=['GET'])
 def health_check():
-    """Health check endpoint"""
+    """Endpoint de verificare a stării serverului."""
     return jsonify({'status': 'ok', 'message': 'Server is running'}), 200
 
 @main_bp.route('/', methods=['GET'])
 def index():
-    """API index"""
+    """Index API — verifică conexiunea la baza de date."""
     return jsonify({
         'name': 'School Library API',
         'version': '1.0.0',
         'message': 'Database connection established'
     }), 200
 
-# Basic routing structure - queries to be implemented by user
 @main_bp.route('/books', methods=['GET'])
 def get_books():
-    """Get all books from the carti table"""
+    """Returnează toate cărțile din catalogul bibliotecii."""
     try:
-        result = db.session.execute(text('SELECT carte_id, titlu, autor, ISBN, stoc_total, stoc_disponibil, imprumutat, gen FROM carti'))
+        result = db.session.execute(text('SELECT carte_id, titlu, autor, ISBN, stoc_total, stoc_disponibil, imprumutat, gen, pozitie FROM carti'))
         books = []
         for row in result:
             books.append({
@@ -282,18 +280,19 @@ def get_books():
                 'stoc_total': row[4],
                 'stoc_disponibil': row[5],
                 'imprumutat': row[6],
-                'gen': row[7]
+                'gen': row[7],
+                'pozitie': row[8]
             })
         return jsonify({'books': books}), 200
     except Exception:
-        logger.exception('Failed to fetch books')
-        return jsonify({'error': 'Failed to fetch books'}), 500
+        logger.exception('Eroare la preluarea cărților')
+        return jsonify({'error': 'Eroare la preluarea cărților'}), 500
 
 
 @main_bp.route('/books', methods=['POST'])
 @bibliotecar_required
 def add_book():
-    """Add a new book to the collection. Requires bibliotecar role."""
+    """Adaugă o carte nouă în colecție. Necesită rol de bibliotecar."""
     data = request.get_json(silent=True) or {}
     titlu = data.get('titlu')
     autor = data.get('autor')
@@ -301,13 +300,14 @@ def add_book():
     stoc_total = data.get('stoc_total', 1)
     stoc_disponibil = data.get('stoc_disponibil', stoc_total)
     gen = data.get('gen')
+    pozitie = data.get('pozitie') or None
 
     if not titlu or not autor or not isbn or not gen:
-        return jsonify({'success': False, 'message': 'titlu, autor, ISBN, and gen are required'}), 400
+        return jsonify({'success': False, 'message': 'titlu, autor, ISBN și gen sunt obligatorii'}), 400
 
     insert_query = text(
-        "INSERT INTO carti (titlu, autor, ISBN, stoc_total, stoc_disponibil, imprumutat, gen) "
-        "VALUES (:titlu, :autor, :ISBN, :stoc_total, :stoc_disponibil, :imprumutat, :gen)"
+        "INSERT INTO carti (titlu, autor, ISBN, stoc_total, stoc_disponibil, imprumutat, gen, pozitie) "
+        "VALUES (:titlu, :autor, :ISBN, :stoc_total, :stoc_disponibil, :imprumutat, :gen, :pozitie)"
     )
     try:
         db.session.execute(insert_query, {
@@ -317,38 +317,39 @@ def add_book():
             'stoc_total': stoc_total,
             'stoc_disponibil': stoc_disponibil,
             'imprumutat': stoc_disponibil < stoc_total,
-            'gen': gen
+            'gen': gen,
+            'pozitie': pozitie
         })
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'A book with this ISBN already exists'}), 409
+        return jsonify({'success': False, 'message': 'Există deja o carte cu acest ISBN'}), 409
     except Exception:
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'Failed to add book'}), 500
+        return jsonify({'success': False, 'message': 'Eroare la adăugarea cărții'}), 500
 
-    return jsonify({'success': True, 'message': 'Book added successfully'}), 201
+    return jsonify({'success': True, 'message': 'Carte adăugată cu succes'}), 201
 
 
 @main_bp.route('/books/<int:carte_id>', methods=['PUT'])
 @bibliotecar_required
 def update_book(carte_id):
-    """Update a book's stock or details. Requires bibliotecar role."""
+    """Actualizează stocul sau detaliile unei cărți. Necesită rol de bibliotecar."""
     data = request.get_json(silent=True) or {}
 
-    # Build dynamic update
+    # Construiește query-ul dinamic de update
     fields = {}
     for key in ALLOWED_BOOK_FIELDS:
         if key in data:
             fields[key] = data[key]
 
     if not fields:
-        return jsonify({'success': False, 'message': 'No fields to update'}), 400
+        return jsonify({'success': False, 'message': 'Niciun câmp de actualizat'}), 400
 
     set_clause = ', '.join(f"{k} = :{k}" for k in fields)
     fields['carte_id'] = carte_id
 
-    # Auto-update imprumutat flag if stock fields are changing
+    # Actualizează automat flag-ul imprumutat dacă se schimbă stocul
     if 'stoc_total' in fields or 'stoc_disponibil' in fields:
         set_clause += ', imprumutat = (stoc_disponibil < stoc_total)'
 
@@ -357,68 +358,69 @@ def update_book(carte_id):
         result = db.session.execute(update_query, fields)
         db.session.commit()
         if result.rowcount == 0:
-            return jsonify({'success': False, 'message': 'Book not found'}), 404
+            return jsonify({'success': False, 'message': 'Cartea nu a fost găsită'}), 404
     except IntegrityError:
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'ISBN conflict'}), 409
+        return jsonify({'success': False, 'message': 'Conflict ISBN'}), 409
     except Exception:
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'Failed to update book'}), 500
+        return jsonify({'success': False, 'message': 'Eroare la actualizarea cărții'}), 500
 
-    return jsonify({'success': True, 'message': 'Book updated successfully'}), 200
+    return jsonify({'success': True, 'message': 'Carte actualizată cu succes'}), 200
 
 
 @main_bp.route('/books/<int:carte_id>', methods=['DELETE'])
 @bibliotecar_required
 def delete_book(carte_id):
-    """Delete a book from the collection. Requires bibliotecar role."""
+    """Șterge o carte și toate înregistrările asociate. Necesită rol de bibliotecar."""
     try:
-        # Delete related records first
+        db.session.execute(text("DELETE FROM imprumuturi_active WHERE carte_id = :id"), {'id': carte_id})
+        db.session.execute(text("DELETE FROM cereri_carti WHERE carte_id = :id"), {'id': carte_id})
         db.session.execute(text("DELETE FROM recenzii WHERE carte_id = :id"), {'id': carte_id})
         db.session.execute(text("DELETE FROM carti_citite WHERE carte_id = :id"), {'id': carte_id})
         result = db.session.execute(text("DELETE FROM carti WHERE carte_id = :id"), {'id': carte_id})
         db.session.commit()
         if result.rowcount == 0:
-            return jsonify({'success': False, 'message': 'Book not found'}), 404
+            return jsonify({'success': False, 'message': 'Cartea nu a fost găsită'}), 404
     except Exception:
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'Failed to delete book'}), 500
+        return jsonify({'success': False, 'message': 'Eroare la ștergerea cărții'}), 500
 
-    return jsonify({'success': True, 'message': 'Book deleted successfully'}), 200
+    return jsonify({'success': True, 'message': 'Carte ștearsă cu succes'}), 200
 
 
 @main_bp.route('/books/<int:carte_id>/request-fizic', methods=['POST'])
 @jwt_required
 def request_book_fizic(carte_id):
-    """Request a physical copy of a book.
+    """Trimite o cerere de împrumut fizic pentru o carte.
 
-    Sends an email to every user with the 'bibliotecar' role
-    informing them that this user wants to pick up the book.
+    Notifică prin email toți utilizatorii cu rolul 'bibliotecar'
+    că elevul dorește să ridice cartea.
     """
     user = request.current_user
 
-    # Look up the book
+    # Căutăm cartea în baza de date
     book_row = db.session.execute(
         text("SELECT titlu, autor, stoc_disponibil FROM carti WHERE carte_id = :id"),
         {'id': carte_id}
     ).fetchone()
 
     if not book_row:
-        return jsonify({'success': False, 'message': 'Book not found'}), 404
+        return jsonify({'success': False, 'message': 'Cartea nu a fost găsită'}), 404
 
     titlu, autor, stoc_disponibil = book_row
     if stoc_disponibil <= 0:
-        return jsonify({'success': False, 'message': 'Book is not available'}), 409
+        return jsonify({'success': False, 'message': 'Cartea nu este disponibilă'}), 409
 
-    # Fetch all librarian emails
+    # Preluăm emailurile tuturor bibliotecarilor
     rows = db.session.execute(
         text("SELECT email FROM users WHERE rol = 'bibliotecar'")
     ).fetchall()
-    librarian_emails = [r[0] for r in rows if r[0]]
+    emailuri_bibliotecari = [r[0] for r in rows if r[0]]
 
-    if not librarian_emails:
-        logger.warning('No librarians found to notify for book request %d', carte_id)
-        return jsonify({'success': False, 'message': 'No librarians available to process your request'}), 503
+    if not emailuri_bibliotecari:
+        logger.warning('Niciun bibliotecar găsit pentru notificarea cererii %d', carte_id)
+        return jsonify({'success': False, 'message': 'Niciun bibliotecar disponibil să proceseze cererea'}), 503
 
     subject = f'Cerere împrumut carte — {titlu}'
     html_body = (
@@ -434,7 +436,7 @@ def request_book_fizic(carte_id):
         f'<p>Stoc disponibil: {stoc_disponibil}</p>'
     )
 
-    # Save the request in the database
+    # Salvăm cererea în baza de date
     try:
         db.session.execute(
             text("INSERT INTO cereri_carti (user_id, carte_id) VALUES (:uid, :cid)"),
@@ -443,11 +445,11 @@ def request_book_fizic(carte_id):
         db.session.commit()
     except Exception:
         db.session.rollback()
-        logger.exception('Failed to save book request to DB')
-        return jsonify({'success': False, 'message': 'Failed to save request'}), 500
+        logger.exception('Eroare la salvarea cererii în DB')
+        return jsonify({'success': False, 'message': 'Eroare la salvarea cererii'}), 500
 
-    # Send email notification (best-effort, don't fail the request if email fails)
-    send_email(librarian_emails, subject, html_body)
+    # Trimitem emailul (best-effort — cererea nu eșuează dacă emailul nu merge)
+    send_email(emailuri_bibliotecari, subject, html_body)
 
     return jsonify({'success': True, 'message': 'Cererea a fost trimisă!'}), 200
 
@@ -455,8 +457,8 @@ def request_book_fizic(carte_id):
 @main_bp.route('/book-requests', methods=['GET'])
 @bibliotecar_required
 def get_book_requests():
-    """List all book borrow requests. Librarians only."""
-    status_filter = request.args.get('status')  # optional: pending, approved, rejected
+    """Listează toate cererile de împrumut. Doar bibliotecar."""
+    status_filter = request.args.get('status')  # opțional: pending, approved, rejected
     try:
         sql = (
             "SELECT c.cerere_id, c.user_id, c.carte_id, c.status, c.created_at, "
@@ -487,27 +489,27 @@ def get_book_requests():
             })
         return jsonify({'success': True, 'cereri': cereri}), 200
     except Exception:
-        logger.exception('Failed to fetch book requests')
-        return jsonify({'success': False, 'error': 'Failed to fetch requests'}), 500
+        logger.exception('Eroare la preluarea cererilor de împrumut')
+        return jsonify({'success': False, 'error': 'Eroare la preluarea cererilor'}), 500
 
 
 @main_bp.route('/book-requests/<int:cerere_id>', methods=['PUT'])
 @bibliotecar_required
 def update_book_request(cerere_id):
-    """Approve or reject a book request. Librarians only."""
+    """Aprobă sau respinge o cerere de împrumut. Doar bibliotecar."""
     data = request.get_json(silent=True) or {}
-    new_status = data.get('status')
-    if new_status not in ('approved', 'rejected'):
-        return jsonify({'success': False, 'message': 'Status must be approved or rejected'}), 400
+    status_nou = data.get('status')
+    if status_nou not in ('approved', 'rejected'):
+        return jsonify({'success': False, 'message': 'Status trebuie să fie approved sau rejected'}), 400
 
-    # Pickup interval (only required when approving)
+    # Intervalul de ridicare (obligatoriu doar la aprobare)
     pickup_from_str = (data.get('pickup_from') or '').strip()
     pickup_until_str = (data.get('pickup_until') or '').strip()
-    if new_status == 'approved' and (not pickup_from_str or not pickup_until_str):
-        return jsonify({'success': False, 'message': 'pickup_from and pickup_until are required when approving'}), 400
+    if status_nou == 'approved' and (not pickup_from_str or not pickup_until_str):
+        return jsonify({'success': False, 'message': 'pickup_from și pickup_until sunt obligatorii la aprobare'}), 400
 
     try:
-        # Fetch the request + student info in one join
+        # Preluăm cererea + datele elevului într-un singur join
         row = db.session.execute(
             text(
                 "SELECT cr.user_id, cr.carte_id, cr.status, "
@@ -520,17 +522,17 @@ def update_book_request(cerere_id):
             {'id': cerere_id}
         ).fetchone()
         if not row:
-            return jsonify({'success': False, 'message': 'Request not found'}), 404
+            return jsonify({'success': False, 'message': 'Cererea nu a fost găsită'}), 404
 
-        user_id, carte_id, old_status, student_email, student_name, titlu, autor = row
+        user_id, carte_id, status_vechi, email_elev, nume_elev, titlu, autor = row
 
         db.session.execute(
             text("UPDATE cereri_carti SET status = :status WHERE cerere_id = :id"),
-            {'status': new_status, 'id': cerere_id}
+            {'status': status_nou, 'id': cerere_id}
         )
 
-        # When approving, record the active borrow and send notification email
-        if new_status == 'approved' and old_status != 'approved':
+        # La aprobare înregistrăm împrumutul activ și trimitem email de notificare
+        if status_nou == 'approved' and status_vechi != 'approved':
             now = datetime.datetime.utcnow()
             due = now + datetime.timedelta(days=30)
             db.session.execute(
@@ -541,7 +543,7 @@ def update_book_request(cerere_id):
                 {'uid': user_id, 'cid': carte_id, 'now': now, 'due': due}
             )
 
-            # Send email notification to student
+            # Trimitem emailul de notificare elevului
             html_body = f"""
 <!DOCTYPE html>
 <html>
@@ -557,7 +559,7 @@ def update_book_request(cerere_id):
         </tr>
         <tr>
           <td style="padding: 32px;">
-            <p style="font-size:16px; color:#333; margin-top:0;">Salut, <strong>{student_name}</strong>!</p>
+            <p style="font-size:16px; color:#333; margin-top:0;">Salut, <strong>{nume_elev}</strong>!</p>
             <p style="font-size:15px; color:#333;">Cererea ta de împrumut pentru cartea:</p>
             <div style="background:#f5f0e8; border-left:4px solid #e74c3c; padding:12px 16px; border-radius:6px; margin:16px 0;">
               <strong style="font-size:16px; color:#2c3e50;">„{titlu}"</strong><br>
@@ -579,32 +581,32 @@ def update_book_request(cerere_id):
 </body>
 </html>"""
             send_email(
-                recipients=[student_email],
+                recipients=[email_elev],
                 subject=f'Cerere aprobată: „{titlu}"',
                 html_body=html_body
             )
 
         db.session.commit()
-        return jsonify({'success': True, 'message': f'Request {new_status}'}), 200
+        return jsonify({'success': True, 'message': f'Cerere {status_nou}'}), 200
     except Exception:
         db.session.rollback()
-        logger.exception('Failed to update book request %d', cerere_id)
-        return jsonify({'success': False, 'message': 'Failed to update request'}), 500
+        logger.exception('Eroare la actualizarea cererii %d', cerere_id)
+        return jsonify({'success': False, 'message': 'Eroare la actualizarea cererii'}), 500
 
 
-# ── Word Report ──────────────────────────────────────────────
+# ── Raport Word ──────────────────────────────────────────────
 
 @main_bp.route('/librarian/report/docx', methods=['GET'])
 @bibliotecar_required
 def librarian_report_docx():
-    """Generate a Word (.docx) report of all students with their read/borrowed books."""
+    """Generează un raport Word (.docx) cu toți elevii și cărțile citite/împrumutate."""
     try:
-        # All regular users (students)
+        # Toți utilizatorii obișnuiți (elevi)
         students = db.session.execute(
             text("SELECT user_id, username, email FROM users WHERE rol NOT IN ('1','bibliotecar','administrator') ORDER BY username ASC")
         ).fetchall()
 
-        # Read books per user: {user_id: [(titlu, autor), ...]}
+        # Cărți citite per utilizator: {user_id: [(titlu, autor), ...]}
         read_rows = db.session.execute(
             text(
                 "SELECT cc.user_id, c.titlu, c.autor "
@@ -615,7 +617,7 @@ def librarian_report_docx():
         for r in read_rows:
             read_map.setdefault(r[0], []).append((r[1], r[2]))
 
-        # Active borrows per user: {user_id: [(titlu, autor, data_imprumut, data_scadenta), ...]}
+        # Împrumuturi active per utilizator: {user_id: [(titlu, autor, data_imprumut, data_scadenta), ...]}
         borrow_rows = db.session.execute(
             text(
                 "SELECT ia.user_id, c.titlu, c.autor, ia.data_imprumut, ia.data_scadenta "
@@ -627,29 +629,29 @@ def librarian_report_docx():
         for r in borrow_rows:
             borrow_map.setdefault(r[0], []).append((r[1], r[2], r[3], r[4]))
 
-        # Build the document
+        # Construim documentul Word
         doc = Document()
 
-        # Title
+        # Titlu
         title_para = doc.add_heading('Raport Bibliotecă – Elevi și Împrumuturi', level=0)
         title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
         generated_para = doc.add_paragraph(
             f'Generat la: {datetime.datetime.now().strftime("%d.%m.%Y %H:%M")}'
         )
         generated_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        doc.add_paragraph()  # spacer
+        doc.add_paragraph()  # spațiu gol
 
         if not students:
             doc.add_paragraph('Nu există elevi înregistrați.')
         else:
             for uid, username, email in students:
-                # Student heading
+                # Heading elev
                 heading = doc.add_heading(username, level=1)
                 email_para = doc.add_paragraph()
                 email_run = email_para.add_run(f'Email: {email}')
                 email_run.italic = True
 
-                # Currently borrowed books
+                # Cărți împrumutate în prezent
                 borrows = borrow_map.get(uid, [])
                 doc.add_heading('Cărți împrumutate în prezent', level=2)
                 if borrows:
@@ -672,7 +674,7 @@ def librarian_report_docx():
                 else:
                     doc.add_paragraph('Niciun împrumut activ.')
 
-                # Books already read
+                # Cărți deja citite
                 reads = read_map.get(uid, [])
                 doc.add_heading('Cărți citite', level=2)
                 if reads:
@@ -691,7 +693,7 @@ def librarian_report_docx():
                 else:
                     doc.add_paragraph('Nicio carte citită înregistrată.')
 
-                doc.add_paragraph()  # spacer between students
+                doc.add_paragraph()  # spațiu între elevi
 
         buf = io.BytesIO()
         doc.save(buf)
@@ -705,20 +707,14 @@ def librarian_report_docx():
             mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         )
     except Exception:
-        logger.exception('Failed to generate Word report')
-        return jsonify({'success': False, 'message': 'Failed to generate report'}), 500
-
-
-@main_bp.route('/users', methods=['GET'])
-def get_users():
-    """Basic users route - implement your queries here"""
-    return jsonify({'message': 'Users endpoint - implement your database queries here'}), 200
+        logger.exception('Eroare la generarea raportului Word')
+        return jsonify({'success': False, 'message': 'Eroare la generarea raportului'}), 500
 
 
 @main_bp.route('/admin/users', methods=['GET'])
 @bibliotecar_required
 def admin_get_users():
-    """List all user accounts. Bibliotecar only."""
+    """Listează toate conturile de utilizatori. Doar bibliotecar."""
     try:
         rows = db.session.execute(
             text("SELECT user_id, username, email, rol, telefon FROM users ORDER BY username ASC")
@@ -735,35 +731,36 @@ def admin_get_users():
         ]
         return jsonify({'success': True, 'users': users}), 200
     except Exception:
-        logger.exception('Failed to fetch users list')
-        return jsonify({'success': False, 'error': 'Failed to fetch users'}), 500
+        logger.exception('Eroare la preluarea listei de utilizatori')
+        return jsonify({'success': False, 'error': 'Eroare la preluarea utilizatorilor'}), 500
 
 
 @main_bp.route('/admin/users/<int:user_id>', methods=['GET'])
 @bibliotecar_required
 def admin_get_user_detail(user_id):
-    """Get full details for a specific user. Bibliotecar only."""
+    """Returnează detalii complete despre un utilizator. Doar bibliotecar."""
     try:
         user_row = db.session.execute(
             text("SELECT user_id, username, email, rol, telefon, description FROM users WHERE user_id = :uid"),
             {'uid': user_id}
         ).fetchone()
         if not user_row:
-            return jsonify({'success': False, 'message': 'User not found'}), 404
+            return jsonify({'success': False, 'message': 'Utilizatorul nu a fost găsit'}), 404
 
-        # Books currently borrowed (approved borrow requests)
+        # Cărți împrumutate în prezent — sursa autoritativă este imprumuturi_active
         borrowed_rows = db.session.execute(
             text("""
-                SELECT c.carte_id, c.titlu, c.autor, c.ISBN, cc.created_at
-                FROM cereri_carti cc
-                JOIN carti c ON cc.carte_id = c.carte_id
-                WHERE cc.user_id = :uid AND cc.status = 'approved'
-                ORDER BY cc.created_at DESC
+                SELECT c.carte_id, c.titlu, c.autor, c.ISBN,
+                       ia.data_imprumut, ia.data_scadenta
+                FROM imprumuturi_active ia
+                JOIN carti c ON ia.carte_id = c.carte_id
+                WHERE ia.user_id = :uid
+                ORDER BY ia.data_imprumut DESC
             """),
             {'uid': user_id}
         ).fetchall()
 
-        # Books read / returned
+        # Cărți citite / returnate
         read_rows = db.session.execute(
             text("""
                 SELECT c.carte_id, c.titlu, c.autor, c.ISBN
@@ -774,7 +771,7 @@ def admin_get_user_detail(user_id):
             {'uid': user_id}
         ).fetchall()
 
-        # Full borrow request history
+        # Istoricul complet al cererilor de împrumut
         history_rows = db.session.execute(
             text("""
                 SELECT cc.cerere_id, c.titlu, c.autor, cc.status, cc.created_at
@@ -786,7 +783,7 @@ def admin_get_user_detail(user_id):
             {'uid': user_id}
         ).fetchall()
 
-        # Reviews
+        # Recenzii scrise de utilizator
         review_rows = db.session.execute(
             text("""
                 SELECT r.id, c.titlu, c.autor, r.nota, r.comentariu
@@ -811,7 +808,8 @@ def admin_get_user_detail(user_id):
             'books_borrowed': [
                 {
                     'carte_id': r[0], 'titlu': r[1], 'autor': r[2], 'ISBN': r[3],
-                    'borrowed_at': r[4].isoformat() if r[4] else None
+                    'borrowed_at': r[4].isoformat() if r[4] else None,
+                    'due_at': r[5].isoformat() if r[5] else None
                 }
                 for r in borrowed_rows
             ],
@@ -833,22 +831,17 @@ def admin_get_user_detail(user_id):
             ]
         }), 200
     except Exception:
-        logger.exception('Failed to fetch user detail for %d', user_id)
-        return jsonify({'success': False, 'error': 'Failed to fetch user details'}), 500
-
-@main_bp.route('/books-read', methods=['GET'])
-def get_books_read():
-    """Basic books read route - implement your queries here"""
-    return jsonify({'message': 'Books read endpoint - implement your database queries here'}), 200
+        logger.exception('Eroare la preluarea detaliilor utilizatorului %d', user_id)
+        return jsonify({'success': False, 'error': 'Eroare la preluarea detaliilor utilizatorului'}), 500
 
 @main_bp.route('/reviews', methods=['GET'])
 def get_reviews():
-    """Get reviews for a specific book by carte_id.
-    Returns reviews with username, nota (rating), and comentariu.
+    """Returnează recenziile pentru o carte dată prin carte_id.
+    Include username, nota și comentariu.
     """
     carte_id = request.args.get('carte_id')
     if not carte_id:
-        return jsonify({'success': False, 'message': 'carte_id is required'}), 400
+        return jsonify({'success': False, 'message': 'carte_id este obligatoriu'}), 400
 
     try:
         query = text("""
@@ -868,7 +861,7 @@ def get_reviews():
                 'username': row[3]
             })
 
-        # Calculate average rating
+        # Calculăm media notelor
         avg_rating = 0
         if reviews:
             avg_rating = round(sum(r['nota'] for r in reviews) / len(reviews), 1)
@@ -880,14 +873,14 @@ def get_reviews():
             'total_reviews': len(reviews)
         }), 200
     except Exception:
-        logger.exception('Failed to fetch reviews')
-        return jsonify({'success': False, 'error': 'Failed to fetch reviews'}), 500
+        logger.exception('Eroare la preluarea recenziilor')
+        return jsonify({'success': False, 'error': 'Eroare la preluarea recenziilor'}), 500
 
 
 @main_bp.route('/reviews', methods=['POST'])
 @jwt_required
 def submit_review():
-    """Submit a review for a book. Requires authentication."""
+    """Salvează o recenzie pentru o carte. Necesită autentificare."""
     user = request.current_user
     data = request.get_json(silent=True) or {}
     carte_id = data.get('carte_id')
@@ -895,23 +888,23 @@ def submit_review():
     comentariu = (data.get('comentariu') or '').strip()
 
     if not carte_id or nota is None or not comentariu:
-        return jsonify({'success': False, 'message': 'carte_id, nota, and comentariu are required'}), 400
+        return jsonify({'success': False, 'message': 'carte_id, nota și comentariu sunt obligatorii'}), 400
 
     try:
         nota = int(nota)
     except (ValueError, TypeError):
-        return jsonify({'success': False, 'message': 'nota must be an integer 1-5'}), 400
+        return jsonify({'success': False, 'message': 'nota trebuie să fie un număr întreg 1-5'}), 400
 
     if nota < 1 or nota > 5:
-        return jsonify({'success': False, 'message': 'nota must be between 1 and 5'}), 400
+        return jsonify({'success': False, 'message': 'nota trebuie să fie între 1 și 5'}), 400
 
-    # Check book exists
+    # Verificăm că cartea există
     book = db.session.execute(text("SELECT carte_id FROM carti WHERE carte_id = :id"), {'id': carte_id}).fetchone()
     if not book:
-        return jsonify({'success': False, 'message': 'Book not found'}), 404
+        return jsonify({'success': False, 'message': 'Cartea nu a fost găsită'}), 404
 
     try:
-        # Upsert: one review per user per book
+        # Upsert: o recenzie per utilizator per carte
         existing = db.session.execute(
             text("SELECT id FROM recenzii WHERE user_id = :uid AND carte_id = :cid"),
             {'uid': user['user_id'], 'cid': carte_id}
@@ -928,21 +921,18 @@ def submit_review():
                 {'uid': user['user_id'], 'cid': carte_id, 'nota': nota, 'com': comentariu}
             )
         db.session.commit()
-        return jsonify({'success': True, 'message': 'Review submitted'}), 200
+        return jsonify({'success': True, 'message': 'Recenzie salvată'}), 200
     except Exception:
         db.session.rollback()
-        logger.exception('Failed to submit review')
-        return jsonify({'success': False, 'message': 'Failed to submit review'}), 500
+        logger.exception('Eroare la salvarea recenziei')
+        return jsonify({'success': False, 'message': 'Eroare la salvarea recenziei'}), 500
 
 
 @main_bp.route('/reviews/user', methods=['GET'])
+@jwt_required
 def get_user_reviews():
-    """Get all reviews by a specific user.
-    Returns reviews with book title, author, nota, and comentariu.
-    """
-    user_id = request.args.get('user_id')
-    if not user_id:
-        return jsonify({'success': False, 'message': 'user_id is required'}), 400
+    """Returnează toate recenziile scrise de utilizatorul autentificat."""
+    user_id = request.current_user['user_id']
 
     try:
         query = text("""
@@ -953,36 +943,26 @@ def get_user_reviews():
             ORDER BY r.id DESC
         """)
         result = db.session.execute(query, {'user_id': user_id})
-        reviews = []
-        for row in result:
-            reviews.append({
-                'id': row[0],
-                'nota': row[1],
-                'comentariu': row[2],
-                'titlu': row[3],
-                'autor': row[4]
-            })
-
-        return jsonify({
-            'success': True,
-            'reviews': reviews,
-            'total_reviews': len(reviews)
-        }), 200
+        reviews = [
+            {'id': row[0], 'nota': row[1], 'comentariu': row[2], 'titlu': row[3], 'autor': row[4]}
+            for row in result
+        ]
+        return jsonify({'success': True, 'reviews': reviews, 'total_reviews': len(reviews)}), 200
     except Exception:
-        logger.exception('Failed to fetch user reviews')
-        return jsonify({'success': False, 'error': 'Failed to fetch reviews'}), 500
+        logger.exception('Eroare la preluarea recenziilor utilizatorului')
+        return jsonify({'success': False, 'error': 'Eroare la preluarea recenziilor'}), 500
 
 
-# Authentication routes structure
+# ── Rute autentificare ────────────────────────────────────────
 @main_bp.route('/auth/login', methods=['POST'])
 def login():
-    """Login route with bcrypt password verification. Sets JWT httpOnly cookie."""
+    """Login cu verificare bcrypt a parolei. Setează cookie httpOnly JWT."""
     data = request.get_json(silent=True) or {}
     raw_email = data.get('email')
-    password = data.get('password')
+    parola = data.get('password')
 
-    if not raw_email or not password:
-        return jsonify({'success': False, 'message': 'Email and password are required'}), 400
+    if not raw_email or not parola:
+        return jsonify({'success': False, 'message': 'Email și parola sunt obligatorii'}), 400
 
     email = normalize_cni_email(raw_email)
     if not email:
@@ -994,11 +974,11 @@ def login():
     result = db.session.execute(query, {'email': email}).mappings().first()
 
     if not result:
-        return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+        return jsonify({'success': False, 'message': 'Credențiale invalide'}), 401
 
-    hashed_password = result.get('hashed_password')
-    if not hashed_password or not bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
-        return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+    parola_hash = result.get('hashed_password')
+    if not parola_hash or not bcrypt.checkpw(parola.encode('utf-8'), parola_hash.encode('utf-8')):
+        return jsonify({'success': False, 'message': 'Credențiale invalide'}), 401
 
     token = create_jwt_token(
         user_id=result['user_id'],
@@ -1006,16 +986,16 @@ def login():
         email=result['email']
     )
 
-    normalized_role = normalize_role(result['rol'])
+    rol_normalizat = normalize_role(result['rol'])
 
     resp = jsonify({
         'success': True,
-        'message': 'Login successful',
+        'message': 'Autentificare reușită',
         'user': {
             'user_id': result['user_id'],
             'username': result['username'],
             'email': result['email'],
-            'rol': normalized_role
+            'rol': rol_normalizat
         }
     })
     set_jwt_cookie(resp, token)
@@ -1024,7 +1004,7 @@ def login():
 @main_bp.route('/auth/me', methods=['GET'])
 @jwt_required
 def auth_me():
-    """Return the currently authenticated user from the JWT cookie."""
+    """Returnează utilizatorul autentificat curent din cookie-ul JWT."""
     user = request.current_user
     return jsonify({
         'success': True,
@@ -1037,8 +1017,8 @@ def auth_me():
 
 @main_bp.route('/auth/logout', methods=['POST'])
 def logout():
-    """Clear the JWT cookie."""
-    resp = jsonify({'success': True, 'message': 'Logged out'})
+    """Șterge cookie-ul JWT."""
+    resp = jsonify({'success': True, 'message': 'Deconectat cu succes'})
     clear_jwt_cookie(resp)
     return resp, 200
 
@@ -1046,7 +1026,7 @@ def logout():
 @main_bp.route('/auth/profile', methods=['GET'])
 @jwt_required
 def profile():
-    """Fetch profile information from the JWT session."""
+    """Returnează informațiile de profil din sesiunea JWT."""
     user = request.current_user
 
     query = text(
@@ -1054,7 +1034,7 @@ def profile():
     )
     result = db.session.execute(query, {'user_id': user['user_id']}).mappings().first()
     if not result:
-        return jsonify({'success': False, 'message': 'Profile not found'}), 404
+        return jsonify({'success': False, 'message': 'Profilul nu a fost găsit'}), 404
 
     return jsonify({
         'success': True,
@@ -1067,7 +1047,7 @@ def profile():
 @main_bp.route('/auth/books-read', methods=['GET'])
 @jwt_required
 def books_read():
-    """Fetch books read by the authenticated user."""
+    """Returnează cărțile citite de utilizatorul autentificat."""
     user = request.current_user
     user_id = user['user_id']
 
@@ -1093,7 +1073,7 @@ def books_read():
 @main_bp.route('/auth/profile', methods=['PUT'])
 @jwt_required
 def update_profile():
-    """Update user description for the authenticated user."""
+    """Actualizează descrierea utilizatorului autentificat."""
     user = request.current_user
     data = request.get_json(silent=True) or {}
     description = data.get('description')
@@ -1105,36 +1085,36 @@ def update_profile():
         result = db.session.execute(update_query, {'description': description, 'user_id': user['user_id']})
         db.session.commit()
         if result.rowcount == 0:
-            return jsonify({'success': False, 'message': 'Profile not found'}), 404
+            return jsonify({'success': False, 'message': 'Profilul nu a fost găsit'}), 404
     except Exception:
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'Failed to update description'}), 500
+        return jsonify({'success': False, 'message': 'Eroare la actualizarea descrierii'}), 500
 
-    return jsonify({'success': True, 'message': 'Description updated'}), 200
+    return jsonify({'success': True, 'message': 'Descriere actualizată'}), 200
 
 @main_bp.route('/auth/register', methods=['POST'])
 def register():
-    """Registration route with bcrypt password hashing. Sets JWT cookie on success."""
+    """Înregistrare cu hashing bcrypt al parolei. Setează cookie JWT la succes."""
     data = request.get_json(silent=True) or {}
     username = data.get('user') or data.get('username') or data.get('fullName')
     raw_email = data.get('email')
-    password = data.get('password')
+    parola = data.get('password')
 
-    if not username or not raw_email or not password:
-        return jsonify({'success': False, 'message': 'User, email, and password are required'}), 400
+    if not username or not raw_email or not parola:
+        return jsonify({'success': False, 'message': 'Username, email și parola sunt obligatorii'}), 400
 
     email = normalize_cni_email(raw_email)
     if not email:
         return jsonify({'success': False, 'message': 'Doar emailurile @cni-sv.ro sunt permise'}), 400
 
-    if len(password) < 8:
-        return jsonify({'success': False, 'message': 'Password must be at least 8 characters'}), 400
+    if len(parola) < 8:
+        return jsonify({'success': False, 'message': 'Parola trebuie să aibă cel puțin 8 caractere'}), 400
 
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    parola_hash = bcrypt.hashpw(parola.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     values = {
         'username': username,
         'email': email,
-        'hashed_password': hashed_password,
+        'hashed_password': parola_hash,
         'rol': 'user',
         'telefon': None
     }
@@ -1148,12 +1128,12 @@ def register():
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'User or email already exists'}), 409
+        return jsonify({'success': False, 'message': 'Username sau email deja existente'}), 409
     except Exception:
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'Registration failed'}), 500
+        return jsonify({'success': False, 'message': 'Înregistrarea a eșuat'}), 500
 
-    # Fetch the new user_id so we can issue a token
+    # Preluăm noul user_id ca să putem emite un token
     query = text("SELECT user_id FROM users WHERE email = :email")
     new_user = db.session.execute(query, {'email': email}).mappings().first()
     token = create_jwt_token(
@@ -1162,7 +1142,7 @@ def register():
         email=email
     )
 
-    resp = jsonify({'success': True, 'message': 'Registration successful'})
+    resp = jsonify({'success': True, 'message': 'Înregistrare reușită'})
     set_jwt_cookie(resp, token)
     return resp, 201
 
@@ -1170,116 +1150,116 @@ def register():
 @main_bp.route('/auth/profile-picture', methods=['POST'])
 @jwt_required
 def upload_profile_picture():
-    """Upload or replace a user's profile picture.
-    Expects multipart/form-data with 'file' field. User determined from JWT.
+    """Încarcă sau înlocuiește poza de profil a utilizatorului.
+    Așteaptă multipart/form-data cu câmpul 'file'. Utilizatorul e dedus din JWT.
     """
     user = request.current_user
 
     if 'file' not in request.files:
-        return jsonify({'success': False, 'message': 'No file provided'}), 400
+        return jsonify({'success': False, 'message': 'Niciun fișier trimis'}), 400
 
     file = request.files['file']
     if file.filename == '':
-        return jsonify({'success': False, 'message': 'No file selected'}), 400
+        return jsonify({'success': False, 'message': 'Niciun fișier selectat'}), 400
 
     if not allowed_file(file.filename):
-        return jsonify({'success': False, 'message': 'File type not allowed. Use png, jpg, jpeg, gif, or webp'}), 400
+        return jsonify({'success': False, 'message': 'Tip de fișier nepermis. Folosește png, jpg, jpeg, gif sau webp'}), 400
 
     username = user['username']
     ext = file.filename.rsplit('.', 1)[1].lower()
 
-    # Remove any existing profile picture for this user
-    for old_file in _find_files_by_prefix(PROFILE_PICTURES_DIR, username):
-        os.remove(os.path.join(PROFILE_PICTURES_DIR, old_file))
+    # Ștergem poza de profil existentă pentru acest utilizator
+    for poza_veche in _find_files_by_prefix(PROFILE_PICTURES_DIR, username):
+        os.remove(os.path.join(PROFILE_PICTURES_DIR, poza_veche))
 
-    # Save the new file as username.ext
+    # Salvăm noul fișier ca username.ext
     filename = f"{username}.{ext}"
     filepath = os.path.join(PROFILE_PICTURES_DIR, filename)
     file.save(filepath)
 
     return jsonify({
         'success': True,
-        'message': 'Profile picture uploaded',
+        'message': 'Poză de profil încărcată',
         'filename': filename
     }), 200
 
 
 @main_bp.route('/auth/profile-picture/<username>', methods=['GET'])
 def get_profile_picture(username):
-    """Serve a user's profile picture by username.
-    Looks for <username>.* in the profile_pictures folder.
+    """Serve0219te poza de profil a unui utilizator dup0103 username.
+    Caut0103 <username>.* 00een folderul profile_pictures.
     """
     matches = _find_files_by_prefix(PROFILE_PICTURES_DIR, username)
 
-    if not matches:
+    if not rezultate:
         return jsonify({'success': False, 'message': 'No profile picture found'}), 404
 
-    return send_from_directory(PROFILE_PICTURES_DIR, matches[0])
+    return send_from_directory(PROFILE_PICTURES_DIR, rezultate[0])
 
 
 @main_bp.route('/books/image', methods=['POST'])
 @bibliotecar_required
 def upload_book_image():
-    """Upload or replace a book cover image.
-    Expects multipart/form-data with 'file' and 'carte_id' fields.
-    Saves as <carte_id>.<ext> in the book_images folder.
+    """Încarcă sau înlocuiește coperta unei cărți.
+    Așteaptă multipart/form-data cu câmpurile 'file' și 'carte_id'.
+    Salvează ca <carte_id>.<ext> în folderul book_images.
     """
     carte_id = request.form.get('carte_id')
     if not carte_id:
         return jsonify({'success': False, 'message': 'carte_id is required'}), 400
 
     if 'file' not in request.files:
-        return jsonify({'success': False, 'message': 'No file provided'}), 400
+        return jsonify({'success': False, 'message': 'Niciun fișier trimis'}), 400
 
     file = request.files['file']
     if file.filename == '':
-        return jsonify({'success': False, 'message': 'No file selected'}), 400
+        return jsonify({'success': False, 'message': 'Niciun fișier selectat'}), 400
 
     if not allowed_file(file.filename):
-        return jsonify({'success': False, 'message': 'File type not allowed. Use png, jpg, jpeg, gif, or webp'}), 400
+        return jsonify({'success': False, 'message': 'Tip de fișier nepermis. Folosește png, jpg, jpeg, gif sau webp'}), 400
 
-    # Verify the book exists
+    # Verificăm că cartea există
     query = text("SELECT carte_id FROM carti WHERE carte_id = :carte_id")
     result = db.session.execute(query, {'carte_id': carte_id}).mappings().first()
     if not result:
-        return jsonify({'success': False, 'message': 'Book not found'}), 404
+        return jsonify({'success': False, 'message': 'Cartea nu a fost găsită'}), 404
 
     ext = file.filename.rsplit('.', 1)[1].lower()
 
-    # Remove any existing image for this book
-    for old_file in _find_files_by_prefix(BOOK_IMAGES_DIR, str(carte_id)):
-        os.remove(os.path.join(BOOK_IMAGES_DIR, old_file))
+    # Ștergem coperta existentă a cărții
+    for imagine_veche in _find_files_by_prefix(BOOK_IMAGES_DIR, str(carte_id)):
+        os.remove(os.path.join(BOOK_IMAGES_DIR, imagine_veche))
 
-    # Save the new file as carte_id.ext
+    # Salvăm noul fișier ca carte_id.ext
     filename = f"{carte_id}.{ext}"
     filepath = os.path.join(BOOK_IMAGES_DIR, filename)
     file.save(filepath)
 
     return jsonify({
         'success': True,
-        'message': 'Book image uploaded',
+        'message': 'Copertă carte încărcată',
         'filename': filename
     }), 200
 
 
 @main_bp.route('/books/image/<int:carte_id>', methods=['GET'])
 def get_book_image(carte_id):
-    """Serve a book's cover image by carte_id.
-    Looks for <carte_id>.* in the book_images folder.
+    """Servește coperta cărții după carte_id.
+    Caută <carte_id>.* în folderul book_images.
     """
     matches = _find_files_by_prefix(BOOK_IMAGES_DIR, str(carte_id))
 
-    if not matches:
-        return jsonify({'success': False, 'message': 'No book image found'}), 404
+    if not rezultate:
+        return jsonify({'success': False, 'message': 'Nicio imagine găsită'}), 404
 
-    return send_from_directory(BOOK_IMAGES_DIR, matches[0])
+    return send_from_directory(BOOK_IMAGES_DIR, rezultate[0])
 
 
-# ── Announcement Routes ──────────────────────────────────────
+# ── Rute anunțuri ──────────────────────────────────────
 
 @main_bp.route('/anunturi', methods=['GET'])
 def get_anunturi():
-    """Get all announcements, newest first. Includes whether current user liked each."""
+    """Returnează toate anunțurile, cel mai nou primul. Include dacă utilizatorul curent a apreciat fiecare."""
     user = get_current_user()
     user_id = user['user_id'] if user else None
 
@@ -1312,20 +1292,20 @@ def get_anunturi():
 
         return jsonify({'success': True, 'anunturi': anunturi}), 200
     except Exception:
-        logger.exception('Failed to fetch announcements')
-        return jsonify({'success': False, 'error': 'Failed to fetch announcements'}), 500
+        logger.exception('Eroare la preluarea anunțurilor')
+        return jsonify({'success': False, 'error': 'Eroare la preluarea anunțurilor'}), 500
 
 
 @main_bp.route('/anunturi', methods=['POST'])
 @bibliotecar_required
 def create_anunt():
-    """Create a new announcement. Requires bibliotecar role."""
+    """Creează un anunț nou. Necesită rol de bibliotecar."""
     data = request.get_json(silent=True) or {}
     titlu = data.get('titlu', '').strip()
     anunt = data.get('anunt', '').strip()
 
     if not titlu or not anunt:
-        return jsonify({'success': False, 'message': 'titlu and anunt are required'}), 400
+        return jsonify({'success': False, 'message': 'titlu și anunt sunt obligatorii'}), 400
 
     try:
         db.session.execute(
@@ -1333,17 +1313,17 @@ def create_anunt():
             {'titlu': titlu, 'anunt': anunt}
         )
         db.session.commit()
-        return jsonify({'success': True, 'message': 'Announcement created'}), 201
+        return jsonify({'success': True, 'message': 'Anunț creat'}), 201
     except Exception:
         db.session.rollback()
-        logger.exception('Failed to create announcement')
-        return jsonify({'success': False, 'message': 'Failed to create announcement'}), 500
+        logger.exception('Eroare la crearea anunțului')
+        return jsonify({'success': False, 'message': 'Eroare la crearea anunțului'}), 500
 
 
 @main_bp.route('/anunturi/<int:anunt_id>', methods=['PUT'])
 @bibliotecar_required
 def update_anunt(anunt_id):
-    """Update an announcement. Requires bibliotecar role."""
+    """Actualizează un anunț. Necesită rol de bibliotecar."""
     data = request.get_json(silent=True) or {}
 
     fields = {}
@@ -1352,7 +1332,7 @@ def update_anunt(anunt_id):
             fields[key] = data[key].strip()
 
     if not fields:
-        return jsonify({'success': False, 'message': 'No fields to update'}), 400
+        return jsonify({'success': False, 'message': 'Niciun câmp de actualizat'}), 400
 
     set_clause = ', '.join(f"{k} = :{k}" for k in fields)
     fields['anunt_id'] = anunt_id
@@ -1361,34 +1341,34 @@ def update_anunt(anunt_id):
         result = db.session.execute(text(f"UPDATE anunturi SET {set_clause} WHERE anunt_id = :anunt_id"), fields)
         db.session.commit()
         if result.rowcount == 0:
-            return jsonify({'success': False, 'message': 'Announcement not found'}), 404
-        return jsonify({'success': True, 'message': 'Announcement updated'}), 200
+            return jsonify({'success': False, 'message': 'Anunțul nu a fost găsit'}), 404
+        return jsonify({'success': True, 'message': 'Anunț actualizat'}), 200
     except Exception:
         db.session.rollback()
-        logger.exception('Failed to update announcement %d', anunt_id)
-        return jsonify({'success': False, 'message': 'Failed to update announcement'}), 500
+        logger.exception('Eroare la actualizarea anunțului %d', anunt_id)
+        return jsonify({'success': False, 'message': 'Eroare la actualizarea anunțului'}), 500
 
 
 @main_bp.route('/anunturi/<int:anunt_id>', methods=['DELETE'])
 @bibliotecar_required
 def delete_anunt(anunt_id):
-    """Delete an announcement. Requires bibliotecar role. Cascade deletes likes."""
+    """Șterge un anunț. Necesită rol de bibliotecar. Șterge și aprecierile asociate."""
     try:
         result = db.session.execute(text("DELETE FROM anunturi WHERE anunt_id = :id"), {'id': anunt_id})
         db.session.commit()
         if result.rowcount == 0:
             return jsonify({'success': False, 'message': 'Announcement not found'}), 404
-        return jsonify({'success': True, 'message': 'Announcement deleted'}), 200
+        return jsonify({'success': True, 'message': 'Anunț șters'}), 200
     except Exception:
         db.session.rollback()
-        logger.exception('Failed to delete announcement %d', anunt_id)
-        return jsonify({'success': False, 'message': 'Failed to delete announcement'}), 500
+        logger.exception('Eroare la ștergerea anunțului %d', anunt_id)
+        return jsonify({'success': False, 'message': 'Eroare la ștergerea anunțului'}), 500
 
 
 @main_bp.route('/anunturi/<int:anunt_id>/like', methods=['POST'])
 @jwt_required
 def toggle_like_anunt(anunt_id):
-    """Toggle like on an announcement. Logged-in users only."""
+    """Toggle apreciere pe un anunț. Doar utilizatori autentificați."""
     user = request.current_user
     user_id = user['user_id']
 
@@ -1408,7 +1388,7 @@ def toggle_like_anunt(anunt_id):
                 {'aid': anunt_id}
             )
             db.session.commit()
-            liked = False
+            apreciat = False
         else:
             db.session.execute(
                 text("INSERT INTO anunturi_aprecieri (anunt_id, user_id) VALUES (:aid, :uid)"),
@@ -1419,67 +1399,67 @@ def toggle_like_anunt(anunt_id):
                 {'aid': anunt_id}
             )
             db.session.commit()
-            liked = True
+            apreciat = True
 
         count = db.session.execute(
             text("SELECT aprecieri FROM anunturi WHERE anunt_id = :aid"),
             {'aid': anunt_id}
         ).fetchone()
 
-        return jsonify({'success': True, 'liked': liked, 'aprecieri': count[0] if count else 0}), 200
+        return jsonify({'success': True, 'liked': apreciat, 'aprecieri': count[0] if count else 0}), 200
     except Exception:
         db.session.rollback()
-        logger.exception('Failed to toggle like on announcement %d', anunt_id)
-        return jsonify({'success': False, 'message': 'Failed to toggle like'}), 500
+        logger.exception('Eroare la toggle apreciere anunț %d', anunt_id)
+        return jsonify({'success': False, 'message': 'Eroare la toggle apreciere'}), 500
 
 
-# ── AI Helper ────────────────────────────────────────────────
+# ── Helper AI ────────────────────────────────────────────────
 
 GROQ_MODEL = 'llama-3.3-70b-versatile'
 
 def _get_groq_client():
-    """Return a Groq client, or None if the API key is missing."""
+    """Returnează un client Groq, sau None dacă API key-ul lipsește."""
     api_key = current_app.config.get('GROQ_API_KEY', '')
     if not api_key:
         return None
     return Groq(api_key=api_key)
 
 def _groq_chat(client, prompt):
-    """Send a single-turn prompt to Groq and return the text response."""
-    logger.info('Groq prompt: %s', prompt[:300])
-    resp = client.chat.completions.create(
+    """Trimite un prompt single-turn către Groq și returnează răspunsul text."""
+    logger.info('Prompt Groq: %s', prompt[:300])
+    raspuns = client.chat.completions.create(
         model=GROQ_MODEL,
         messages=[{'role': 'user', 'content': prompt}],
         max_tokens=1024,
         temperature=0.7
     )
-    return resp.choices[0].message.content.strip()
+    return raspuns.choices[0].message.content.strip()
 
 
 @main_bp.route('/ai/recommend', methods=['GET'])
 @jwt_required
 def ai_recommend():
-    """Return personalised book recommendations based on read history."""
+    """Returnează recomandări personalizate de cărți bazate pe istoricul de citire."""
     user = request.current_user
     user_id = user['user_id']
 
     client = _get_groq_client()
     if not client:
-        return jsonify({'success': False, 'message': 'AI not configured'}), 503
+        return jsonify({'success': False, 'message': 'AI neconfigurat'}), 503
 
     try:
-        # All books in the library with real availability
+        # Toate cărțile din bibliotecă cu disponibilitate reală
         all_rows = db.session.execute(
             text("SELECT carte_id, titlu, autor, gen, stoc_disponibil FROM carti ORDER BY titlu")
         ).fetchall()
 
-        # Books the user has already read/returned
+        # Cărțile pe care utilizatorul le-a citit/returnat deja
         read_rows = db.session.execute(
             text("SELECT c.carte_id, c.titlu, c.autor, c.gen FROM carti_citite cc JOIN carti c ON cc.carte_id = c.carte_id WHERE cc.user_id = :uid"),
             {'uid': user_id}
         ).fetchall()
 
-        # Books the user currently has borrowed or requested
+        # Cărțile pe care utilizatorul le are împrumutate sau solicitate
         borrowed_rows = db.session.execute(
             text("SELECT c.carte_id, c.titlu, c.autor FROM cereri_carti cc JOIN carti c ON cc.carte_id = c.carte_id WHERE cc.user_id = :uid AND cc.status IN ('pending', 'approved')"),
             {'uid': user_id}
@@ -1509,56 +1489,56 @@ def ai_recommend():
             "Răspunde în română, prietenos."
         )
 
-        reply = _groq_chat(client, prompt)
-        return jsonify({'success': True, 'recommendations': reply}), 200
+        raspuns_ai = _groq_chat(client, prompt)
+        return jsonify({'success': True, 'recommendations': raspuns_ai}), 200
     except Exception:
-        logger.exception('AI recommend failed')
-        return jsonify({'success': False, 'message': 'AI request failed'}), 500
+        logger.exception('Eroare AI recommend')
+        return jsonify({'success': False, 'message': 'Cererea AI a eșuat'}), 500
 
 
 @main_bp.route('/ai/review-assist', methods=['POST'])
 @jwt_required
 def ai_review_assist():
-    """Polish a rough review draft into a well-written review."""
+    """Reformulează o ciornă de recenzie într-o recenzie bine scrisă."""
     data = request.get_json(silent=True) or {}
-    draft = (data.get('draft') or '').strip()
-    book_title = (data.get('titlu') or '').strip()
-    rating = data.get('nota', 0)
+    ciorna = (data.get('draft') or '').strip()
+    titlu_carte = (data.get('titlu') or '').strip()
+    nota_raw = data.get('nota', 0)
 
-    if not draft:
-        return jsonify({'success': False, 'message': 'draft is required'}), 400
+    if not ciorna:
+        return jsonify({'success': False, 'message': 'ciorna (draft) este obligatorie'}), 400
 
     client = _get_groq_client()
     if not client:
-        return jsonify({'success': False, 'message': 'AI not configured'}), 503
+        return jsonify({'success': False, 'message': 'AI neconfigurat'}), 503
 
     try:
         prompt = (
             f"Ești un asistent pentru recenzii de carte. Elevul vrea să scrie o recenzie pentru "
-            f'"{book_title}" cu nota {rating}/5. Gândul lui brut:\n"{draft}"\n\n'
+            f'"{titlu_carte}" cu nota {nota_raw}/5. Gândul lui brut:\n"{ciorna}"\n\n'
             "Rescrie-l ca o recenzie coerentă, bine scrisă, de 2-4 propoziții. "
             "Păstrează opinia originală, nu adăuga informații inventate. Răspunde DOAR cu textul recenziei, fără explicații."
         )
-        reply = _groq_chat(client, prompt)
-        return jsonify({'success': True, 'review': reply}), 200
+        raspuns_ai = _groq_chat(client, prompt)
+        return jsonify({'success': True, 'review': raspuns_ai}), 200
     except Exception:
-        logger.exception('AI review-assist failed')
-        return jsonify({'success': False, 'message': 'AI request failed'}), 500
+        logger.exception('Eroare AI review-assist')
+        return jsonify({'success': False, 'message': 'Cererea AI a eșuat'}), 500
 
 
 @main_bp.route('/ai/book-summary/<int:carte_id>', methods=['GET'])
 def ai_book_summary(carte_id):
-    """Summarise all reviews for a book into a short opinion summary."""
+    """Rezumă recenziile pentru o carte într-un scurt sumar de opinie."""
     client = _get_groq_client()
     if not client:
-        return jsonify({'success': False, 'message': 'AI not configured'}), 503
+        return jsonify({'success': False, 'message': 'AI neconfigurat'}), 503
 
     try:
         book_row = db.session.execute(
             text("SELECT titlu, autor FROM carti WHERE carte_id = :id"), {'id': carte_id}
         ).fetchone()
         if not book_row:
-            return jsonify({'success': False, 'message': 'Book not found'}), 404
+            return jsonify({'success': False, 'message': 'Cartea nu a fost găsită'}), 404
 
         reviews = db.session.execute(
             text("SELECT nota, comentariu FROM recenzii WHERE carte_id = :id LIMIT 20"), {'id': carte_id}
@@ -1574,27 +1554,27 @@ def ai_book_summary(carte_id):
             "Scrie un rezumat de 2-3 propoziții al opiniei generale a cititorilor despre această carte. "
             "Menționează dacă e apreciată sau nu și de ce. Răspunde în română."
         )
-        reply = _groq_chat(client, prompt)
-        return jsonify({'success': True, 'summary': reply}), 200
+        raspuns_ai = _groq_chat(client, prompt)
+        return jsonify({'success': True, 'summary': raspuns_ai}), 200
     except Exception:
-        logger.exception('AI book-summary failed for carte_id=%d', carte_id)
-        return jsonify({'success': False, 'message': 'AI request failed'}), 500
+        logger.exception('Eroare AI book-summary pentru carte_id=%d', carte_id)
+        return jsonify({'success': False, 'message': 'Cererea AI a eșuat'}), 500
 
 
 @main_bp.route('/ai/chat', methods=['POST'])
 def ai_chat():
-    """General library chatbot. Answers questions using library context."""
+    """Chatbot general al bibliotecii. Răspunde la întrebări folosind contextul bibliotecii."""
     data = request.get_json(silent=True) or {}
     message = (data.get('message') or '').strip()
     if not message:
-        return jsonify({'success': False, 'message': 'message is required'}), 400
+        return jsonify({'success': False, 'message': 'mesajul este obligatoriu'}), 400
 
     client = _get_groq_client()
     if not client:
-        return jsonify({'success': False, 'message': 'AI not configured'}), 503
+        return jsonify({'success': False, 'message': 'AI neconfigurat'}), 503
 
     try:
-        # Full library catalog from DB
+        # Catalogul complet din DB
         books = db.session.execute(
             text("SELECT carte_id, titlu, autor, gen, stoc_disponibil FROM carti ORDER BY titlu")
         ).fetchall()
@@ -1603,27 +1583,27 @@ def ai_chat():
             for r in books
         )
 
-        # If user is logged in, add their reading context
+        # Dacă utilizatorul e autentificat, adăugăm contextul său de citire
         user = get_current_user()
-        user_context = ''
+        context_utilizator = ''
         if user:
             read_rows = db.session.execute(
                 text("SELECT c.titlu, c.autor FROM carti_citite cc JOIN carti c ON cc.carte_id = c.carte_id WHERE cc.user_id = :uid"),
                 {'uid': user['user_id']}
             ).fetchall()
             if read_rows:
-                user_context = '\nCărți citite de utilizatorul curent: ' + ', '.join(f'"{r[0]}"' for r in read_rows) + '\n'
+                context_utilizator = '\nCărți citite de utilizatorul curent: ' + ', '.join(f'"{r[0]}"' for r in read_rows) + '\n'
 
         prompt = (
             "Ești asistentul virtual al bibliotecii școlii CNI Suceava. "
             "Răspunzi scurt, prietenos și în română. "
             "Folosește DOAR informațiile din catalogul de mai jos — nu inventa cărți sau autori.\n\n"
             f"CATALOG COMPLET:\n{book_list}\n"
-            f"{user_context}\n"
+            f"{context_utilizator}\n"
             f"Întrebarea utilizatorului: {message}"
         )
-        reply = _groq_chat(client, prompt)
-        return jsonify({'success': True, 'reply': reply}), 200
+        raspuns_ai = _groq_chat(client, prompt)
+        return jsonify({'success': True, 'reply': raspuns_ai}), 200
     except Exception:
-        logger.exception('AI chat failed')
-        return jsonify({'success': False, 'message': 'AI request failed'}), 500
+        logger.exception('Eroare AI chat')
+        return jsonify({'success': False, 'message': 'Cererea AI a eșuat'}), 500

@@ -27,9 +27,7 @@ def create_app(config_name=None):
     
     # Create database tables
     with app.app_context():
-        # Import models to register them with SQLAlchemy
-        from app.models import Carti, Users, CartiCitite, Recenzii
-        # Note: Tables already exist in the database, so we don't call db.create_all()
+        from app.models import Carti, Users, CartiCitite, Recenzii, ImprumuturiActive
     
     # Register blueprints
     from app.routes import main_bp

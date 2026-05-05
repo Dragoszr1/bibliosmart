@@ -1,10 +1,10 @@
-"""Database models for the library application"""
+"""Modele SQLAlchemy pentru baza de date a bibliotecii."""
 
-# Import db from the database module
+# Importăm obiectul db din modulul database
 from app.database import db
 
 class Carti(db.Model):
-    """Books table model - matches existing 'carti' table"""
+    """Modelul tabelei carti din baza de date."""
     __tablename__ = 'carti'
 
     carte_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -15,12 +15,13 @@ class Carti(db.Model):
     stoc_disponibil = db.Column(db.Integer)
     imprumutat = db.Column(db.Boolean)
     gen = db.Column(db.String(255), nullable=False)
+    pozitie = db.Column(db.String(100), nullable=True)
 
     def __repr__(self):
         return f'<Carti {self.titlu}>'
 
 class Users(db.Model):
-    """Users table model - matches existing 'users' table"""
+    """Modelul tabelei users din baza de date."""
     __tablename__ = 'users'
 
     user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -35,7 +36,7 @@ class Users(db.Model):
         return f'<Users {self.username}>'
 
 class CartiCitite(db.Model):
-    """Books read table model - matches existing 'carti_citite' table"""
+    """Modelul tabelei carti_citite — cărți citite/returnate per utilizator."""
     __tablename__ = 'carti_citite'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -46,7 +47,7 @@ class CartiCitite(db.Model):
         return f'<CartiCitite user:{self.user_id} carte:{self.carte_id}>'
 
 class Recenzii(db.Model):
-    """Reviews table model - matches existing 'recenzii' table"""
+    """Modelul tabelei recenzii — notă și comentariu per carte per utilizator."""
     __tablename__ = 'recenzii'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -59,7 +60,7 @@ class Recenzii(db.Model):
         return f'<Recenzii user:{self.user_id} carte:{self.carte_id} nota:{self.nota}>'
 
 class Anunturi(db.Model):
-    """Announcements table model"""
+    """Modelul tabelei anunturi — anunțuri publicate de bibliotecar."""
     __tablename__ = 'anunturi'
 
     anunt_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -72,16 +73,19 @@ class Anunturi(db.Model):
         return f'<Anunturi {self.anunt_id}: {self.titlu}>'
 
 class AnunturiAprecieri(db.Model):
-    """Announcement likes tracking table"""
+    """Modelul tabelei anunturi_aprecieri — aprecierile utilizatorilor la anunțuri."""
     __tablename__ = 'anunturi_aprecieri'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     anunt_id = db.Column(db.Integer, nullable=False)
     user_id = db.Column(db.Integer, nullable=False)
 
+    def __repr__(self):
+        return f'<AnunturiAprecieri anunt:{self.anunt_id} user:{self.user_id}>'
+
 
 class CereriCarti(db.Model):
-    """Book borrow requests table"""
+    """Modelul tabelei cereri_carti — cereri de împrumut fizic."""
     __tablename__ = 'cereri_carti'
 
     cerere_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -94,5 +98,16 @@ class CereriCarti(db.Model):
     def __repr__(self):
         return f'<CereriCarti {self.cerere_id}: user={self.user_id} carte={self.carte_id} status={self.status}>'
 
+
+class ImprumuturiActive(db.Model):
+    """Modelul tabelei imprumuturi_active — împrumuturi aprobate și active."""
+    __tablename__ = 'imprumuturi_active'
+
+    imprumut_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), nullable=False)
+    carte_id = db.Column(db.Integer, db.ForeignKey('carti.carte_id', ondelete='CASCADE'), nullable=False)
+    data_imprumut = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    data_scadenta = db.Column(db.DateTime, nullable=False)
+
     def __repr__(self):
-        return f'<AnunturiAprecieri anunt:{self.anunt_id} user:{self.user_id}>'
+        return f'<ImprumuturiActive {self.imprumut_id}: user={self.user_id} carte={self.carte_id} scadenta={self.data_scadenta}>'

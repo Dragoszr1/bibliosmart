@@ -39,7 +39,7 @@ const router = createRouter({
   routes
 })
 
-// Navigation guard — check JWT session for protected routes
+// Guard de navigare — verifică sesiunea JWT pentru rutele protejate
 router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAuth) {
     try {

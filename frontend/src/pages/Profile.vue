@@ -329,6 +329,7 @@
                   <th class="px-3 sm:px-4 py-3 font-semibold">Titlu</th>
                   <th class="px-3 sm:px-4 py-3 font-semibold hidden sm:table-cell">Autor</th>
                   <th class="px-3 sm:px-4 py-3 font-semibold hidden md:table-cell">Gen</th>
+                  <th class="px-3 sm:px-4 py-3 font-semibold hidden lg:table-cell">Poziție</th>
                   <th class="px-3 sm:px-4 py-3 font-semibold text-center">Stoc</th>
                   <th class="px-3 sm:px-4 py-3 font-semibold text-center">Disponibil</th>
                   <th class="px-3 sm:px-4 py-3 font-semibold text-center">Acțiuni</th>
@@ -366,6 +367,8 @@
                   <td class="px-3 sm:px-4 py-3 hidden md:table-cell">
                     <span class="bg-cream text-secondary px-2 py-1 rounded-md text-xs font-medium">{{ book.gen }}</span>
                   </td>
+                  <!-- Position -->
+                  <td class="px-3 sm:px-4 py-3 hidden lg:table-cell text-gray-600 text-xs">{{ book.pozitie || '—' }}</td>
                   <!-- Stock Total -->
                   <td class="px-3 sm:px-4 py-3 text-center font-bold text-secondary">{{ book.stoc_total }}</td>
                   <!-- Stock Available -->
@@ -596,6 +599,10 @@
             <label class="block text-dark font-semibold mb-1 text-sm">Gen *</label>
             <input v-model="addForm.gen" type="text" required class="input-field text-sm">
           </div>
+          <div>
+            <label class="block text-dark font-semibold mb-1 text-sm">Poziție în bibliotecă</label>
+            <input v-model="addForm.pozitie" type="text" placeholder="ex: Raft A3, Sala 2" class="input-field text-sm">
+          </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-dark font-semibold mb-1 text-sm">Stoc Total</label>
@@ -643,6 +650,10 @@
           <div>
             <label class="block text-dark font-semibold mb-1 text-sm">Gen</label>
             <input v-model="editBookForm.gen" type="text" class="input-field text-sm">
+          </div>
+          <div>
+            <label class="block text-dark font-semibold mb-1 text-sm">Poziție în bibliotecă</label>
+            <input v-model="editBookForm.pozitie" type="text" placeholder="ex: Raft A3, Sala 2" class="input-field text-sm">
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -1009,7 +1020,7 @@ export default {
   name: 'Profile',
   data() {
     return {
-      // ── User profile ──
+      // ── Profilul utilizatorului ──
       user: {
         name: '',
         profilePicture: 'https://api.dicebear.com/9.x/lorelei-neutral/svg?seed=default',
@@ -1030,7 +1041,7 @@ export default {
       editDescription: '',
       profileMsg: { error: '', success: '' },
       savingDescription: false,
-      // ── Librarian panel ──
+      // ── Panoul bibliotecarului ──
       bookRequests: [],
       loadingRequests: false,
       requestFilter: 'pending',
@@ -1050,11 +1061,11 @@ export default {
       bookImageCarteId: null,
       // Add book
       addBookOpen: false,
-      addForm: { titlu: '', autor: '', ISBN: '', gen: '', stoc_total: 1, stoc_disponibil: 1 },
+      addForm: { titlu: '', autor: '', ISBN: '', gen: '', stoc_total: 1, stoc_disponibil: 1, pozitie: '' },
       addMsg: { error: '', success: '' },
       // Edit book
       editBookOpen: false,
-      editBookForm: { carte_id: null, titlu: '', autor: '', ISBN: '', gen: '', stoc_total: 0, stoc_disponibil: 0 },
+      editBookForm: { carte_id: null, titlu: '', autor: '', ISBN: '', gen: '', stoc_total: 0, stoc_disponibil: 0, pozitie: '' },
       editBookMsg: { error: '', success: '' },
       // Stock quick-edit
       stockModalOpen: false,
@@ -1064,7 +1075,7 @@ export default {
       deleteBookOpen: false,
       deleteTarget: null,
       deleteMsg: { error: '' },
-      // ── Announcements ──
+      // ── Anunțuri ──
       allAnunturi: [],
       loadingAnunturi: false,
       // Add announcement
@@ -1079,7 +1090,7 @@ export default {
       deleteAnuntOpen: false,
       deleteAnuntTarget: null,
       deleteAnuntMsg: { error: '' },
-      // ── Users list (bibliotecar) ──
+      // ── Lista utilizatorilor (bibliotecar) ──
       usersListOpen: false,
       allUsers: [],
       loadingUsers: false,
@@ -1107,7 +1118,7 @@ export default {
     this.loadProfile()
   },
   methods: {
-    // ═══════════ PROFILE METHODS ═══════════
+    // ═══════════ METODE PROFIL ═══════════
     openProfileEditModal() {
       this.editDescription = this.user.description || ''
       this.profileMsg = { error: '', success: '' }
@@ -1175,7 +1186,7 @@ export default {
         this.user.description = data.description || null
         this.loadProfilePicture(data.username)
 
-        // Check role
+        // Verificăm rolul
         const meRes = await fetch('/api/auth/me', { credentials: 'include' })
         if (meRes.ok) {
           const me = await meRes.json()
@@ -1184,10 +1195,10 @@ export default {
 
         if (data.user_id) {
           this.loadBooksRead()
-          this.loadUserReviews(data.user_id)
+          this.loadUserReviews()
         }
 
-        // Load librarian panel data
+        // Încărcăm datele panoului bibliotecarului
         if (this.isBibliotecar) {
           this.fetchBookRequests()
           this.fetchAllBooks()
@@ -1210,10 +1221,10 @@ export default {
         console.error('Books read fetch error:', error)
       }
     },
-    async loadUserReviews(userId) {
+    async loadUserReviews() {
       this.loadingReviews = true
       try {
-        const response = await fetch(`/api/reviews/user?user_id=${userId}`)
+        const response = await fetch('/api/reviews/user', { credentials: 'include' })
         const data = await response.json()
         if (response.ok && data.reviews) {
           this.user.userReviews = data.reviews
@@ -1225,7 +1236,7 @@ export default {
       }
     },
 
-    // ═══════════ LIBRARIAN METHODS ═══════════
+    // ═══════════ METODE BIBLIOTECAR ═══════════
 
     async downloadReport() {
       this.downloadingReport = true
@@ -1250,7 +1261,7 @@ export default {
       }
     },
 
-    // ── AI Recommendations ──
+    // ── Recomandări AI ──
     async loadAiRecommendations() {
       this.loadingAi = true
       this.aiError = ''
@@ -1274,7 +1285,7 @@ export default {
       }
     },
 
-    // ── Book Requests ──
+    // ── Cereri de împrumut ──
     async fetchBookRequests() {
       this.loadingRequests = true
       try {
@@ -1293,7 +1304,7 @@ export default {
     openPickupModal(req) {
       this.pickupReq = req
       this.pickupError = ''
-      // Default: today at 08:00 → today at 14:00
+      // Implicit: azi la 08:00 → azi la 14:00
       const now = new Date()
       const pad = n => String(n).padStart(2, '0')
       const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`
@@ -1363,7 +1374,7 @@ export default {
       return d.toLocaleDateString('ro-RO', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
     },
 
-    // ── Books ──
+    // ── Cărți ──
     async fetchAllBooks() {
       this.loadingBooks = true
       try {
@@ -1393,9 +1404,9 @@ export default {
       )
     },
 
-    // ── Add Book ──
+    // ── Adăugare carte ──
     openAddBookModal() {
-      this.addForm = { titlu: '', autor: '', ISBN: '', gen: '', stoc_total: 1, stoc_disponibil: 1 }
+      this.addForm = { titlu: '', autor: '', ISBN: '', gen: '', stoc_total: 1, stoc_disponibil: 1, pozitie: '' }
       this.addMsg = { error: '', success: '' }
       this.addBookOpen = true
     },
@@ -1421,7 +1432,7 @@ export default {
       }
     },
 
-    // ── Edit Book ──
+    // ── Editare carte ──
     openEditBookModal(book) {
       this.editBookForm = {
         carte_id: book.carte_id,
@@ -1430,7 +1441,8 @@ export default {
         ISBN: book.ISBN,
         gen: book.gen,
         stoc_total: book.stoc_total,
-        stoc_disponibil: book.stoc_disponibil
+        stoc_disponibil: book.stoc_disponibil,
+        pozitie: book.pozitie || ''
       }
       this.editBookMsg = { error: '', success: '' }
       this.editBookOpen = true
@@ -1458,7 +1470,7 @@ export default {
       }
     },
 
-    // ── Quick Stock Update ──
+    // ── Actualizare rapidă stoc ──
     openStockModal(book) {
       this.stockForm = {
         carte_id: book.carte_id,
@@ -1494,7 +1506,7 @@ export default {
       }
     },
 
-    // ── Delete Book ──
+    // ── Ștergere carte ──
     confirmDeleteBook(book) {
       this.deleteTarget = book
       this.deleteMsg = { error: '' }
@@ -1519,7 +1531,7 @@ export default {
       }
     },
 
-    // ── Book Image Upload ──
+    // ── Încărcare copertă carte ──
     triggerBookImageInput(carteId) {
       this.bookImageCarteId = carteId
       this.$refs.bookImageInput.click()
@@ -1546,7 +1558,7 @@ export default {
       this.bookImageCarteId = null
     },
 
-    // ═══════════ ANNOUNCEMENT METHODS ═══════════
+    // ═══════════ METODE ANUNȚURI ═══════════
     async fetchAllAnunturi() {
       this.loadingAnunturi = true
       try {
@@ -1562,7 +1574,7 @@ export default {
       }
     },
 
-    // ── Add Announcement ──
+    // ── Adăugare anunț ──
     openAddAnuntModal() {
       this.addAnuntForm = { titlu: '', anunt: '' }
       this.addAnuntMsg = { error: '', success: '' }
@@ -1590,7 +1602,7 @@ export default {
       }
     },
 
-    // ── Edit Announcement ──
+    // ── Editare anunț ──
     openEditAnuntModal(a) {
       this.editAnuntForm = {
         anunt_id: a.anunt_id,
@@ -1623,7 +1635,7 @@ export default {
       }
     },
 
-    // ── Delete Announcement ──
+    // ── Ștergere anunț ──
     confirmDeleteAnunt(a) {
       this.deleteAnuntTarget = a
       this.deleteAnuntMsg = { error: '' }
@@ -1648,7 +1660,7 @@ export default {
       }
     },
 
-    // ═══════════ USER ACCOUNTS METHODS ═══════════
+    // ═══════════ METODE CONTURI UTILIZATORI ═══════════
     async openUsersListModal() {
       this.usersSearch = ''
       this.usersListOpen = true
