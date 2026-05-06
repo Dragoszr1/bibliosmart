@@ -472,6 +472,62 @@
           </div>
         </div>
 
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- INVITAȚII CLUB DE LITERATURĂ (bibliotecar only) -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="mt-8">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+            <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
+              <i class="pi pi-bookmark text-secondary"></i> Invitații Club de Literatură
+            </h2>
+          </div>
+          <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-6">
+            <p class="text-sm text-gray-500 mb-4">Generează un link de invitație pe care îl poți trimite elevilor. Link-ul îi va adăuga automat în clubul de literatură.</p>
+            <div class="flex flex-wrap gap-3 mb-5">
+              <label class="text-xs font-semibold text-gray-600 self-center">Valabilitate:</label>
+              <button
+                v-for="opt in inviteOptions"
+                :key="opt.value"
+                @click="inviteExpiry = opt.value"
+                :class="inviteExpiry === opt.value
+                  ? 'bg-secondary text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+              >
+                {{ opt.label }}
+              </button>
+            </div>
+            <button
+              @click="generateInviteLink"
+              :disabled="inviteLoading"
+              class="px-5 py-2.5 bg-secondary hover:bg-secondary/90 disabled:opacity-60 text-white font-semibold rounded-lg text-sm transition-all flex items-center gap-2"
+            >
+              <i :class="inviteLoading ? 'pi pi-spin pi-spinner' : 'pi pi-link'" class="text-xs"></i>
+              Generează link
+            </button>
+            <div v-if="generatedInviteLink" class="mt-5">
+              <label class="block text-xs font-semibold text-gray-600 mb-2">Link generat (expiră {{ inviteExpiresAt }}):</label>
+              <div class="flex gap-2">
+                <input
+                  :value="generatedInviteLink"
+                  readonly
+                  class="input-field flex-1 text-xs font-mono bg-gray-50 cursor-text"
+                />
+                <button
+                  @click="copyInviteLink"
+                  class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-dark font-semibold rounded-xl text-xs transition-colors flex items-center gap-1"
+                >
+                  <i :class="inviteCopied ? 'pi pi-check text-green-600' : 'pi pi-copy'"></i>
+                  {{ inviteCopied ? 'Copiat!' : 'Copiază' }}
+                </button>
+              </div>
+            </div>
+            <div v-if="inviteError" class="mt-4 bg-accent/10 border-l-4 border-accent rounded-lg p-3">
+              <p class="text-accent text-xs">{{ inviteError }}</p>
+            </div>
+          </div>
+        </div>
+
       </div>
     </main>
 
@@ -1067,6 +1123,18 @@ export default {
       loadingBooks: false,
       imageCacheBust: Date.now(),
       bookImageCarteId: null,
+      // Invitații club
+      inviteExpiry: 24,
+      inviteOptions: [
+        { label: '1 oră', value: 1 },
+        { label: '24 ore', value: 24 },
+        { label: '7 zile', value: 168 }
+      ],
+      inviteLoading: false,
+      generatedInviteLink: '',
+      inviteExpiresAt: '',
+      inviteCopied: false,
+      inviteError: '',
       // Add book
       addBookOpen: false,
       addForm: { titlu: '', autor: '', ISBN: '', gen: '', stoc_total: 1, stoc_disponibil: 1, pozitie: '', cod: '' },
@@ -1700,6 +1768,42 @@ export default {
         console.error('Error fetching user detail:', error)
       } finally {
         this.loadingUserDetail = false
+      }
+    },
+
+    // ═══════════ METODE INVITAȚII CLUB ═══════════
+    async generateInviteLink() {
+      this.inviteLoading = true
+      this.inviteError = ''
+      this.generatedInviteLink = ''
+      this.inviteCopied = false
+      try {
+        const res = await fetch('/api/club/invite', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ expires_in_hours: this.inviteExpiry })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+          this.inviteError = data.message || 'Eroare la generarea link-ului.'
+        } else {
+          this.generatedInviteLink = window.location.origin + '/club/join/' + data.token
+          this.inviteExpiresAt = data.expires_at
+        }
+      } catch {
+        this.inviteError = 'Eroare de rețea. Încearcă din nou.'
+      } finally {
+        this.inviteLoading = false
+      }
+    },
+    async copyInviteLink() {
+      try {
+        await navigator.clipboard.writeText(this.generatedInviteLink)
+        this.inviteCopied = true
+        setTimeout(() => { this.inviteCopied = false }, 2500)
+      } catch {
+        this.inviteError = 'Nu s-a putut copia. Copiază manual.'
       }
     }
   }

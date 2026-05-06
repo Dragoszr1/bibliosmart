@@ -117,7 +117,8 @@ export default {
         if (response.ok) {
           this.successMessage = 'Conectare reușită! Se redirecționează...'
           setTimeout(() => {
-            this.$router.push('/')
+            const redirect = this.$route.query.redirect
+            this.$router.push(redirect && redirect.startsWith('/') ? redirect : '/')
           }, 1500)
         } else {
           this.errorMessage = data.message || 'Email sau parolă invalidă'

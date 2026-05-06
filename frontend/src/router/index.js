@@ -5,6 +5,7 @@ import Login from '../pages/Login.vue'
 import Signup from '../pages/Signup.vue'
 import Books from '../pages/Books.vue'
 import Club from '../pages/Club.vue'
+import ClubJoin from '../pages/ClubJoin.vue'
 
 const routes = [
   {
@@ -38,6 +39,11 @@ const routes = [
     component: Club,
     name: 'Club',
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/club/join/:token',
+    component: ClubJoin,
+    name: 'ClubJoin'
   }
 ]
 
@@ -54,10 +60,10 @@ router.beforeEach(async (to, from, next) => {
       if (res.ok) {
         next()
       } else {
-        next('/login')
+        next({ path: '/login', query: { redirect: to.fullPath } })
       }
     } catch {
-      next('/login')
+      next({ path: '/login', query: { redirect: to.fullPath } })
     }
   } else {
     next()

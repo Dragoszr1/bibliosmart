@@ -9,6 +9,7 @@ import io
 import os
 import logging
 import re
+import secrets
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from groq import Groq
@@ -1616,3 +1617,81 @@ def ai_chat():
     except Exception:
         logger.exception('Eroare AI chat')
         return jsonify({'success': False, 'message': 'Cererea AI a eșuat'}), 500
+
+
+# ── Rute Club de Literatură ────────────────────────────────────
+
+MAX_INVITE_HOURS = 168  # 7 zile
+
+@main_bp.route('/club/invite', methods=['POST'])
+@bibliotecar_required
+def create_club_invite():
+    """Generează un link de invitație la club. Necesită rol de bibliotecar."""
+    data = request.get_json(silent=True) or {}
+    try:
+        expires_in_hours = int(data.get('expires_in_hours', 24))
+    except (ValueError, TypeError):
+        expires_in_hours = 24
+
+    expires_in_hours = max(1, min(expires_in_hours, MAX_INVITE_HOURS))
+
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.datetime.utcnow() + datetime.timedelta(hours=expires_in_hours)
+    user = request.current_user
+
+    try:
+        db.session.execute(
+            text("INSERT INTO club_invites (token, created_by, expires_at) VALUES (:token, :uid, :exp)"),
+            {'token': token, 'uid': user['user_id'], 'exp': expires_at}
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception('Eroare la crearea invitației de club')
+        return jsonify({'success': False, 'message': 'Eroare la generarea link-ului'}), 500
+
+    return jsonify({
+        'success': True,
+        'token': token,
+        'expires_at': expires_at.strftime('%d.%m.%Y %H:%M'),
+        'expires_in_hours': expires_in_hours
+    }), 201
+
+
+@main_bp.route('/club/join/<token>', methods=['POST'])
+@jwt_required
+def join_club(token):
+    """Validează un token de invitație și adaugă utilizatorul în club."""
+    user = request.current_user
+
+    try:
+        row = db.session.execute(
+            text("SELECT expires_at FROM club_invites WHERE token = :token"),
+            {'token': token}
+        ).fetchone()
+
+        if not row:
+            return jsonify({'success': False, 'message': 'Link de invitație invalid'}), 404
+
+        if datetime.datetime.utcnow() > row[0]:
+            return jsonify({'success': False, 'message': 'Link-ul de invitație a expirat'}), 410
+
+        # Verificăm dacă e deja în club
+        member_row = db.session.execute(
+            text("SELECT club FROM users WHERE user_id = :uid"),
+            {'uid': user['user_id']}
+        ).fetchone()
+
+        if member_row and member_row[0]:
+            return jsonify({'success': True, 'already_member': True, 'message': 'Ești deja membru al clubului'}), 200
+
+        db.session.execute(
+            text("UPDATE users SET club = 1 WHERE user_id = :uid"),
+            {'uid': user['user_id']}
+        )
+        db.session.commit()
+        return jsonify({'success': True, 'already_member': False, 'message': 'Bun venit în Clubul de Literatură!'}), 200
+    except Exception:
+        db.session.rollback()
+        logger.exception('Eroare la join club pentru token %s', token)
+        return jsonify({'success': False, 'message': 'Eroare la procesarea invitației'}), 500
