@@ -16,6 +16,7 @@ class Carti(db.Model):
     imprumutat = db.Column(db.Boolean)
     gen = db.Column(db.String(255), nullable=False)
     pozitie = db.Column(db.String(100), nullable=True)
+    cod = db.Column(db.String(50), nullable=True)
 
     def __repr__(self):
         return f'<Carti {self.titlu}>'
@@ -31,6 +32,7 @@ class Users(db.Model):
     rol = db.Column(db.Enum('user', 'bibliotecar', name='user_role'), nullable=False, default='user')
     telefon = db.Column(db.String(50), nullable=True, unique=True)
     description = db.Column(db.String(255), nullable=True)
+    club = db.Column(db.Boolean, nullable=False, default=False)
 
     def __repr__(self):
         return f'<Users {self.username}>'

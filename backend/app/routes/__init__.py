@@ -24,7 +24,7 @@ main_bp = Blueprint('main', __name__, url_prefix='/api')
 ALLOWED_EXTENSIONS = frozenset({'png', 'jpg', 'jpeg', 'gif', 'webp'})
 ALLOWED_EMAIL_DOMAIN = 'cni-sv.ro'
 VALID_ROLES = frozenset({'user', 'bibliotecar'})
-ALLOWED_BOOK_FIELDS = frozenset({'titlu', 'autor', 'ISBN', 'stoc_total', 'stoc_disponibil', 'gen', 'pozitie'})
+ALLOWED_BOOK_FIELDS = frozenset({'titlu', 'autor', 'ISBN', 'stoc_total', 'stoc_disponibil', 'gen', 'pozitie', 'cod'})
 ALLOWED_ANUNT_FIELDS = frozenset({'titlu', 'anunt'})
 
 logger = logging.getLogger(__name__)
@@ -269,7 +269,7 @@ def index():
 def get_books():
     """Returnează toate cărțile din catalogul bibliotecii."""
     try:
-        result = db.session.execute(text('SELECT carte_id, titlu, autor, ISBN, stoc_total, stoc_disponibil, imprumutat, gen, pozitie FROM carti'))
+        result = db.session.execute(text('SELECT carte_id, titlu, autor, ISBN, stoc_total, stoc_disponibil, imprumutat, gen, pozitie, cod FROM carti'))
         books = []
         for row in result:
             books.append({
@@ -281,7 +281,8 @@ def get_books():
                 'stoc_disponibil': row[5],
                 'imprumutat': row[6],
                 'gen': row[7],
-                'pozitie': row[8]
+                'pozitie': row[8],
+                'cod': row[9]
             })
         return jsonify({'books': books}), 200
     except Exception:
@@ -301,13 +302,14 @@ def add_book():
     stoc_disponibil = data.get('stoc_disponibil', stoc_total)
     gen = data.get('gen')
     pozitie = data.get('pozitie') or None
+    cod = data.get('cod') or None
 
     if not titlu or not autor or not isbn or not gen:
         return jsonify({'success': False, 'message': 'titlu, autor, ISBN și gen sunt obligatorii'}), 400
 
     insert_query = text(
-        "INSERT INTO carti (titlu, autor, ISBN, stoc_total, stoc_disponibil, imprumutat, gen, pozitie) "
-        "VALUES (:titlu, :autor, :ISBN, :stoc_total, :stoc_disponibil, :imprumutat, :gen, :pozitie)"
+        "INSERT INTO carti (titlu, autor, ISBN, stoc_total, stoc_disponibil, imprumutat, gen, pozitie, cod) "
+        "VALUES (:titlu, :autor, :ISBN, :stoc_total, :stoc_disponibil, :imprumutat, :gen, :pozitie, :cod)"
     )
     try:
         db.session.execute(insert_query, {
@@ -318,7 +320,8 @@ def add_book():
             'stoc_disponibil': stoc_disponibil,
             'imprumutat': stoc_disponibil < stoc_total,
             'gen': gen,
-            'pozitie': pozitie
+            'pozitie': pozitie,
+            'cod': cod
         })
         db.session.commit()
     except IntegrityError:
@@ -1006,12 +1009,18 @@ def login():
 def auth_me():
     """Returnează utilizatorul autentificat curent din cookie-ul JWT."""
     user = request.current_user
+    # Citim câmpul club direct din DB (nu e stocat în JWT)
+    row = db.session.execute(
+        text("SELECT club FROM users WHERE user_id = :uid"),
+        {'uid': user['user_id']}
+    ).fetchone()
     return jsonify({
         'success': True,
         'user_id': user['user_id'],
         'username': user['username'],
         'email': user['email'],
-        'rol': user['rol']
+        'rol': user['rol'],
+        'club': bool(row[0]) if row else False
     }), 200
 
 

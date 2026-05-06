@@ -4,6 +4,7 @@ import Profile from '../pages/Profile.vue'
 import Login from '../pages/Login.vue'
 import Signup from '../pages/Signup.vue'
 import Books from '../pages/Books.vue'
+import Club from '../pages/Club.vue'
 
 const routes = [
   {
@@ -31,6 +32,12 @@ const routes = [
     path: '/books',
     component: Books,
     name: 'Books'
+  },
+  {
+    path: '/club',
+    component: Club,
+    name: 'Club',
+    meta: { requiresAuth: true }
   }
 ]
 

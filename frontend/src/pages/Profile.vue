@@ -603,6 +603,10 @@
             <label class="block text-dark font-semibold mb-1 text-sm">Poziție în bibliotecă</label>
             <input v-model="addForm.pozitie" type="text" placeholder="ex: Raft A3, Sala 2" class="input-field text-sm">
           </div>
+          <div>
+            <label class="block text-dark font-semibold mb-1 text-sm">Cod</label>
+            <input v-model="addForm.cod" type="text" placeholder="ex: BIO-042" class="input-field text-sm">
+          </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-dark font-semibold mb-1 text-sm">Stoc Total</label>
@@ -654,6 +658,10 @@
           <div>
             <label class="block text-dark font-semibold mb-1 text-sm">Poziție în bibliotecă</label>
             <input v-model="editBookForm.pozitie" type="text" placeholder="ex: Raft A3, Sala 2" class="input-field text-sm">
+          </div>
+          <div>
+            <label class="block text-dark font-semibold mb-1 text-sm">Cod</label>
+            <input v-model="editBookForm.cod" type="text" placeholder="ex: BIO-042" class="input-field text-sm">
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -1061,11 +1069,11 @@ export default {
       bookImageCarteId: null,
       // Add book
       addBookOpen: false,
-      addForm: { titlu: '', autor: '', ISBN: '', gen: '', stoc_total: 1, stoc_disponibil: 1, pozitie: '' },
+      addForm: { titlu: '', autor: '', ISBN: '', gen: '', stoc_total: 1, stoc_disponibil: 1, pozitie: '', cod: '' },
       addMsg: { error: '', success: '' },
       // Edit book
       editBookOpen: false,
-      editBookForm: { carte_id: null, titlu: '', autor: '', ISBN: '', gen: '', stoc_total: 0, stoc_disponibil: 0, pozitie: '' },
+      editBookForm: { carte_id: null, titlu: '', autor: '', ISBN: '', gen: '', stoc_total: 0, stoc_disponibil: 0, pozitie: '', cod: '' },
       editBookMsg: { error: '', success: '' },
       // Stock quick-edit
       stockModalOpen: false,
@@ -1406,7 +1414,7 @@ export default {
 
     // ── Adăugare carte ──
     openAddBookModal() {
-      this.addForm = { titlu: '', autor: '', ISBN: '', gen: '', stoc_total: 1, stoc_disponibil: 1, pozitie: '' }
+      this.addForm = { titlu: '', autor: '', ISBN: '', gen: '', stoc_total: 1, stoc_disponibil: 1, pozitie: '', cod: '' }
       this.addMsg = { error: '', success: '' }
       this.addBookOpen = true
     },
@@ -1442,7 +1450,8 @@ export default {
         gen: book.gen,
         stoc_total: book.stoc_total,
         stoc_disponibil: book.stoc_disponibil,
-        pozitie: book.pozitie || ''
+        pozitie: book.pozitie || '',
+        cod: book.cod || ''
       }
       this.editBookMsg = { error: '', success: '' }
       this.editBookOpen = true

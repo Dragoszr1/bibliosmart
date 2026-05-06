@@ -36,6 +36,14 @@
           >
             Profil
           </router-link>
+          <router-link
+            v-if="inClub"
+            to="/club"
+            class="px-4 py-2 text-sm font-medium text-white/70 hover:text-white rounded-lg hover:bg-white/5 transition-all duration-150"
+            active-class="!text-white bg-white/10"
+          >
+            Club
+          </router-link>
 
           <div class="w-px h-6 bg-white/10 mx-2"></div>
 
@@ -75,6 +83,9 @@
           <router-link v-if="isLoggedIn" to="/profile" @click="mobileMenuOpen = false" class="block px-4 py-2.5 text-sm font-medium text-white/70 hover:text-white rounded-lg hover:bg-white/5 transition-all">
             Profil
           </router-link>
+          <router-link v-if="inClub" to="/club" @click="mobileMenuOpen = false" class="block px-4 py-2.5 text-sm font-medium text-white/70 hover:text-white rounded-lg hover:bg-white/5 transition-all">
+            Club
+          </router-link>
           <div class="pt-2 border-t border-white/5">
             <button 
               @click="handleAuthClick"
@@ -100,6 +111,7 @@ export default {
   data() {
     return {
       isLoggedIn: false,
+      inClub: false,
       mobileMenuOpen: false
     }
   },
@@ -115,9 +127,17 @@ export default {
     async checkAuth() {
       try {
         const response = await fetch('/api/auth/me', { credentials: 'include' })
-        this.isLoggedIn = response.ok
+        if (response.ok) {
+          const data = await response.json()
+          this.isLoggedIn = true
+          this.inClub = !!data.club
+        } else {
+          this.isLoggedIn = false
+          this.inClub = false
+        }
       } catch {
         this.isLoggedIn = false
+        this.inClub = false
       }
     },
     async handleAuthClick() {
@@ -126,6 +146,7 @@ export default {
           await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
         } catch { /* ignore */ }
         this.isLoggedIn = false
+        this.inClub = false
         this.mobileMenuOpen = false
         this.$router.push('/')
       } else {
