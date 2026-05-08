@@ -5,56 +5,47 @@
       <!-- Header -->
       <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 class="text-2xl sm:text-3xl font-bold text-dark flex items-center gap-2">
-            <i class="pi pi-bookmark-fill text-secondary"></i> Club de Literatură
-          </h1>
-          <p class="text-gray-500 text-sm mt-1">Activitățile săptămânii curente</p>
-        </div>
-        <div class="flex flex-wrap gap-2 self-start">
-          <router-link
-            to="/club/anterioare"
-            class="px-4 py-2.5 border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold rounded-xl text-sm transition-all flex items-center gap-2"
-          >
-            <i class="pi pi-history text-xs"></i> Săptămâna anterioară
+          <router-link to="/club" class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-secondary mb-2 transition-colors">
+            <i class="pi pi-arrow-left text-[10px]"></i> Înapoi la club
           </router-link>
-          <button
-            v-if="isBibliotecar"
-            @click="openAddModal"
-            class="px-5 py-2.5 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2"
-          >
-            <i class="pi pi-plus text-xs"></i> Activitate nouă
-          </button>
+          <h1 class="text-2xl sm:text-3xl font-bold text-dark flex items-center gap-2">
+            <i class="pi pi-history text-secondary"></i> Săptămâna anterioară
+          </h1>
+          <p class="text-gray-500 text-sm mt-1">Activitățile și sarcinile din săptămâna trecută</p>
         </div>
+        <button
+          v-if="isBibliotecar"
+          @click="openAddModal"
+          class="px-5 py-2.5 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2 self-start"
+        >
+          <i class="pi pi-plus text-xs"></i> Activitate nouă
+        </button>
       </div>
 
-      <!-- Loading state -->
+      <!-- Loading -->
       <div v-if="loading" class="text-center py-20 text-gray-400">
         <i class="pi pi-spin pi-spinner text-3xl mb-3 block"></i>
         <p class="text-sm">Se încarcă activitățile...</p>
       </div>
 
-      <!-- Error state -->
+      <!-- Error -->
       <div v-else-if="loadError" class="bg-accent/10 border-l-4 border-accent rounded-xl p-4 text-accent text-sm">
         {{ loadError }}
       </div>
 
-      <!-- Empty state -->
+      <!-- Empty -->
       <div v-else-if="activitati.length === 0" class="text-center py-20 text-gray-400">
         <i class="pi pi-calendar text-4xl mb-3 block text-gray-200"></i>
-        <p class="text-sm">Nicio activitate pentru săptămâna curentă.</p>
-        <p v-if="isBibliotecar" class="text-xs mt-1 text-secondary cursor-pointer hover:underline" @click="openAddModal">
-          Adaugă prima activitate →
-        </p>
+        <p class="text-sm">Nicio activitate înregistrată pentru săptămâna anterioară.</p>
       </div>
 
-      <!-- Activity feed -->
+      <!-- Feed -->
       <div v-else class="space-y-6">
         <div
           v-for="act in activitati"
           :key="act.activitate_id"
           class="bg-white rounded-2xl shadow-card border border-gray-100"
         >
-          <!-- Activity header -->
           <div class="p-5 sm:p-6">
             <div class="flex items-start justify-between gap-3">
               <div class="flex-1 min-w-0">
@@ -82,7 +73,6 @@
               </button>
             </div>
 
-            <!-- Thread toggle -->
             <button
               @click="toggleThread(act.activitate_id)"
               class="mt-4 text-xs font-semibold text-secondary hover:underline flex items-center gap-1"
@@ -95,12 +85,10 @@
 
           <!-- Thread panel -->
           <div v-if="openThreads[act.activitate_id]" class="border-t border-gray-100 bg-gray-50 rounded-b-2xl px-5 sm:px-6 py-4 space-y-4">
-            <!-- Loading comments -->
             <div v-if="loadingThread[act.activitate_id]" class="text-center text-gray-400 text-sm py-4">
               <i class="pi pi-spin pi-spinner mr-1"></i> Se încarcă...
             </div>
 
-            <!-- Comment list -->
             <div
               v-for="com in (threadData[act.activitate_id] || [])"
               :key="com.comentariu_id"
@@ -127,12 +115,10 @@
               </button>
             </div>
 
-            <!-- No comments yet -->
             <p v-if="!loadingThread[act.activitate_id] && (threadData[act.activitate_id] || []).length === 0" class="text-xs text-gray-400 text-center py-2">
-              Niciun comentariu încă. Fii primul!
+              Niciun comentariu încă.
             </p>
 
-            <!-- New comment input -->
             <div class="flex gap-2 pt-1">
               <input
                 v-model="newComment[act.activitate_id]"
@@ -156,16 +142,15 @@
       </div>
     </div>
 
-    <!-- Add Activity Modal -->
+    <!-- Add Activity Modal (bibliotecar) -->
     <div v-if="addModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="addModalOpen = false">
       <div class="w-full max-w-lg bg-white rounded-2xl shadow-modal p-6">
         <div class="flex items-center justify-between mb-5">
           <h2 class="text-lg font-bold text-dark flex items-center gap-2">
-            <i class="pi pi-plus-circle text-secondary"></i> Activitate nouă
+            <i class="pi pi-plus-circle text-secondary"></i> Activitate — săptămâna anterioară
           </h2>
           <button @click="addModalOpen = false" class="text-gray-400 hover:text-secondary text-2xl font-bold leading-none">&times;</button>
         </div>
-
         <div class="space-y-4">
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">Titlu *</label>
@@ -175,24 +160,18 @@
             <label class="block text-xs font-semibold text-gray-600 mb-1">Descriere</label>
             <textarea v-model="addForm.continut" rows="4" maxlength="5000" placeholder="Detalii, instrucțiuni, linkuri..." class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-secondary/40 resize-none"></textarea>
           </div>
-          <div class="flex gap-3">
-            <div class="flex-1">
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Tip</label>
-              <select v-model="addForm.tip" class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-secondary/40 bg-white">
-                <option value="activitate">Activitate</option>
-                <option value="sarcina">Sarcină</option>
-                <option value="anunt">Anunț</option>
-              </select>
-            </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Tip</label>
+            <select v-model="addForm.tip" class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-secondary/40 bg-white">
+              <option value="activitate">Activitate</option>
+              <option value="sarcina">Sarcină</option>
+              <option value="anunt">Anunț</option>
+            </select>
           </div>
         </div>
-
         <p v-if="addError" class="mt-3 text-xs text-accent">{{ addError }}</p>
-
         <div class="flex gap-3 mt-6">
-          <button @click="addModalOpen = false" class="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition-colors">
-            Anulează
-          </button>
+          <button @click="addModalOpen = false" class="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition-colors">Anulează</button>
           <button
             @click="submitActivity"
             :disabled="addSaving || !addForm.titlu.trim()"
@@ -205,7 +184,7 @@
       </div>
     </div>
 
-    <!-- Delete confirm modal -->
+    <!-- Delete confirm -->
     <div v-if="deleteTarget" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="deleteTarget = null">
       <div class="w-full max-w-sm bg-white rounded-2xl shadow-modal p-6 text-center">
         <i class="pi pi-exclamation-triangle text-3xl text-accent mb-3 block"></i>
@@ -224,28 +203,22 @@
 
 <script>
 export default {
-  name: 'Club',
+  name: 'ClubAnterioare',
   data() {
     return {
       loading: true,
       loadError: '',
       activitati: [],
       currentUser: null,
-
-      // Thread state (per activitate_id)
       openThreads: {},
       loadingThread: {},
       threadData: {},
       threadError: {},
       newComment: {},
-
-      // Add activity modal
       addModalOpen: false,
-      addForm: { titlu: '', continut: '', tip: 'activitate', saptamana: 'curenta' },
+      addForm: { titlu: '', continut: '', tip: 'activitate' },
       addError: '',
       addSaving: false,
-
-      // Delete
       deleteTarget: null,
       deleteSaving: false
     }
@@ -266,12 +239,11 @@ export default {
         if (res.ok) this.currentUser = await res.json()
       } catch { /* ignorăm */ }
     },
-
     async fetchActivitati() {
       this.loading = true
       this.loadError = ''
       try {
-        const res = await fetch('/api/club/activitati?saptamana=curenta', { credentials: 'include' })
+        const res = await fetch('/api/club/activitati?saptamana=anterioara', { credentials: 'include' })
         const data = await res.json()
         if (!res.ok) {
           this.loadError = data.message || 'Eroare la încărcarea activităților.'
@@ -284,16 +256,14 @@ export default {
         this.loading = false
       }
     },
-
     tipBadge(tip) {
       const map = {
-        anunt:      { label: 'Anunț',      icon: 'pi pi-megaphone', cls: 'bg-blue-50 text-blue-600' },
+        anunt:      { label: 'Anunț',      icon: 'pi pi-megaphone',    cls: 'bg-blue-50 text-blue-600' },
         sarcina:    { label: 'Sarcină',    icon: 'pi pi-check-square', cls: 'bg-amber-50 text-amber-600' },
-        activitate: { label: 'Activitate', icon: 'pi pi-star', cls: 'bg-secondary/10 text-secondary' }
+        activitate: { label: 'Activitate', icon: 'pi pi-star',         cls: 'bg-secondary/10 text-secondary' }
       }
       return map[tip] || map.activitate
     },
-
     async toggleThread(id) {
       const wasOpen = !!this.openThreads[id]
       this.openThreads = { ...this.openThreads, [id]: !wasOpen }
@@ -301,10 +271,9 @@ export default {
         await this.loadComments(id)
       }
     },
-
     async loadComments(activitateId) {
       this.loadingThread = { ...this.loadingThread, [activitateId]: true }
-      this.threadError = { ...this.threadError, [activitateId]: '' }
+      this.threadError   = { ...this.threadError,   [activitateId]: '' }
       try {
         const res = await fetch(`/api/club/activitati/${activitateId}/comentarii`, { credentials: 'include' })
         const data = await res.json()
@@ -315,7 +284,6 @@ export default {
         this.loadingThread = { ...this.loadingThread, [activitateId]: false }
       }
     },
-
     async submitComment(activitateId) {
       const text = (this.newComment[activitateId] || '').trim()
       if (!text) return
@@ -333,7 +301,6 @@ export default {
         } else {
           this.newComment = { ...this.newComment, [activitateId]: '' }
           await this.loadComments(activitateId)
-          // Update comment count in list
           const act = this.activitati.find(a => a.activitate_id === activitateId)
           if (act) act.nr_comentarii++
         }
@@ -341,12 +308,10 @@ export default {
         this.threadError = { ...this.threadError, [activitateId]: 'Eroare de rețea.' }
       }
     },
-
     canDeleteComment(com) {
       if (!this.currentUser) return false
       return com.user_id === this.currentUser.user_id || this.isBibliotecar
     },
-
     async deleteComment(activitateId, comentariuId) {
       try {
         await fetch(`/api/club/activitati/${activitateId}/comentarii/${comentariuId}`, {
@@ -358,13 +323,11 @@ export default {
         if (act && act.nr_comentarii > 0) act.nr_comentarii--
       } catch { /* ignorăm */ }
     },
-
     openAddModal() {
-      this.addForm = { titlu: '', continut: '', tip: 'activitate', saptamana: 'curenta' }
+      this.addForm = { titlu: '', continut: '', tip: 'activitate' }
       this.addError = ''
       this.addModalOpen = true
     },
-
     async submitActivity() {
       if (!this.addForm.titlu.trim()) return
       this.addSaving = true
@@ -374,7 +337,7 @@ export default {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.addForm)
+          body: JSON.stringify({ ...this.addForm, saptamana: 'anterioara' })
         })
         const data = await res.json()
         if (!res.ok) {
@@ -389,11 +352,9 @@ export default {
         this.addSaving = false
       }
     },
-
     confirmDelete(act) {
       this.deleteTarget = act
     },
-
     async executeDelete() {
       if (!this.deleteTarget) return
       this.deleteSaving = true

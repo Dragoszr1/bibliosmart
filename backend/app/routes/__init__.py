@@ -1695,3 +1695,201 @@ def join_club(token):
         db.session.rollback()
         logger.exception('Eroare la join club pentru token %s', token)
         return jsonify({'success': False, 'message': 'Eroare la procesarea invitației'}), 500
+
+
+# ── Activități & comentarii club ───────────────────────────────
+
+def club_required(f):
+    """Decorator — impune ca utilizatorul să fie autentificat ȘI membru al clubului."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = get_current_user()
+        if not user:
+            return jsonify({'success': False, 'message': 'Autentificare necesară'}), 401
+        request.current_user = user
+        if not user.get('club') and user.get('rol') != 'bibliotecar':
+            return jsonify({'success': False, 'message': 'Acces restricționat clubului'}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+
+SAPTAMANI_VALIDE = {'anterioara', 'curenta', 'urmatoare'}
+TIPURI_VALIDE    = {'anunt', 'sarcina', 'activitate'}
+
+
+@main_bp.route('/club/activitati', methods=['GET'])
+@club_required
+def get_activitati():
+    """Returnează activitățile clubului filtrate după săptămână."""
+    saptamana = request.args.get('saptamana', 'curenta')
+    if saptamana not in SAPTAMANI_VALIDE:
+        saptamana = 'curenta'
+    try:
+        rows = db.session.execute(
+            text("""
+                SELECT a.activitate_id, a.titlu, a.continut, a.tip, a.saptamana,
+                       a.creat_la, a.actualizat_la,
+                       u.username, u.rol,
+                       (SELECT COUNT(*) FROM comentarii_activitati c WHERE c.activitate_id = a.activitate_id) AS nr_comentarii
+                FROM activitati_club a
+                JOIN users u ON u.user_id = a.creat_de
+                WHERE a.saptamana = :s
+                ORDER BY a.creat_la DESC
+            """),
+            {'s': saptamana}
+        ).fetchall()
+        activitati = []
+        for r in rows:
+            activitati.append({
+                'activitate_id': r[0],
+                'titlu': r[1],
+                'continut': r[2],
+                'tip': r[3],
+                'saptamana': r[4],
+                'creat_la': r[5].strftime('%d.%m.%Y %H:%M') if r[5] else None,
+                'actualizat_la': r[6].strftime('%d.%m.%Y %H:%M') if r[6] else None,
+                'autor': r[7],
+                'autor_rol': r[8],
+                'nr_comentarii': r[9]
+            })
+        return jsonify({'success': True, 'activitati': activitati}), 200
+    except Exception:
+        logger.exception('Eroare la get activitati club')
+        return jsonify({'success': False, 'message': 'Eroare la încărcarea activităților'}), 500
+
+
+@main_bp.route('/club/activitati', methods=['POST'])
+@bibliotecar_required
+def create_activitate():
+    """Creează o activitate nouă în club. Necesită rol bibliotecar."""
+    data = request.get_json(silent=True) or {}
+    titlu    = (data.get('titlu') or '').strip()
+    continut = (data.get('continut') or '').strip()
+    tip      = data.get('tip', 'activitate')
+    saptamana = data.get('saptamana', 'curenta')
+
+    if not titlu:
+        return jsonify({'success': False, 'message': 'Titlul este obligatoriu'}), 400
+    if tip not in TIPURI_VALIDE:
+        tip = 'activitate'
+    if saptamana not in SAPTAMANI_VALIDE:
+        saptamana = 'curenta'
+
+    try:
+        result = db.session.execute(
+            text("""INSERT INTO activitati_club (titlu, continut, tip, saptamana, creat_de)
+                    VALUES (:titlu, :continut, :tip, :s, :uid)"""),
+            {'titlu': titlu, 'continut': continut or None, 'tip': tip,
+             's': saptamana, 'uid': request.current_user['user_id']}
+        )
+        db.session.commit()
+        return jsonify({'success': True, 'activitate_id': result.lastrowid}), 201
+    except Exception:
+        db.session.rollback()
+        logger.exception('Eroare la creare activitate club')
+        return jsonify({'success': False, 'message': 'Eroare la salvarea activității'}), 500
+
+
+@main_bp.route('/club/activitati/<int:activitate_id>', methods=['DELETE'])
+@bibliotecar_required
+def delete_activitate(activitate_id):
+    """Șterge o activitate (+ comentariile ei cascade). Necesită bibliotecar."""
+    try:
+        db.session.execute(
+            text("DELETE FROM activitati_club WHERE activitate_id = :id"),
+            {'id': activitate_id}
+        )
+        db.session.commit()
+        return jsonify({'success': True}), 200
+    except Exception:
+        db.session.rollback()
+        logger.exception('Eroare la ștergere activitate %s', activitate_id)
+        return jsonify({'success': False, 'message': 'Eroare la ștergere'}), 500
+
+
+@main_bp.route('/club/activitati/<int:activitate_id>/comentarii', methods=['GET'])
+@club_required
+def get_comentarii(activitate_id):
+    """Returnează comentariile unui fir de activitate."""
+    try:
+        rows = db.session.execute(
+            text("""
+                SELECT c.comentariu_id, c.continut, c.creat_la,
+                       u.username, u.rol, u.user_id
+                FROM comentarii_activitati c
+                JOIN users u ON u.user_id = c.user_id
+                WHERE c.activitate_id = :id
+                ORDER BY c.creat_la ASC
+            """),
+            {'id': activitate_id}
+        ).fetchall()
+        comentarii = [{
+            'comentariu_id': r[0],
+            'continut': r[1],
+            'creat_la': r[2].strftime('%d.%m.%Y %H:%M') if r[2] else None,
+            'autor': r[3],
+            'autor_rol': r[4],
+            'user_id': r[5]
+        } for r in rows]
+        return jsonify({'success': True, 'comentarii': comentarii}), 200
+    except Exception:
+        logger.exception('Eroare la get comentarii activitate %s', activitate_id)
+        return jsonify({'success': False, 'message': 'Eroare la încărcarea comentariilor'}), 500
+
+
+@main_bp.route('/club/activitati/<int:activitate_id>/comentarii', methods=['POST'])
+@club_required
+def post_comentariu(activitate_id):
+    """Adaugă un comentariu la un fir de activitate."""
+    data = request.get_json(silent=True) or {}
+    continut = (data.get('continut') or '').strip()
+    if not continut:
+        return jsonify({'success': False, 'message': 'Comentariul nu poate fi gol'}), 400
+    if len(continut) > 2000:
+        return jsonify({'success': False, 'message': 'Comentariul este prea lung (max 2000 caractere)'}), 400
+
+    # Verificăm că activitatea există
+    exists = db.session.execute(
+        text("SELECT 1 FROM activitati_club WHERE activitate_id = :id"),
+        {'id': activitate_id}
+    ).fetchone()
+    if not exists:
+        return jsonify({'success': False, 'message': 'Activitatea nu există'}), 404
+
+    try:
+        result = db.session.execute(
+            text("INSERT INTO comentarii_activitati (activitate_id, user_id, continut) VALUES (:aid, :uid, :c)"),
+            {'aid': activitate_id, 'uid': request.current_user['user_id'], 'c': continut}
+        )
+        db.session.commit()
+        return jsonify({'success': True, 'comentariu_id': result.lastrowid}), 201
+    except Exception:
+        db.session.rollback()
+        logger.exception('Eroare la post comentariu activitate %s', activitate_id)
+        return jsonify({'success': False, 'message': 'Eroare la salvarea comentariului'}), 500
+
+
+@main_bp.route('/club/activitati/<int:activitate_id>/comentarii/<int:comentariu_id>', methods=['DELETE'])
+@club_required
+def delete_comentariu(activitate_id, comentariu_id):
+    """Șterge un comentariu — autorul sau bibliotecar."""
+    user = request.current_user
+    row = db.session.execute(
+        text("SELECT user_id FROM comentarii_activitati WHERE comentariu_id = :cid AND activitate_id = :aid"),
+        {'cid': comentariu_id, 'aid': activitate_id}
+    ).fetchone()
+    if not row:
+        return jsonify({'success': False, 'message': 'Comentariul nu există'}), 404
+    if row[0] != user['user_id'] and user.get('rol') != 'bibliotecar':
+        return jsonify({'success': False, 'message': 'Nu poți șterge comentariul altcuiva'}), 403
+    try:
+        db.session.execute(
+            text("DELETE FROM comentarii_activitati WHERE comentariu_id = :cid"),
+            {'cid': comentariu_id}
+        )
+        db.session.commit()
+        return jsonify({'success': True}), 200
+    except Exception:
+        db.session.rollback()
+        logger.exception('Eroare la ștergere comentariu %s', comentariu_id)
+        return jsonify({'success': False, 'message': 'Eroare la ștergere'}), 500

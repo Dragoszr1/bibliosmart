@@ -6,6 +6,7 @@ import Signup from '../pages/Signup.vue'
 import Books from '../pages/Books.vue'
 import Club from '../pages/Club.vue'
 import ClubJoin from '../pages/ClubJoin.vue'
+import ClubAnterioare from '../pages/ClubAnterioare.vue'
 
 const routes = [
   {
@@ -44,6 +45,12 @@ const routes = [
     path: '/club/join/:token',
     component: ClubJoin,
     name: 'ClubJoin'
+  },
+  {
+    path: '/club/anterioare',
+    component: ClubAnterioare,
+    name: 'ClubAnterioare',
+    meta: { requiresAuth: true }
   }
 ]
 
