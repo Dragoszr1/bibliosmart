@@ -26,7 +26,7 @@
                     :src="user.profilePicture" 
                     :alt="user.name"
                     class="w-full h-full object-cover"
-                    @error="user.profilePicture = 'https://api.dicebear.com/9.x/lorelei-neutral/svg?seed=default'"
+                    @error="user.profilePicture = '/api/auth/profile-picture/default'"
                   >
                 </div>
                 <div 
@@ -196,7 +196,7 @@
             </h2>
             <div class="flex gap-1.5">
               <button
-                v-for="f in [{ key: 'all', label: 'Toate' }, { key: 'pending', label: 'În așteptare' }, { key: 'approved', label: 'Aprobate' }, { key: 'rejected', label: 'Respinse' }]"
+                v-for="f in [{ key: 'all', label: 'Toate' }, { key: 'pending', label: 'În așteptare' }, { key: 'approved', label: 'Aprobate' }, { key: 'ridicat', label: 'Ridicate' }, { key: 'rejected', label: 'Respinse' }]"
                 :key="f.key"
                 @click="requestFilter = f.key; fetchBookRequests()"
                 :class="[
@@ -238,11 +238,12 @@
                   <div class="flex items-center gap-2 mb-1">
                     <span :class="[
                       'text-xs px-2 py-0.5 rounded-full font-medium',
-                      req.status === 'pending' ? 'bg-amber-50 text-amber-700' :
-                      req.status === 'approved' ? 'bg-green-50 text-green-700' :
+                      req.status === 'pending'   ? 'bg-amber-50 text-amber-700' :
+                      req.status === 'approved'  ? 'bg-blue-50 text-blue-700' :
+                      req.status === 'ridicat' ? 'bg-green-50 text-green-700' :
                       'bg-red-50 text-red-700'
                     ]">
-                      {{ req.status === 'pending' ? 'În așteptare' : req.status === 'approved' ? 'Aprobat' : 'Respins' }}
+                      {{ { pending: 'În așteptare', approved: 'Aprobat', ridicat: 'Ridicat', rejected: 'Respins' }[req.status] || req.status }}
                     </span>
                     <span class="text-gray-400 text-xs">{{ formatDate(req.created_at) }}</span>
                   </div>
@@ -458,17 +459,180 @@
         <!-- USER ACCOUNTS (bibliotecar only) -->
         <!-- ═══════════════════════════════════════════════════════════ -->
         <div class="mt-8">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-            <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
-              <i class="pi pi-users text-secondary"></i> Conturi Utilizatori
-            </h2>
-            <button @click="openUsersListModal" class="px-4 py-2 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-lg text-xs sm:text-sm transition-all">
-              <i class="pi pi-list mr-1"></i> Vezi Toate Conturile
-            </button>
-          </div>
-          <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-6 text-center text-gray-400 text-sm">
-            <i class="pi pi-users text-3xl mb-2 block text-gray-200"></i>
-            Apasă butonul pentru a vizualiza și gestiona conturile elevilor.
+          <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2 mb-6">
+            <i class="pi pi-users text-secondary"></i> Gestionare Elevi
+          </h2>
+
+          <!-- Two-column layout -->
+          <div class="flex gap-4 min-h-[520px]">
+
+            <!-- LEFT: user list -->
+            <div class="w-60 flex-shrink-0 bg-white rounded-2xl shadow-card border border-gray-100 flex flex-col overflow-hidden">
+              <div class="p-3 border-b border-gray-100">
+                <input
+                  v-model="eleviSearch"
+                  type="text"
+                  placeholder="Caută elev..."
+                  class="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                />
+              </div>
+              <div class="flex-1 overflow-y-auto">
+                <div v-if="loadingElevi" class="flex items-center justify-center py-8 text-gray-400">
+                  <i class="pi pi-spin pi-spinner"></i>
+                </div>
+                <div v-else-if="eleviFiltrati.length === 0" class="text-center py-8 text-gray-400 text-xs px-3">
+                  Niciun utilizator găsit.
+                </div>
+                <div
+                  v-for="u in eleviFiltrati"
+                  :key="u.user_id"
+                  @click="selecteazaElev(u)"
+                  :class="elevSelectat && elevSelectat.user_id === u.user_id
+                    ? 'bg-secondary/10 border-l-4 border-secondary'
+                    : 'hover:bg-gray-50 border-l-4 border-transparent'"
+                  class="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all"
+                >
+                  <div class="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0 text-secondary text-xs font-bold uppercase">
+                    {{ u.username.charAt(0) }}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-dark truncate">{{ u.username }}</p>
+                    <p class="text-[11px] text-gray-400 truncate">{{ u.email }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT: selected user detail -->
+            <div class="flex-1 bg-white rounded-2xl shadow-card border border-gray-100 overflow-y-auto">
+
+              <!-- Nothing selected -->
+              <div v-if="!elevSelectat" class="flex flex-col items-center justify-center h-full text-gray-400 text-sm py-16">
+                <i class="pi pi-arrow-left text-3xl mb-3 text-gray-200"></i>
+                Selectează un elev din lista din stânga.
+              </div>
+
+              <!-- Loading detail -->
+              <div v-else-if="loadingElevDetalii" class="flex items-center justify-center h-full py-16 text-gray-400">
+                <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
+              </div>
+
+              <!-- Detail content -->
+              <div v-else-if="elevDetalii" class="p-6 space-y-6">
+
+                <!-- Header user -->
+                <div class="flex items-center gap-4 p-4 bg-cream rounded-xl">
+                  <img
+                    :src="`/api/auth/profile-picture/${encodeURIComponent(elevDetalii.user.username)}?t=${imageCacheBust}`"
+                    class="w-14 h-14 rounded-full object-cover border-2 border-white shadow flex-shrink-0"
+                    @error="$event.target.src='/api/auth/profile-picture/default'"
+                  >
+                  <div class="flex-1 min-w-0">
+                    <p class="font-bold text-dark text-base">{{ elevDetalii.user.username }}</p>
+                    <p class="text-gray-500 text-sm">{{ elevDetalii.user.email }}</p>
+                    <p v-if="elevDetalii.user.telefon" class="text-gray-400 text-xs mt-0.5"><i class="pi pi-phone mr-1"></i>{{ elevDetalii.user.telefon }}</p>
+                  </div>
+                  <div class="flex-shrink-0 text-right">
+                    <p class="text-xs text-gray-400">Ridicat: <span class="font-bold text-dark">{{ elevDetalii.books_borrowed.length }}</span></p>
+                    <p class="text-xs text-gray-400">Citite: <span class="font-bold text-dark">{{ elevDetalii.books_read.length }}</span></p>
+                  </div>
+                </div>
+
+                <!-- APROBATE — în așteptarea ridicării fizice -->
+                <div>
+                  <h3 class="text-sm font-bold text-dark mb-3 flex items-center gap-2">
+                    <i class="pi pi-clock text-amber-500"></i> Aprobate — Așteptare ridicare fizică
+                    <span v-if="aprovateAsteptare.length" class="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ aprovateAsteptare.length }}</span>
+                  </h3>
+                  <div v-if="aprovateAsteptare.length === 0" class="text-gray-400 text-xs italic">Nicio carte aprobată în așteptare.</div>
+                  <div v-else class="space-y-2">
+                    <div v-for="r in aprovateAsteptare" :key="r.cerere_id" class="flex items-center gap-3 p-3 border border-amber-200 bg-amber-50 rounded-xl">
+                      <i class="pi pi-hourglass text-amber-500 flex-shrink-0"></i>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-dark truncate">{{ r.titlu }}</p>
+                        <p class="text-xs text-gray-500">{{ r.autor }}</p>
+                        <p v-if="r.ridicare_de_la" class="text-xs text-amber-700 mt-0.5">
+                          <i class="pi pi-calendar mr-1"></i>{{ r.ridicare_de_la }} — {{ r.ridicare_pana_la }}
+                        </p>
+                      </div>
+                      <button
+                        @click="confirmaRidicare(r.cerere_id)"
+                        :disabled="confirmandRidicare === r.cerere_id"
+                        class="px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold rounded-lg text-xs transition-all flex items-center gap-1 flex-shrink-0"
+                      >
+                        <i :class="confirmandRidicare === r.cerere_id ? 'pi pi-spin pi-spinner' : 'pi pi-check'" class="text-[10px]"></i>
+                        Confirmă ridicarea
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Împrumutate activ (ridicate fizic) -->
+                <div>
+                  <h3 class="text-sm font-bold text-dark mb-3 flex items-center gap-2">
+                    <i class="pi pi-book text-secondary"></i> Împrumutate curent (ridicate)
+                  </h3>
+                  <div v-if="elevDetalii.books_borrowed.length === 0" class="text-gray-400 text-xs italic">Nicio carte ridicată momentan.</div>
+                  <div v-else class="space-y-2">
+                    <div v-for="b in elevDetalii.books_borrowed" :key="b.carte_id" class="flex items-center gap-3 p-3 border border-green-100 bg-green-50 rounded-xl">
+                      <i class="pi pi-book text-green-600 flex-shrink-0"></i>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-dark truncate">{{ b.titlu }}</p>
+                        <p class="text-xs text-gray-500">{{ b.autor }}</p>
+                      </div>
+                      <div class="flex-shrink-0 text-right">
+                        <p class="text-xs text-gray-400">Ridicat: {{ formatDate(b.borrowed_at) }}</p>
+                        <p class="text-xs text-red-400">Scadent: {{ formatDate(b.due_at) }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Returnate / citite -->
+                <div>
+                  <h3 class="text-sm font-bold text-dark mb-3 flex items-center gap-2">
+                    <i class="pi pi-check-circle text-secondary"></i> Returnate / citite
+                  </h3>
+                  <div v-if="elevDetalii.books_read.length === 0" class="text-gray-400 text-xs italic">Nicio carte returnată.</div>
+                  <div v-else class="space-y-2">
+                    <div v-for="b in elevDetalii.books_read" :key="b.carte_id" class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl">
+                      <i class="pi pi-check text-secondary flex-shrink-0"></i>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-dark truncate">{{ b.titlu }}</p>
+                        <p class="text-xs text-gray-500">{{ b.autor }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Istoricul complet cereri -->
+                <div>
+                  <h3 class="text-sm font-bold text-dark mb-3 flex items-center gap-2">
+                    <i class="pi pi-history text-secondary"></i> Toate cererile
+                  </h3>
+                  <div v-if="elevDetalii.borrow_history.length === 0" class="text-gray-400 text-xs italic">Nicio cerere.</div>
+                  <div v-else class="space-y-1.5">
+                    <div v-for="r in elevDetalii.borrow_history" :key="r.cerere_id" class="flex items-center gap-3 p-2.5 border border-gray-100 rounded-xl">
+                      <span :class="{
+                        'bg-amber-50 text-amber-700': r.status === 'pending',
+                        'bg-blue-50 text-blue-700':   r.status === 'approved',
+                        'bg-green-50 text-green-700': r.status === 'ridicat',
+                        'bg-red-50 text-red-700':     r.status === 'rejected'
+                      }" class="text-[10px] px-2 py-0.5 rounded-full font-semibold flex-shrink-0">
+                        {{ { pending: 'Așteptare', approved: 'Aprobat', ridicat: 'Ridicat', rejected: 'Respins' }[r.status] }}
+                      </span>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-xs font-semibold text-dark truncate">{{ r.titlu }}</p>
+                        <p class="text-[10px] text-gray-400">{{ r.autor }}</p>
+                      </div>
+                      <span class="text-[10px] text-gray-400 flex-shrink-0">{{ formatDate(r.created_at) }}</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -559,20 +723,32 @@
 
         <div class="space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">De la (dată și oră)</label>
-            <input
-              v-model="pickupFrom"
-              type="datetime-local"
-              class="input-field"
-            >
+            <label class="block text-xs font-semibold text-gray-600 mb-1">De la</label>
+            <div class="flex gap-2">
+              <input v-model="pickupFromDate" type="date" class="input-field flex-1">
+              <input
+                v-model="pickupFromTime"
+                type="text"
+                placeholder="HH:MM"
+                maxlength="5"
+                @input="formatTimeInput('pickupFromTime', $event)"
+                class="input-field w-28 font-mono"
+              >
+            </div>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Până la (dată și oră)</label>
-            <input
-              v-model="pickupUntil"
-              type="datetime-local"
-              class="input-field"
-            >
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Până la</label>
+            <div class="flex gap-2">
+              <input v-model="pickupUntilDate" type="date" class="input-field flex-1">
+              <input
+                v-model="pickupUntilTime"
+                type="text"
+                placeholder="HH:MM"
+                maxlength="5"
+                @input="formatTimeInput('pickupUntilTime', $event)"
+                class="input-field w-28 font-mono"
+              >
+            </div>
           </div>
         </div>
 
@@ -959,7 +1135,7 @@
             <img
               :src="`/api/auth/profile-picture/${encodeURIComponent(userDetail.user.username)}?t=${Date.now()}`"
               class="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
-              @error="$event.target.src='https://api.dicebear.com/7.x/avataaars/svg?seed=' + userDetail.user.username"
+              @error="$event.target.src='/api/auth/profile-picture/default'"
             >
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
@@ -1087,7 +1263,7 @@ export default {
       // ── Profilul utilizatorului ──
       user: {
         name: '',
-        profilePicture: 'https://api.dicebear.com/9.x/lorelei-neutral/svg?seed=default',
+        profilePicture: '/api/auth/profile-picture/default',
         joinDate: 'Ianuarie 2023',
         description: null,
         totalBooksRead: 0,
@@ -1113,8 +1289,10 @@ export default {
       // Pickup interval modal
       pickupModalOpen: false,
       pickupReq: {},
-      pickupFrom: '',
-      pickupUntil: '',
+      pickupFromDate: '',
+      pickupFromTime: '08:00',
+      pickupUntilDate: '',
+      pickupUntilTime: '14:00',
       pickupError: '',
       approvingRequest: false,
       allBooks: [],
@@ -1174,7 +1352,15 @@ export default {
       // User detail modal
       userDetailOpen: false,
       loadingUserDetail: false,
-      userDetail: null
+      userDetail: null,
+      // ── Gestionare elevi (panoul nou) ──
+      eleviLista: [],
+      loadingElevi: false,
+      eleviSearch: '',
+      elevSelectat: null,
+      elevDetalii: null,
+      loadingElevDetalii: false,
+      confirmandRidicare: null
     }
   },
   computed: {
@@ -1188,6 +1374,18 @@ export default {
         u.username.toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q)
       )
+    },
+    eleviFiltrati() {
+      if (!this.eleviSearch.trim()) return this.eleviLista
+      const q = this.eleviSearch.toLowerCase()
+      return this.eleviLista.filter(u =>
+        u.username.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q)
+      )
+    },
+    aprovateAsteptare() {
+      if (!this.elevDetalii) return []
+      return this.elevDetalii.borrow_history.filter(r => r.status === 'approved')
     }
   },
   mounted() {
@@ -1279,6 +1477,7 @@ export default {
           this.fetchBookRequests()
           this.fetchAllBooks()
           this.fetchAllAnunturi()
+          this.fetchEleviLista()
         }
       } catch (error) {
         console.error('Profile fetch error:', error)
@@ -1384,35 +1583,43 @@ export default {
       const now = new Date()
       const pad = n => String(n).padStart(2, '0')
       const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`
-      this.pickupFrom = `${dateStr}T08:00`
-      this.pickupUntil = `${dateStr}T14:00`
+      this.pickupFromDate = dateStr
+      this.pickupFromTime = '08:00'
+      this.pickupUntilDate = dateStr
+      this.pickupUntilTime = '14:00'
       this.pickupModalOpen = true
+    },
+    // Auto-inserează ':' după primele 2 cifre pentru câmpurile de oră HH:MM
+    formatTimeInput(field, event) {
+      let val = event.target.value.replace(/\D/g, '')
+      if (val.length >= 3) val = val.slice(0, 2) + ':' + val.slice(2, 4)
+      else if (val.length === 2 && !event.target.value.includes(':')) val = val + ':'
+      this[field] = val
     },
 
     async confirmApprove() {
       this.pickupError = ''
-      if (!this.pickupFrom || !this.pickupUntil) {
-        this.pickupError = 'Completează ambele câmpuri.'
+      const timeRe = /^([01]\d|2[0-3]):[0-5]\d$/
+      if (!this.pickupFromDate || !timeRe.test(this.pickupFromTime) || !this.pickupUntilDate || !timeRe.test(this.pickupUntilTime)) {
+        this.pickupError = 'Completează toate câmpurile. Ora trebuie să fie în format HH:MM (ex: 08:30).'
         return
       }
-      if (this.pickupFrom >= this.pickupUntil) {
+      const isoFrom  = `${this.pickupFromDate}T${this.pickupFromTime}`
+      const isoUntil = `${this.pickupUntilDate}T${this.pickupUntilTime}`
+      if (isoFrom >= isoUntil) {
         this.pickupError = 'Data de start trebuie să fie înainte de data de final.'
         return
       }
       this.approvingRequest = true
       try {
-        const fmt = iso => {
-          const d = new Date(iso)
-          return d.toLocaleString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-        }
         const res = await fetch(`/api/book-requests/${this.pickupReq.cerere_id}`, {
           method: 'PUT',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             status: 'approved',
-            pickup_from: fmt(this.pickupFrom),
-            pickup_until: fmt(this.pickupUntil)
+            ridicare_de_la: isoFrom,
+            ridicare_pana_la: isoUntil
           })
         })
         if (res.ok) {
@@ -1768,6 +1975,55 @@ export default {
         console.error('Error fetching user detail:', error)
       } finally {
         this.loadingUserDetail = false
+      }
+    },
+
+    // ═══════════ METODE GESTIONARE ELEVI (panou nou) ═══════════
+    async fetchEleviLista() {
+      this.loadingElevi = true
+      try {
+        const res = await fetch('/api/admin/users', { credentials: 'include' })
+        const data = await res.json()
+        if (data.success) {
+          // Excludem bibliotecaristul din lista de elevi
+          this.eleviLista = data.users.filter(u => u.rol !== 'bibliotecar')
+        }
+      } catch { /* ignorăm */ } finally {
+        this.loadingElevi = false
+      }
+    },
+    async selecteazaElev(u) {
+      this.elevSelectat = u
+      this.elevDetalii = null
+      this.loadingElevDetalii = true
+      try {
+        const res = await fetch(`/api/admin/users/${u.user_id}`, { credentials: 'include' })
+        const data = await res.json()
+        if (data.success) this.elevDetalii = data
+      } catch { /* ignorăm */ } finally {
+        this.loadingElevDetalii = false
+      }
+    },
+    async confirmaRidicare(cerereId) {
+      this.confirmandRidicare = cerereId
+      try {
+        const res = await fetch(`/api/book-requests/${cerereId}/confirma-ridicare`, {
+          method: 'POST',
+          credentials: 'include'
+        })
+        const data = await res.json()
+        if (res.ok && data.success) {
+          // Reîncarcă detaliile elevului selectat
+          await this.selecteazaElev(this.elevSelectat)
+          // Reîncarcă și cererile globale
+          await this.fetchBookRequests()
+        } else {
+          alert(data.message || 'Eroare la confirmare.')
+        }
+      } catch {
+        alert('Eroare de rețea.')
+      } finally {
+        this.confirmandRidicare = null
       }
     },
 

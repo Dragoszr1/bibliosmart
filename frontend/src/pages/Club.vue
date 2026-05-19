@@ -71,6 +71,7 @@
                 </div>
                 <h3 class="text-base sm:text-lg font-bold text-dark leading-snug">{{ act.titlu }}</h3>
                 <p v-if="act.continut" class="text-sm text-gray-600 mt-2 whitespace-pre-line leading-relaxed">{{ act.continut }}</p>
+                <img v-if="act.imagine_url && act.tip === 'anunt'" :src="act.imagine_url" alt="Imagine anunț" class="w-full h-56 object-cover rounded-2xl mt-4" />
               </div>
               <button
                 v-if="isBibliotecar"
@@ -178,11 +179,32 @@
           <div class="flex gap-3">
             <div class="flex-1">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Tip</label>
-              <select v-model="addForm.tip" class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-secondary/40 bg-white">
+              <select v-model="addForm.tip" @change="onActivityTypeChange" class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-secondary/40 bg-white">
                 <option value="activitate">Activitate</option>
                 <option value="sarcina">Sarcină</option>
                 <option value="anunt">Anunț</option>
               </select>
+            </div>
+          </div>
+          <div v-if="addForm.tip === 'anunt'" class="pt-2">
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Imagine anunț</label>
+            <input
+              ref="activityImageInput"
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+              @change="onActivityImageChange"
+              class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-secondary file:text-white hover:file:bg-secondary/90"
+            />
+            <p class="text-[11px] text-gray-400 mt-2">Imaginea va fi încărcată împreună cu anunțul și va apărea în previzualizare.</p>
+          </div>
+          <div v-if="activityImagePreview && addForm.tip === 'anunt'" class="mt-4 border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+            <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">Previzualizare anunț</div>
+            <div>
+              <img :src="activityImagePreview" alt="Previzualizare imagine" class="w-full h-52 object-cover" />
+              <div class="p-4">
+                <h3 class="text-sm font-semibold text-dark mb-2">{{ addForm.titlu || 'Titlul anunțului' }}</h3>
+                <p class="text-sm text-gray-600 whitespace-pre-line">{{ addForm.continut || 'Textul anunțului va apărea aici.' }}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -242,6 +264,8 @@ export default {
       // Add activity modal
       addModalOpen: false,
       addForm: { titlu: '', continut: '', tip: 'activitate', saptamana: 'curenta' },
+      activityImageFile: null,
+      activityImagePreview: null,
       addError: '',
       addSaving: false,
 
@@ -361,8 +385,31 @@ export default {
 
     openAddModal() {
       this.addForm = { titlu: '', continut: '', tip: 'activitate', saptamana: 'curenta' }
+      this.activityImageFile = null
+      this.activityImagePreview = null
       this.addError = ''
       this.addModalOpen = true
+    },
+
+    onActivityTypeChange() {
+      if (this.addForm.tip !== 'anunt') {
+        this.activityImageFile = null
+        this.activityImagePreview = null
+        if (this.$refs.activityImageInput) {
+          this.$refs.activityImageInput.value = ''
+        }
+      }
+    },
+
+    onActivityImageChange(event) {
+      const file = event.target.files[0]
+      if (!file) {
+        this.activityImageFile = null
+        this.activityImagePreview = null
+        return
+      }
+      this.activityImageFile = file
+      this.activityImagePreview = URL.createObjectURL(file)
     },
 
     async submitActivity() {
@@ -370,17 +417,30 @@ export default {
       this.addSaving = true
       this.addError = ''
       try {
+        const formData = new FormData()
+        formData.append('titlu', this.addForm.titlu)
+        formData.append('continut', this.addForm.continut)
+        formData.append('tip', this.addForm.tip)
+        formData.append('saptamana', this.addForm.saptamana)
+        if (this.activityImageFile && this.addForm.tip === 'anunt') {
+          formData.append('image', this.activityImageFile)
+        }
+
         const res = await fetch('/api/club/activitati', {
           method: 'POST',
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.addForm)
+          body: formData
         })
         const data = await res.json()
         if (!res.ok) {
           this.addError = data.message || 'Eroare la publicare.'
         } else {
           this.addModalOpen = false
+          this.activityImageFile = null
+          this.activityImagePreview = null
+          if (this.$refs.activityImageInput) {
+            this.$refs.activityImageInput.value = ''
+          }
           await this.fetchActivitati()
         }
       } catch {

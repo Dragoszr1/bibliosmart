@@ -39,9 +39,36 @@ ROLE_ALIASES = {
 EMAIL_REGEX = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9._%+\-]{0,62}[A-Za-z0-9])?@([A-Za-z0-9\-]+\.)+[A-Za-z]{2,63}$")
 PROFILE_PICTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'profile_pictures')
 BOOK_IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'book_images')
+CLUB_ANNOUNCEMENT_IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'imagini_anunturi_club')
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def _get_request_data():
+    if request.content_type and request.content_type.startswith('multipart/form-data'):
+        return request.form.to_dict()
+    return request.get_json(silent=True) or {}
+
+
+def _save_club_activity_image(file, activitate_id):
+    if not file or not file.filename:
+        return None
+    if not allowed_file(file.filename):
+        return None
+
+    os.makedirs(CLUB_ANNOUNCEMENT_IMAGES_DIR, exist_ok=True)
+    for old in _find_files_by_prefix(CLUB_ANNOUNCEMENT_IMAGES_DIR, str(activitate_id)):
+        try:
+            os.remove(os.path.join(CLUB_ANNOUNCEMENT_IMAGES_DIR, old))
+        except OSError:
+            pass
+
+    ext = file.filename.rsplit('.', 1)[1].lower()
+    filename = f"anunt_{activitate_id}.{ext}"
+    filepath = os.path.join(CLUB_ANNOUNCEMENT_IMAGES_DIR, filename)
+    file.save(filepath)
+    return filename
 
 
 def _find_files_by_prefix(directory, prefix):
@@ -507,10 +534,10 @@ def update_book_request(cerere_id):
         return jsonify({'success': False, 'message': 'Status trebuie să fie approved sau rejected'}), 400
 
     # Intervalul de ridicare (obligatoriu doar la aprobare)
-    pickup_from_str = (data.get('pickup_from') or '').strip()
-    pickup_until_str = (data.get('pickup_until') or '').strip()
-    if status_nou == 'approved' and (not pickup_from_str or not pickup_until_str):
-        return jsonify({'success': False, 'message': 'pickup_from și pickup_until sunt obligatorii la aprobare'}), 400
+    ridicare_de_la_str = (data.get('ridicare_de_la') or '').strip()
+    ridicare_pana_la_str = (data.get('ridicare_pana_la') or '').strip()
+    if status_nou == 'approved' and (not ridicare_de_la_str or not ridicare_pana_la_str):
+        return jsonify({'success': False, 'message': 'ridicare_de_la și ridicare_pana_la sunt obligatorii la aprobare'}), 400
 
     try:
         # Preluăm cererea + datele elevului într-un singur join
@@ -530,24 +557,25 @@ def update_book_request(cerere_id):
 
         user_id, carte_id, status_vechi, email_elev, nume_elev, titlu, autor = row
 
+        # Stocăm intervalul de ridicare dacă cererea e aprobată
+        ridicare_de_la_dt = None
+        ridicare_pana_la_dt = None
+        if status_nou == 'approved':
+            try:
+                ridicare_de_la_dt  = datetime.datetime.fromisoformat(ridicare_de_la_str)
+                ridicare_pana_la_dt = datetime.datetime.fromisoformat(ridicare_pana_la_str)
+            except ValueError:
+                return jsonify({'success': False, 'message': 'Format dată invalid pentru intervalul de ridicare'}), 400
+
         db.session.execute(
-            text("UPDATE cereri_carti SET status = :status WHERE cerere_id = :id"),
-            {'status': status_nou, 'id': cerere_id}
+            text("UPDATE cereri_carti SET status = :status, ridicare_de_la = :pf, ridicare_pana_la = :pu WHERE cerere_id = :id"),
+            {'status': status_nou, 'pf': ridicare_de_la_dt, 'pu': ridicare_pana_la_dt, 'id': cerere_id}
         )
 
-        # La aprobare înregistrăm împrumutul activ și trimitem email de notificare
+        # La aprobare trimitem email de notificare (fără să modificăm stocul sau imprumuturi_active)
         if status_nou == 'approved' and status_vechi != 'approved':
-            now = datetime.datetime.utcnow()
-            due = now + datetime.timedelta(days=30)
-            db.session.execute(
-                text(
-                    "INSERT INTO imprumuturi_active (user_id, carte_id, data_imprumut, data_scadenta) "
-                    "VALUES (:uid, :cid, :now, :due)"
-                ),
-                {'uid': user_id, 'cid': carte_id, 'now': now, 'due': due}
-            )
-
-            # Trimitem emailul de notificare elevului
+            interval_de_la   = ridicare_de_la_dt.strftime('%d.%m.%Y %H:%M')
+            interval_pana_la = ridicare_pana_la_dt.strftime('%d.%m.%Y %H:%M')
             html_body = f"""
 <!DOCTYPE html>
 <html>
@@ -572,7 +600,7 @@ def update_book_request(cerere_id):
             <p style="font-size:15px; color:#2c3e50; font-weight:bold;">✅ a fost <span style="color:#27ae60;">APROBATĂ</span>!</p>
             <p style="font-size:15px; color:#333;">Poți ridica cartea de la bibliotecă în intervalul:</p>
             <div style="background:#eaf7ec; border:1px solid #a8e6b8; border-radius:8px; padding:14px 20px; margin:16px 0; text-align:center;">
-              <span style="font-size:18px; font-weight:bold; color:#1a7a3c;">🕐 {pickup_from_str} — {pickup_until_str}</span>
+              <span style="font-size:18px; font-weight:bold; color:#1a7a3c;">🕐 {interval_de_la} — {interval_pana_la}</span>
             </div>
             <p style="font-size:13px; color:#888;">Dacă nu poți ridica cartea în acest interval, te rugăm să contactezi biblioteca.</p>
             <hr style="border:none; border-top:1px solid #eee; margin:24px 0;">
@@ -598,6 +626,67 @@ def update_book_request(cerere_id):
         return jsonify({'success': False, 'message': 'Eroare la actualizarea cererii'}), 500
 
 
+@main_bp.route('/book-requests/<int:cerere_id>/confirma-ridicare', methods=['POST'])
+@bibliotecar_required
+def confirma_ridicare(cerere_id):
+    """Confirmă că elevul a ridicat fizic cartea.
+    Decrementează stoc_disponibil, inserează în imprumuturi_active,
+    marchează cererea ca ridicat.
+    """
+    try:
+        row = db.session.execute(
+            text(
+                "SELECT cr.user_id, cr.carte_id, cr.status, c.stoc_disponibil "
+                "FROM cereri_carti cr "
+                "JOIN carti c ON cr.carte_id = c.carte_id "
+                "WHERE cr.cerere_id = :id"
+            ),
+            {'id': cerere_id}
+        ).fetchone()
+
+        if not row:
+            return jsonify({'success': False, 'message': 'Cererea nu a fost găsită'}), 404
+
+        user_id, carte_id, status_curent, stoc_disponibil = row
+
+        if status_curent != 'approved':
+            return jsonify({'success': False, 'message': 'Cererea trebuie să fie aprobată înainte de confirmare'}), 409
+
+        if stoc_disponibil <= 0:
+            return jsonify({'success': False, 'message': 'Stoc insuficient — cartea nu mai este disponibilă'}), 409
+
+        now = datetime.datetime.utcnow()
+        due = now + datetime.timedelta(days=30)
+
+        # Inserăm în imprumuturi_active
+        db.session.execute(
+            text("INSERT INTO imprumuturi_active (user_id, carte_id, data_imprumut, data_scadenta) "
+                 "VALUES (:uid, :cid, :now, :due)"),
+            {'uid': user_id, 'cid': carte_id, 'now': now, 'due': due}
+        )
+
+        # Decrementăm stocul disponibil
+        db.session.execute(
+            text("UPDATE carti SET stoc_disponibil = stoc_disponibil - 1, "
+                 "imprumutat = (stoc_disponibil - 1 < stoc_total) "
+                 "WHERE carte_id = :cid AND stoc_disponibil > 0"),
+            {'cid': carte_id}
+        )
+
+        # Marcăm cererea ca ridicată
+        db.session.execute(
+            text("UPDATE cereri_carti SET status = 'ridicat' WHERE cerere_id = :id"),
+            {'id': cerere_id}
+        )
+
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Ridicare confirmată'}), 200
+    except Exception:
+        db.session.rollback()
+        logger.exception('Eroare la confirmarea ridicării pentru cererea %d', cerere_id)
+        return jsonify({'success': False, 'message': 'Eroare la confirmarea ridicării'}), 500
+
+
 # ── Raport Word ──────────────────────────────────────────────
 
 @main_bp.route('/librarian/report/docx', methods=['GET'])
@@ -621,7 +710,7 @@ def librarian_report_docx():
         for r in read_rows:
             read_map.setdefault(r[0], []).append((r[1], r[2]))
 
-        # Împrumuturi active per utilizator: {user_id: [(titlu, autor, data_imprumut, data_scadenta), ...]}
+        # Împrumuturi active per utilizator (fizic ridicate)
         borrow_rows = db.session.execute(
             text(
                 "SELECT ia.user_id, c.titlu, c.autor, ia.data_imprumut, ia.data_scadenta "
@@ -632,6 +721,19 @@ def librarian_report_docx():
         borrow_map = {}
         for r in borrow_rows:
             borrow_map.setdefault(r[0], []).append((r[1], r[2], r[3], r[4]))
+
+        # Cereri aprobate — în așteptarea ridicării fizice
+        approved_rows = db.session.execute(
+            text(
+                "SELECT cr.user_id, c.titlu, c.autor, cr.ridicare_de_la, cr.ridicare_pana_la "
+                "FROM cereri_carti cr JOIN carti c ON cr.carte_id = c.carte_id "
+                "WHERE cr.status = 'approved' "
+                "ORDER BY cr.updated_at ASC"
+            )
+        ).fetchall()
+        approved_map = {}
+        for r in approved_rows:
+            approved_map.setdefault(r[0], []).append((r[1], r[2], r[3], r[4]))
 
         # Construim documentul Word
         doc = Document()
@@ -650,14 +752,33 @@ def librarian_report_docx():
         else:
             for uid, username, email in students:
                 # Heading elev
-                heading = doc.add_heading(username, level=1)
+                doc.add_heading(username, level=1)
                 email_para = doc.add_paragraph()
                 email_run = email_para.add_run(f'Email: {email}')
                 email_run.italic = True
 
+                # Aprobate — în așteptarea ridicării fizice
+                approved = approved_map.get(uid, [])
+                doc.add_heading('Aprobate — în așteptarea ridicării', level=2)
+                if approved:
+                    tbl0 = doc.add_table(rows=1, cols=4)
+                    tbl0.style = 'Table Grid'
+                    hdr0 = tbl0.rows[0].cells
+                    hdr0[0].text = 'Titlu'; hdr0[1].text = 'Autor'
+                    hdr0[2].text = 'Interval ridicare (de la)'; hdr0[3].text = 'Interval ridicare (până la)'
+                    for cell in hdr0:
+                        cell.paragraphs[0].runs[0].bold = True
+                    for titlu, autor, pf, pu in approved:
+                        rc = tbl0.add_row().cells
+                        rc[0].text = titlu; rc[1].text = autor
+                        rc[2].text = pf.strftime('%d.%m.%Y %H:%M') if pf else '—'
+                        rc[3].text = pu.strftime('%d.%m.%Y %H:%M') if pu else '—'
+                else:
+                    doc.add_paragraph('Nicio carte în așteptarea ridicării.')
+
                 # Cărți împrumutate în prezent
                 borrows = borrow_map.get(uid, [])
-                doc.add_heading('Cărți împrumutate în prezent', level=2)
+                doc.add_heading('Cărți împrumutate activ', level=2)
                 if borrows:
                     tbl = doc.add_table(rows=1, cols=4)
                     tbl.style = 'Table Grid'
@@ -778,7 +899,8 @@ def admin_get_user_detail(user_id):
         # Istoricul complet al cererilor de împrumut
         history_rows = db.session.execute(
             text("""
-                SELECT cc.cerere_id, c.titlu, c.autor, cc.status, cc.created_at
+                SELECT cc.cerere_id, c.titlu, c.autor, cc.status, cc.created_at,
+                       cc.ridicare_de_la, cc.ridicare_pana_la
                 FROM cereri_carti cc
                 JOIN carti c ON cc.carte_id = c.carte_id
                 WHERE cc.user_id = :uid
@@ -825,7 +947,9 @@ def admin_get_user_detail(user_id):
                 {
                     'cerere_id': r[0], 'titlu': r[1], 'autor': r[2],
                     'status': r[3],
-                    'created_at': r[4].isoformat() if r[4] else None
+                    'created_at': r[4].isoformat() if r[4] else None,
+                    'ridicare_de_la': r[5].strftime('%d.%m.%Y %H:%M') if r[5] else None,
+                    'ridicare_pana_la': r[6].strftime('%d.%m.%Y %H:%M') if r[6] else None
                 }
                 for r in history_rows
             ],
@@ -1196,15 +1320,16 @@ def upload_profile_picture():
 
 @main_bp.route('/auth/profile-picture/<username>', methods=['GET'])
 def get_profile_picture(username):
-    """Serve0219te poza de profil a unui utilizator dup0103 username.
-    Caut0103 <username>.* 00een folderul profile_pictures.
+    """Servește poza de profil a unui utilizator după username.
+    Caută <username>.* în folderul profile_pictures.
+    Dacă nu există, returnează default.jpg.
     """
     matches = _find_files_by_prefix(PROFILE_PICTURES_DIR, username)
 
-    if not rezultate:
-        return jsonify({'success': False, 'message': 'No profile picture found'}), 404
+    if not matches:
+        return send_from_directory(PROFILE_PICTURES_DIR, 'default.jpg')
 
-    return send_from_directory(PROFILE_PICTURES_DIR, rezultate[0])
+    return send_from_directory(PROFILE_PICTURES_DIR, matches[0])
 
 
 @main_bp.route('/books/image', methods=['POST'])
@@ -1259,10 +1384,10 @@ def get_book_image(carte_id):
     """
     matches = _find_files_by_prefix(BOOK_IMAGES_DIR, str(carte_id))
 
-    if not rezultate:
+    if not matches:
         return jsonify({'success': False, 'message': 'Nicio imagine găsită'}), 404
 
-    return send_from_directory(BOOK_IMAGES_DIR, rezultate[0])
+    return send_from_directory(BOOK_IMAGES_DIR, matches[0])
 
 
 # ── Rute anunțuri ──────────────────────────────────────
@@ -1728,7 +1853,7 @@ def get_activitati():
         rows = db.session.execute(
             text("""
                 SELECT a.activitate_id, a.titlu, a.continut, a.tip, a.saptamana,
-                       a.creat_la, a.actualizat_la,
+                       a.creat_la, a.actualizat_la, a.nume_imagine,
                        u.username, u.rol,
                        (SELECT COUNT(*) FROM comentarii_activitati c WHERE c.activitate_id = a.activitate_id) AS nr_comentarii
                 FROM activitati_club a
@@ -1748,9 +1873,10 @@ def get_activitati():
                 'saptamana': r[4],
                 'creat_la': r[5].strftime('%d.%m.%Y %H:%M') if r[5] else None,
                 'actualizat_la': r[6].strftime('%d.%m.%Y %H:%M') if r[6] else None,
-                'autor': r[7],
-                'autor_rol': r[8],
-                'nr_comentarii': r[9]
+                'imagine_url': f'/api/club/activitati/{r[0]}/imagine' if r[7] else None,
+                'autor': r[8],
+                'autor_rol': r[9],
+                'nr_comentarii': r[10]
             })
         return jsonify({'success': True, 'activitati': activitati}), 200
     except Exception:
@@ -1762,11 +1888,12 @@ def get_activitati():
 @bibliotecar_required
 def create_activitate():
     """Creează o activitate nouă în club. Necesită rol bibliotecar."""
-    data = request.get_json(silent=True) or {}
+    data = _get_request_data()
     titlu    = (data.get('titlu') or '').strip()
     continut = (data.get('continut') or '').strip()
     tip      = data.get('tip', 'activitate')
     saptamana = data.get('saptamana', 'curenta')
+    image_file = request.files.get('image')
 
     if not titlu:
         return jsonify({'success': False, 'message': 'Titlul este obligatoriu'}), 400
@@ -1774,6 +1901,8 @@ def create_activitate():
         tip = 'activitate'
     if saptamana not in SAPTAMANI_VALIDE:
         saptamana = 'curenta'
+    if image_file and not allowed_file(image_file.filename):
+        return jsonify({'success': False, 'message': 'Format imagine nepermis. Folosește png, jpg, jpeg, gif sau webp.'}), 400
 
     try:
         result = db.session.execute(
@@ -1782,12 +1911,29 @@ def create_activitate():
             {'titlu': titlu, 'continut': continut or None, 'tip': tip,
              's': saptamana, 'uid': request.current_user['user_id']}
         )
+        activitate_id = result.lastrowid
+        if image_file and tip == 'anunt':
+            filename = _save_club_activity_image(image_file, activitate_id)
+            if filename:
+                db.session.execute(
+                    text("UPDATE activitati_club SET nume_imagine = :img WHERE activitate_id = :id"),
+                    {'img': filename, 'id': activitate_id}
+                )
         db.session.commit()
-        return jsonify({'success': True, 'activitate_id': result.lastrowid}), 201
+        return jsonify({'success': True, 'activitate_id': activitate_id}), 201
     except Exception:
         db.session.rollback()
         logger.exception('Eroare la creare activitate club')
         return jsonify({'success': False, 'message': 'Eroare la salvarea activității'}), 500
+
+
+@main_bp.route('/club/activitati/<int:activitate_id>/imagine', methods=['GET'])
+def get_activitate_image(activitate_id):
+    """Returnează imaginea asociată unei activități de club."""
+    matches = _find_files_by_prefix(CLUB_ANNOUNCEMENT_IMAGES_DIR, str(activitate_id))
+    if not matches:
+        return jsonify({'success': False, 'message': 'Imaginea nu a fost găsită'}), 404
+    return send_from_directory(CLUB_ANNOUNCEMENT_IMAGES_DIR, matches[0])
 
 
 @main_bp.route('/club/activitati/<int:activitate_id>', methods=['DELETE'])
@@ -1795,6 +1941,11 @@ def create_activitate():
 def delete_activitate(activitate_id):
     """Șterge o activitate (+ comentariile ei cascade). Necesită bibliotecar."""
     try:
+        for old in _find_files_by_prefix(CLUB_ANNOUNCEMENT_IMAGES_DIR, str(activitate_id)):
+            try:
+                os.remove(os.path.join(CLUB_ANNOUNCEMENT_IMAGES_DIR, old))
+            except OSError:
+                pass
         db.session.execute(
             text("DELETE FROM activitati_club WHERE activitate_id = :id"),
             {'id': activitate_id}

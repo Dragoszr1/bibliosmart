@@ -12,7 +12,7 @@
     <!-- Main Content -->
     <main class="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
       <!-- Search Bar -->
-      <div class="mb-10">
+      <div class="mb-6">
         <div class="flex items-center gap-3 bg-white rounded-xl shadow-card border border-gray-100 px-5 py-3">
           <i class="pi pi-search text-gray-400"></i>
           <input
@@ -28,27 +28,71 @@
         </div>
       </div>
 
-      <!-- Results Info & Sort -->
-      <div class="mb-6 flex items-center justify-between">
-        <p class="text-gray-500 text-sm">
-          <span class="text-dark font-semibold">{{ filteredBooks.length }}</span> cărți găsite
-        </p>
-        <div class="flex gap-1.5">
-          <button 
-            v-for="s in [{ key: 'title', label: 'A-Z' }, { key: 'available', icon: 'pi-check-circle' }, { key: 'newest', icon: 'pi-clock' }]"
-            :key="s.key"
-            @click="sortBy(s.key)"
-            :class="[
-              'px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150',
-              sortType === s.key 
-                ? 'bg-secondary text-white' 
-                : 'bg-white text-gray-500 border border-gray-200 hover:border-secondary/30 hover:text-secondary'
-            ]"
+      <!-- Filters Panel -->
+      <div class="bg-white rounded-xl shadow-card border border-gray-100 p-4 mb-6">
+        <div class="flex flex-wrap gap-4 items-end">
+
+          <!-- Gen -->
+          <div class="flex flex-col gap-1 min-w-[160px]">
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Gen</label>
+            <select v-model="filterGen" @change="filterBooks" class="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-cream focus:outline-none focus:border-secondary/50 text-dark">
+              <option value="">Toate genurile</option>
+              <option v-for="g in allGenres" :key="g" :value="g">{{ g }}</option>
+            </select>
+          </div>
+
+          <!-- Autor -->
+          <div class="flex flex-col gap-1 min-w-[180px]">
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Autor</label>
+            <select v-model="filterAutor" @change="filterBooks" class="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-cream focus:outline-none focus:border-secondary/50 text-dark">
+              <option value="">Toți autorii</option>
+              <option v-for="a in allAuthors" :key="a" :value="a">{{ a }}</option>
+            </select>
+          </div>
+
+          <!-- Disponibilitate -->
+          <div class="flex flex-col gap-1 min-w-[170px]">
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Disponibilitate</label>
+            <select v-model="filterAvailability" @change="filterBooks" class="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-cream focus:outline-none focus:border-secondary/50 text-dark">
+              <option value="">Toate</option>
+              <option value="available">Disponibile</option>
+              <option value="unavailable">Indisponibile</option>
+            </select>
+          </div>
+
+          <!-- Sortare -->
+          <div class="flex flex-col gap-1 min-w-[200px]">
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Sortare</label>
+            <select v-model="sortType" @change="filterBooks" class="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-cream focus:outline-none focus:border-secondary/50 text-dark">
+              <option value="newest">Cele mai noi</option>
+              <option value="title_asc">Titlu A → Z</option>
+              <option value="title_desc">Titlu Z → A</option>
+              <option value="author_asc">Autor A → Z</option>
+              <option value="author_desc">Autor Z → A</option>
+              <option value="stock_desc">Stoc disponibil ↓</option>
+              <option value="stock_asc">Stoc disponibil ↑</option>
+              <option value="stock_total_desc">Stoc total ↓</option>
+              <option value="stock_total_asc">Stoc total ↑</option>
+            </select>
+          </div>
+
+          <!-- Reset -->
+          <button
+            v-if="hasActiveFilters"
+            @click="clearFilters"
+            class="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-accent border border-accent/30 rounded-lg hover:bg-accent/5 transition-colors"
           >
-            <i v-if="s.icon" :class="'pi ' + s.icon"></i>
-            <span v-else>{{ s.label }}</span>
+            <i class="pi pi-filter-slash"></i> Resetează
           </button>
         </div>
+      </div>
+
+      <!-- Results Info -->
+      <div class="mb-5">
+        <p class="text-gray-500 text-sm">
+          <span class="text-dark font-semibold">{{ filteredBooks.length }}</span> cărți găsite
+          <span v-if="hasActiveFilters" class="ml-2 text-secondary text-xs">(filtrate din {{ allBooks.length }} total)</span>
+        </p>
       </div>
 
       <!-- Books Grid -->
@@ -286,6 +330,9 @@ export default {
     return {
       searchQuery: '',
       sortType: 'newest',
+      filterGen: '',
+      filterAutor: '',
+      filterAvailability: '',
       allBooks: [],
       filteredBooks: [],
       showModal: false,
@@ -310,6 +357,17 @@ export default {
       aiReviewError: '',
       // Autentificare
       isLoggedIn: false
+    }
+  },
+  computed: {
+    allGenres() {
+      return [...new Set(this.allBooks.map(b => b.genre).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ro'))
+    },
+    allAuthors() {
+      return [...new Set(this.allBooks.map(b => b.author).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ro'))
+    },
+    hasActiveFilters() {
+      return this.searchQuery.trim() || this.filterGen || this.filterAutor || this.filterAvailability || this.sortType !== 'newest'
     }
   },
   methods: {
@@ -346,20 +404,49 @@ export default {
           book.genre.toLowerCase().includes(query)
         );
       }
+      if (this.filterGen) {
+        result = result.filter(b => b.genre === this.filterGen);
+      }
+      if (this.filterAutor) {
+        result = result.filter(b => b.author === this.filterAutor);
+      }
+      if (this.filterAvailability === 'available') {
+        result = result.filter(b => b.available);
+      } else if (this.filterAvailability === 'unavailable') {
+        result = result.filter(b => !b.available);
+      }
+      result = [...result];
       this.sortBooks(result);
       this.filteredBooks = result;
     },
     sortBooks(books) {
       switch (this.sortType) {
-        case 'title':
-          books.sort((a, b) => a.title.localeCompare(b.title));
+        case 'title_asc':
+          books.sort((a, b) => a.title.localeCompare(b.title, 'ro'));
           break;
-        case 'available':
+        case 'title_desc':
+          books.sort((a, b) => b.title.localeCompare(a.title, 'ro'));
+          break;
+        case 'author_asc':
+          books.sort((a, b) => a.author.localeCompare(b.author, 'ro'));
+          break;
+        case 'author_desc':
+          books.sort((a, b) => b.author.localeCompare(a.author, 'ro'));
+          break;
+        case 'stock_desc':
           books.sort((a, b) => b.stoc_disponibil - a.stoc_disponibil);
           break;
-        case 'newest':
-          books.sort((a, b) => b.id - a.id);
+        case 'stock_asc':
+          books.sort((a, b) => a.stoc_disponibil - b.stoc_disponibil);
           break;
+        case 'stock_total_desc':
+          books.sort((a, b) => b.stoc_total - a.stoc_total);
+          break;
+        case 'stock_total_asc':
+          books.sort((a, b) => a.stoc_total - b.stoc_total);
+          break;
+        default: // newest
+          books.sort((a, b) => b.id - a.id);
       }
     },
     sortBy(type) {
@@ -369,6 +456,9 @@ export default {
     clearFilters() {
       this.searchQuery = '';
       this.sortType = 'newest';
+      this.filterGen = '';
+      this.filterAutor = '';
+      this.filterAvailability = '';
       this.filterBooks();
     },
     async openBookDetail(book) {
