@@ -574,16 +574,22 @@
                   </h3>
                   <div v-if="elevDetalii.books_borrowed.length === 0" class="text-gray-400 text-xs italic">Nicio carte ridicată momentan.</div>
                   <div v-else class="space-y-2">
-                    <div v-for="b in elevDetalii.books_borrowed" :key="b.carte_id" class="flex items-center gap-3 p-3 border border-green-100 bg-green-50 rounded-xl">
+                    <div v-for="b in elevDetalii.books_borrowed" :key="b.imprumut_id" class="flex items-center gap-3 p-3 border border-green-100 bg-green-50 rounded-xl">
                       <i class="pi pi-book text-green-600 flex-shrink-0"></i>
                       <div class="flex-1 min-w-0">
                         <p class="text-sm font-semibold text-dark truncate">{{ b.titlu }}</p>
                         <p class="text-xs text-gray-500">{{ b.autor }}</p>
-                      </div>
-                      <div class="flex-shrink-0 text-right">
-                        <p class="text-xs text-gray-400">Ridicat: {{ formatDate(b.borrowed_at) }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Ridicat: {{ formatDate(b.borrowed_at) }}</p>
                         <p class="text-xs text-red-400">Scadent: {{ formatDate(b.due_at) }}</p>
                       </div>
+                      <button
+                        @click="deschideReturnareModal(b)"
+                        :class="isOverdue(b.due_at) ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
+                        class="px-3 py-1.5 text-white font-semibold rounded-lg text-xs transition-all flex items-center gap-1 flex-shrink-0"
+                      >
+                        <i class="pi pi-undo text-[10px]"></i>
+                        Returnează
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1055,6 +1061,54 @@
       </div>
     </div>
 
+    <!-- ═══════════ RETURNARE ÎMPRUMUT MODAL ═══════════ -->
+    <div v-if="returnareModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="returnareModalOpen = false">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="returnareModalOpen = false"></div>
+      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-sm z-10 p-6 sm:p-8">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-lg sm:text-xl font-bold text-secondary">Returnare Carte</h2>
+          <button @click="returnareModalOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold">&times;</button>
+        </div>
+        <p class="text-dark font-semibold text-sm mb-0.5">{{ returnareTarget?.titlu }}</p>
+        <p class="text-gray-500 text-xs mb-5">{{ returnareTarget?.autor }}</p>
+
+        <!-- Modificare dată scadentă -->
+        <div class="mb-3">
+          <label class="block text-dark font-semibold mb-1 text-xs">Modifică data scadentă</label>
+          <div class="grid grid-cols-2 gap-2">
+            <input v-model="returnareNovaDataDate" type="date" class="input-field text-sm">
+            <input v-model="returnareNovaDataTime" type="time" class="input-field text-sm">
+          </div>
+        </div>
+        <button
+          @click="prelungesteData"
+          :disabled="salvandData || !returnareNovaDataDate || !returnareNovaDataTime"
+          class="w-full btn-secondary text-sm mb-5 disabled:opacity-50 flex items-center justify-center gap-1"
+        >
+          <i :class="salvandData ? 'pi pi-spin pi-spinner' : 'pi pi-calendar'"></i>
+          {{ salvandData ? 'Se salvează...' : 'Salvează data scadentă' }}
+        </button>
+
+        <div class="border-t border-gray-100 mb-5"></div>
+
+        <div v-if="returnareMsg.error" class="mb-3 bg-accent/10 border-l-4 border-accent rounded-lg p-3">
+          <p class="text-accent text-xs">{{ returnareMsg.error }}</p>
+        </div>
+        <div v-if="returnareMsg.success" class="mb-3 bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
+          <p class="text-green-700 text-xs">{{ returnareMsg.success }}</p>
+        </div>
+
+        <button
+          @click="returneazaAcum"
+          :disabled="procesandReturnare"
+          class="w-full btn-primary text-sm disabled:opacity-50 flex items-center justify-center gap-1"
+        >
+          <i :class="procesandReturnare ? 'pi pi-spin pi-spinner' : 'pi pi-check-circle'"></i>
+          {{ procesandReturnare ? 'Se procesează...' : 'Returnează acum' }}
+        </button>
+      </div>
+    </div>
+
     <!-- ═══════════ USERS LIST MODAL ═══════════ -->
     <div v-if="usersListOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="usersListOpen = false">
       <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="usersListOpen = false"></div>
@@ -1360,7 +1414,15 @@ export default {
       elevSelectat: null,
       elevDetalii: null,
       loadingElevDetalii: false,
-      confirmandRidicare: null
+      confirmandRidicare: null,
+      // Returnare împrumut
+      returnareModalOpen: false,
+      returnareTarget: null,
+      returnareNovaDataDate: '',
+      returnareNovaDataTime: '',
+      returnareMsg: { error: '', success: '' },
+      procesandReturnare: false,
+      salvandData: false
     }
   },
   computed: {
@@ -2024,6 +2086,65 @@ export default {
         alert('Eroare de rețea.')
       } finally {
         this.confirmandRidicare = null
+      }
+    },
+
+    isOverdue(due_at) {
+      if (!due_at) return false
+      return new Date(due_at) < new Date()
+    },
+    deschideReturnareModal(b) {
+      this.returnareTarget = b
+      this.returnareNovaDataDate = b.due_at ? b.due_at.slice(0, 10) : ''
+      this.returnareNovaDataTime = b.due_at ? b.due_at.slice(11, 16) : ''
+      this.returnareMsg = { error: '', success: '' }
+      this.returnareModalOpen = true
+    },
+    async prelungesteData() {
+      if (!this.returnareNovaDataDate || !this.returnareNovaDataTime) return
+      this.salvandData = true
+      this.returnareMsg = { error: '', success: '' }
+      const dataScadenta = `${this.returnareNovaDataDate}T${this.returnareNovaDataTime}`
+      try {
+        const res = await fetch(`/api/admin/loans/${this.returnareTarget.imprumut_id}/prelungeste`, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data_scadenta: dataScadenta })
+        })
+        const data = await res.json()
+        if (res.ok && data.success) {
+          this.returnareMsg.success = 'Data scadentă actualizată!'
+          await this.selecteazaElev(this.elevSelectat)
+        } else {
+          this.returnareMsg.error = data.message || 'Eroare la actualizare.'
+        }
+      } catch {
+        this.returnareMsg.error = 'Eroare de rețea.'
+      } finally {
+        this.salvandData = false
+      }
+    },
+    async returneazaAcum() {
+      this.procesandReturnare = true
+      this.returnareMsg = { error: '', success: '' }
+      try {
+        const res = await fetch(`/api/admin/loans/${this.returnareTarget.imprumut_id}/returneaza`, {
+          method: 'POST',
+          credentials: 'include'
+        })
+        const data = await res.json()
+        if (res.ok && data.success) {
+          this.returnareMsg.success = 'Carte returnată cu succes!'
+          await this.selecteazaElev(this.elevSelectat)
+          setTimeout(() => { this.returnareModalOpen = false }, 1200)
+        } else {
+          this.returnareMsg.error = data.message || 'Eroare la returnare.'
+        }
+      } catch {
+        this.returnareMsg.error = 'Eroare de rețea.'
+      } finally {
+        this.procesandReturnare = false
       }
     },
 

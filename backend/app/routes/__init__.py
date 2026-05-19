@@ -875,7 +875,7 @@ def admin_get_user_detail(user_id):
         # Cărți împrumutate în prezent — sursa autoritativă este imprumuturi_active
         borrowed_rows = db.session.execute(
             text("""
-                SELECT c.carte_id, c.titlu, c.autor, c.ISBN,
+                SELECT ia.imprumut_id, c.carte_id, c.titlu, c.autor, c.ISBN,
                        ia.data_imprumut, ia.data_scadenta
                 FROM imprumuturi_active ia
                 JOIN carti c ON ia.carte_id = c.carte_id
@@ -933,9 +933,10 @@ def admin_get_user_detail(user_id):
             },
             'books_borrowed': [
                 {
-                    'carte_id': r[0], 'titlu': r[1], 'autor': r[2], 'ISBN': r[3],
-                    'borrowed_at': r[4].isoformat() if r[4] else None,
-                    'due_at': r[5].isoformat() if r[5] else None
+                    'imprumut_id': r[0],
+                    'carte_id': r[1], 'titlu': r[2], 'autor': r[3], 'ISBN': r[4],
+                    'borrowed_at': r[5].isoformat() if r[5] else None,
+                    'due_at': r[6].isoformat() if r[6] else None
                 }
                 for r in borrowed_rows
             ],
@@ -961,6 +962,79 @@ def admin_get_user_detail(user_id):
     except Exception:
         logger.exception('Eroare la preluarea detaliilor utilizatorului %d', user_id)
         return jsonify({'success': False, 'error': 'Eroare la preluarea detaliilor utilizatorului'}), 500
+
+
+@main_bp.route('/admin/loans/<int:imprumut_id>/prelungeste', methods=['PUT'])
+@bibliotecar_required
+def prelungeste_imprumut(imprumut_id):
+    """Modifică data scadentă a unui împrumut activ. Necesită bibliotecar."""
+    data = request.get_json(silent=True) or {}
+    data_noua = (data.get('data_scadenta') or '').strip()
+    if not data_noua:
+        return jsonify({'success': False, 'message': 'data_scadenta este obligatorie'}), 400
+    try:
+        data_scadenta = datetime.datetime.fromisoformat(data_noua)
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Format dată invalid. Folosește YYYY-MM-DDTHH:MM'}), 400
+    try:
+        result = db.session.execute(
+            text("UPDATE imprumuturi_active SET data_scadenta = :ds WHERE imprumut_id = :id"),
+            {'ds': data_scadenta, 'id': imprumut_id}
+        )
+        if result.rowcount == 0:
+            return jsonify({'success': False, 'message': 'Împrumutul nu a fost găsit'}), 404
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Data scadentă actualizată'}), 200
+    except Exception:
+        db.session.rollback()
+        logger.exception('Eroare la prelungire împrumut %d', imprumut_id)
+        return jsonify({'success': False, 'message': 'Eroare la actualizare'}), 500
+
+
+@main_bp.route('/admin/loans/<int:imprumut_id>/returneaza', methods=['POST'])
+@bibliotecar_required
+def returneaza_imprumut(imprumut_id):
+    """Procesează returnarea unui împrumut activ.
+    Șterge din imprumuturi_active, crește stocul disponibil,
+    și adaugă cartea în carti_citite pentru utilizator.
+    """
+    try:
+        row = db.session.execute(
+            text("SELECT user_id, carte_id FROM imprumuturi_active WHERE imprumut_id = :id"),
+            {'id': imprumut_id}
+        ).fetchone()
+        if not row:
+            return jsonify({'success': False, 'message': 'Împrumutul nu a fost găsit'}), 404
+        user_id, carte_id = row
+
+        db.session.execute(
+            text("DELETE FROM imprumuturi_active WHERE imprumut_id = :id"),
+            {'id': imprumut_id}
+        )
+        db.session.execute(
+            text("UPDATE carti SET stoc_disponibil = stoc_disponibil + 1, "
+                 "imprumutat = (stoc_disponibil + 1 < stoc_total) "
+                 "WHERE carte_id = :cid"),
+            {'cid': carte_id}
+        )
+
+        already = db.session.execute(
+            text("SELECT 1 FROM carti_citite WHERE user_id = :uid AND carte_id = :cid"),
+            {'uid': user_id, 'cid': carte_id}
+        ).fetchone()
+        if not already:
+            db.session.execute(
+                text("INSERT INTO carti_citite (user_id, carte_id) VALUES (:uid, :cid)"),
+                {'uid': user_id, 'cid': carte_id}
+            )
+
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Carte returnată cu succes'}), 200
+    except Exception:
+        db.session.rollback()
+        logger.exception('Eroare la returnarea împrumutului %d', imprumut_id)
+        return jsonify({'success': False, 'message': 'Eroare la returnare'}), 500
+
 
 @main_bp.route('/reviews', methods=['GET'])
 def get_reviews():
