@@ -7,7 +7,7 @@
           <img src="/logo.webp" alt="Biblioteca" class="h-9 w-9 rounded-lg transition-transform duration-200 group-hover:scale-105">
           <div class="hidden sm:block">
             <h1 class="text-lg font-bold text-white leading-tight">Biblioteca</h1>
-            <p class="text-[11px] text-white/40 font-medium -mt-0.5">Sistem Școlar</p>
+            <p class="text-[11px] text-white/40 font-medium -mt-0.5">C.N.I. „Spiru-Haret"</p>
           </div>
         </router-link>
 
@@ -51,8 +51,8 @@
             @click="handleAuthClick"
             :class="[
               'px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200',
-              isLoggedIn 
-                ? 'text-white/70 hover:text-white hover:bg-white/5' 
+              isLoggedIn
+                ? 'text-white/70 hover:text-white hover:bg-white/5'
                 : 'bg-secondary hover:bg-secondary/90 text-white shadow-soft'
             ]"
           >
@@ -91,8 +91,8 @@
               @click="handleAuthClick"
               :class="[
                 'w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold transition-all',
-                isLoggedIn 
-                  ? 'text-white/70 hover:text-white hover:bg-white/5' 
+                isLoggedIn
+                  ? 'text-white/70 hover:text-white hover:bg-white/5'
                   : 'bg-secondary text-white'
               ]"
             >

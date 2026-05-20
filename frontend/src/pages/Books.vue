@@ -531,7 +531,7 @@ export default {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draft: this.reviewText, titlu: this.selectedBook.title, nota: this.reviewNota })
+          body: JSON.stringify({ draft: this.reviewText, titlu: this.selectedBook.title })
         });
         const data = await res.json();
         if (data.success) {

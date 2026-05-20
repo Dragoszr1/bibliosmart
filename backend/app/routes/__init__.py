@@ -159,7 +159,7 @@ def normalize_cni_email(email):
 def fetch_user_by_id(user_id):
     """Încarcă utilizatorul curent din baza de date pentru verificări de autorizare."""
     query = text(
-        "SELECT user_id, username, email, rol FROM users WHERE user_id = :user_id"
+        "SELECT user_id, username, email, rol, club FROM users WHERE user_id = :user_id"
     )
     result = db.session.execute(query, {'user_id': user_id}).mappings().first()
     if not result:
@@ -169,7 +169,8 @@ def fetch_user_by_id(user_id):
         'user_id': result['user_id'],
         'username': result['username'],
         'email': result['email'],
-        'rol': normalize_role(result['rol'])
+        'rol': normalize_role(result['rol']),
+        'club': bool(result['club'])
     }
 
 
@@ -1712,7 +1713,6 @@ def ai_review_assist():
     data = request.get_json(silent=True) or {}
     ciorna = (data.get('draft') or '').strip()
     titlu_carte = (data.get('titlu') or '').strip()
-    nota_raw = data.get('nota', 0)
 
     if not ciorna:
         return jsonify({'success': False, 'message': 'ciorna (draft) este obligatorie'}), 400
@@ -1723,10 +1723,11 @@ def ai_review_assist():
 
     try:
         prompt = (
-            f"Ești un asistent pentru recenzii de carte. Elevul vrea să scrie o recenzie pentru "
-            f'"{titlu_carte}" cu nota {nota_raw}/5. Gândul lui brut:\n"{ciorna}"\n\n'
+            f"Ești un asistent pentru recenzii de carte. Elevul a scris o ciornă de recenzie pentru "
+            f'cartea "{titlu_carte}". Gândul lui brut:\n"{ciorna}"\n\n'
             "Rescrie-l ca o recenzie coerentă, bine scrisă, de 2-4 propoziții. "
-            "Păstrează opinia originală, nu adăuga informații inventate. Răspunde DOAR cu textul recenziei, fără explicații."
+            "Păstrează exact opinia și tonul original al elevului — nu schimba dacă e pozitivă sau negativă. "
+            "Nu adăuga informații inventate. Răspunde DOAR cu textul recenziei, fără explicații."
         )
         raspuns_ai = _groq_chat(client, prompt)
         return jsonify({'success': True, 'review': raspuns_ai}), 200

@@ -23,7 +23,7 @@
           </div>
           <div>
             <p class="text-white text-sm font-semibold leading-tight">Asistent Bibliotecă</p>
-            <p class="text-white/40 text-xs">Alimentat de Gemini AI</p>
+            <p class="text-white/40 text-xs">Asistent Bibliotecă</p>
           </div>
         </div>
 

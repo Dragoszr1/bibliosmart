@@ -6,7 +6,7 @@
       <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold text-dark flex items-center gap-2">
-            <i class="pi pi-bookmark-fill text-secondary"></i> Club de Literatură
+            <i class="pi pi-bookmark-fill text-secondary"></i> Club de Lectură
           </h1>
           <p class="text-gray-500 text-sm mt-1">Activitățile săptămânii curente</p>
         </div>
@@ -34,8 +34,9 @@
       </div>
 
       <!-- Error state -->
-      <div v-else-if="loadError" class="bg-accent/10 border-l-4 border-accent rounded-xl p-4 text-accent text-sm">
-        {{ loadError }}
+      <div v-else-if="loadError" class="text-center py-20 text-gray-400">
+        <i class="pi pi-exclamation-circle text-4xl mb-3 block text-gray-200"></i>
+        <p class="text-sm">Nu s-au putut încărca activitățile.</p>
       </div>
 
       <!-- Empty state -->
@@ -297,6 +298,10 @@ export default {
       try {
         const res = await fetch('/api/club/activitati?saptamana=curenta', { credentials: 'include' })
         const data = await res.json()
+        if (res.status === 403) {
+          this.$router.push('/')
+          return
+        }
         if (!res.ok) {
           this.loadError = data.message || 'Eroare la încărcarea activităților.'
         } else {

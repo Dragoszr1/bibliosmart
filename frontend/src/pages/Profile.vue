@@ -181,14 +181,38 @@
       </div>
 
       <!-- ═══════════════════════════════════════════════════════════ -->
-      <!-- LIBRARIAN PANEL (only when rol='1') -->
+      <!-- LIBRARIAN PANEL -->
       <!-- ═══════════════════════════════════════════════════════════ -->
       <div v-if="isBibliotecar" class="mt-2">
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- BOOK REQUESTS (bibliotecar only) -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <div class="mb-8">
+        <!-- Tab Bar -->
+        <div class="flex gap-1 bg-white rounded-2xl shadow-card border border-gray-100 p-1.5 mb-6 overflow-x-auto">
+          <button
+            v-for="tab in [
+              { key: 'cereri',   label: 'Cereri',   icon: 'pi pi-inbox' },
+              { key: 'elevi',    label: 'Elevi',    icon: 'pi pi-users' },
+              { key: 'anunturi', label: 'Anunțuri', icon: 'pi pi-megaphone' },
+              { key: 'club',     label: 'Club',     icon: 'pi pi-bookmark' },
+              { key: 'carti',    label: 'Cărți',    icon: 'pi pi-book' },
+            ]"
+            :key="tab.key"
+            @click="activeTab = tab.key"
+            :class="[
+              'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 whitespace-nowrap flex-shrink-0',
+              activeTab === tab.key
+                ? 'bg-secondary text-white shadow-soft'
+                : 'text-gray-500 hover:text-dark hover:bg-gray-50'
+            ]"
+          >
+            <i :class="tab.icon" class="text-xs"></i>
+            {{ tab.label }}
+            <span v-if="tab.key === 'cereri' && pendingRequestsCount > 0" class="bg-white/30 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{{ pendingRequestsCount }}</span>
+            <span v-if="tab.key === 'elevi' && approvedWaitingCount > 0" class="bg-amber-400 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{{ approvedWaitingCount }}</span>
+          </button>
+        </div>
+
+        <!-- ── TAB: CERERI ── -->
+        <div v-if="activeTab === 'cereri'" class="mb-8">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
             <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
               <i class="pi pi-inbox text-secondary"></i> Cereri Împrumut
@@ -273,9 +297,11 @@
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Section Header -->
+        </div><!-- end cereri tab -->
+
+        <!-- ── TAB: CĂRȚI ── -->
+        <div v-if="activeTab === 'carti'">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
             <i class="pi pi-cog text-secondary"></i> Gestionare Cărți
@@ -402,10 +428,10 @@
           </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- ANNOUNCEMENTS MANAGEMENT (bibliotecar only) -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <div class="mt-8">
+        </div><!-- end carti tab -->
+
+        <!-- ── TAB: ANUNȚURI ── -->
+        <div v-if="activeTab === 'anunturi'">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
             <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
               <i class="pi pi-megaphone text-secondary"></i> Gestionare Anunțuri
@@ -453,12 +479,10 @@
               <p class="text-gray-500 text-sm">Niciun anunț încă</p>
             </div>
           </div>
-        </div>
+        </div><!-- end anunturi tab -->
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- USER ACCOUNTS (bibliotecar only) -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <div class="mt-8">
+        <!-- ── TAB: ELEVI ── -->
+        <div v-if="activeTab === 'elevi'">
           <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2 mb-6">
             <i class="pi pi-users text-secondary"></i> Gestionare Elevi
           </h2>
@@ -640,12 +664,10 @@
             </div>
 
           </div>
-        </div>
+        </div><!-- end elevi tab -->
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- INVITAȚII CLUB DE LITERATURĂ (bibliotecar only) -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <div class="mt-8">
+        <!-- ── TAB: CLUB ── -->
+        <div v-if="activeTab === 'club'">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
             <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
               <i class="pi pi-bookmark text-secondary"></i> Invitații Club de Literatură
@@ -696,7 +718,7 @@
               <p class="text-accent text-xs">{{ inviteError }}</p>
             </div>
           </div>
-        </div>
+        </div><!-- end club tab -->
 
       </div>
     </main>
@@ -1314,6 +1336,9 @@ export default {
   name: 'Profile',
   data() {
     return {
+      // ── Admin tabs ──
+      activeTab: 'cereri',
+
       // ── Profilul utilizatorului ──
       user: {
         name: '',
@@ -1428,6 +1453,9 @@ export default {
   computed: {
     pendingRequestsCount() {
       return this.bookRequests.filter(r => r.status === 'pending').length
+    },
+    approvedWaitingCount() {
+      return this.bookRequests.filter(r => r.status === 'approved').length
     },
     filteredUsers() {
       if (!this.usersSearch.trim()) return this.allUsers

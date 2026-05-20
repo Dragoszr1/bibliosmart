@@ -3,12 +3,12 @@ Description=Biblioteca Flask API (Gunicorn)
 After=network.target mysqld.service mariadb.service
 
 [Service]
-User=dragoszr
-Group=dragoszr
-WorkingDirectory=/home/dragoszr/biblioteca-repo/backend
+User=dragoszr-proiect
+Group=dragoszr-proiect
+WorkingDirectory=/home/dragoszr-proiect/Desktop/biblioteca-repo/backend
 Environment="FLASK_ENV=production"
-Environment="PATH=/home/dragoszr/biblioteca-repo/backend/venv/bin"
-ExecStart=/home/dragoszr/biblioteca-repo/backend/venv/bin/gunicorn \
+Environment="PATH=/home/dragoszr-proiect/Desktop/biblioteca-repo/backend/venv/bin"
+ExecStart=/home/dragoszr-proiect/Desktop/biblioteca-repo/backend/venv/bin/gunicorn \
     --workers 3 \
     --bind 127.0.0.1:5000 \
     --timeout 60 \

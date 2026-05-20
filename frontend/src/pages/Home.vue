@@ -5,7 +5,8 @@
       <div class="absolute inset-0 bg-gradient-to-br from-secondary/20 via-transparent to-accent/10"></div>
       <div class="max-w-3xl mx-auto px-6 text-center relative z-10">
         <h2 class="text-3xl sm:text-5xl font-bold text-white mb-3 tracking-tight">Bine ai venit la Biblioteca</h2>
-        <p class="text-white/50 text-sm sm:text-lg font-normal">Locul unde cunoașterea prinde viață</p>
+        <p class="text-white/80 text-sm sm:text-base font-medium mb-2">Colegiului Național de Informatică „Spiru-Haret"</p>
+        <p class="text-white/45 text-sm sm:text-base italic">„Locul unde cunoașterea prinde viață"</p>
       </div>
     </section>
 
@@ -62,7 +63,7 @@
       <!-- Features Section -->
       <section class="mt-16">
         <div class="flex items-center gap-3 mb-8">
-          <h2 class="text-2xl font-bold text-dark">De ce Biblioteca?</h2>
+          <h2 class="text-2xl font-bold text-dark">Facilități</h2>
           <div class="flex-1 h-px bg-gray-200"></div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
