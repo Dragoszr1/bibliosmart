@@ -155,9 +155,9 @@ export default {
 
         const data = await response.json()
         if (response.ok) {
-          this.successMessage = 'Cont creat cu succes! Se redirecționează...'
+          this.successMessage = 'Cont creat cu succes! Te redirecționăm la pagina de autentificare...'
           setTimeout(() => {
-            this.$router.push('/')
+            this.$router.push('/login')
           }, 2000)
         } else {
           this.errorMessage = data.message || 'Eroare la înregistrare'

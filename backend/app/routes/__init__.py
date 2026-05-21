@@ -10,12 +10,12 @@ import os
 import logging
 import re
 import secrets
+import random
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from groq import Groq
 import smtplib
 from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
 from app.database import db
 from app.models import Carti, Users, CartiCitite, Recenzii, Anunturi, AnunturiAprecieri, CereriCarti
@@ -39,6 +39,7 @@ ROLE_ALIASES = {
 EMAIL_REGEX = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9._%+\-]{0,62}[A-Za-z0-9])?@([A-Za-z0-9\-]+\.)+[A-Za-z]{2,63}$")
 PROFILE_PICTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'profile_pictures')
 BOOK_IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'book_images')
+BOOK_PDFS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'book_pdfs')
 CLUB_ANNOUNCEMENT_IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'imagini_anunturi_club')
 
 def allowed_file(filename):
@@ -65,7 +66,7 @@ def _save_club_activity_image(file, activitate_id):
             pass
 
     ext = file.filename.rsplit('.', 1)[1].lower()
-    filename = f"anunt_{activitate_id}.{ext}"
+    filename = f"{activitate_id}.{ext}"
     filepath = os.path.join(CLUB_ANNOUNCEMENT_IMAGES_DIR, filename)
     file.save(filepath)
     return filename
@@ -87,10 +88,10 @@ def _find_files_by_prefix(directory, prefix):
     return rezultate
 
 
-# ── Helper email ─────────────────────────────────────────────
+# email
 
-def send_email(recipients, subject, html_body):
-    """Trimite un email prin SMTP (Gmail).
+def send_email(recipients, subject, body):
+    """Trimite un email plain-text prin SMTP (Gmail).
 
     Citește setările SMTP_* din config-ul Flask.
     Returnează True la succes, False la eroare (logat, nu aruncă excepție).
@@ -106,11 +107,10 @@ def send_email(recipients, subject, html_body):
         logger.error('Credențiale SMTP lipsă — emailul nu a fost trimis')
         return False
 
-    msg = MIMEMultipart('alternative')
+    msg = MIMEText(body, 'plain', 'utf-8')
     msg['Subject'] = subject
     msg['From'] = sender
     msg['To'] = ', '.join(recipients)
-    msg.attach(MIMEText(html_body, 'html'))
 
     try:
         with smtplib.SMTP(host, port, timeout=10) as server:
@@ -126,10 +126,9 @@ def send_email(recipients, subject, html_body):
         return False
 
 
-# ── Helpers JWT ──────────────────────────────────────────────
+# jwt
 
 def normalize_role(raw_role):
-    """Normalizează valorile vechi de rol la setul suportat."""
     if raw_role is None:
         return 'user'
 
@@ -138,7 +137,6 @@ def normalize_role(raw_role):
 
 
 def normalize_cni_email(email):
-    """Returnează adresa de email școlară normalizată sau None dacă e invalidă."""
     if not isinstance(email, str):
         return None
 
@@ -157,7 +155,6 @@ def normalize_cni_email(email):
 
 
 def fetch_user_by_id(user_id):
-    """Încarcă utilizatorul curent din baza de date pentru verificări de autorizare."""
     query = text(
         "SELECT user_id, username, email, rol, club FROM users WHERE user_id = :user_id"
     )
@@ -175,7 +172,6 @@ def fetch_user_by_id(user_id):
 
 
 def create_jwt_token(user_id, username, email):
-    """Creează un token JWT cu date de identitate."""
     payload = {
         'user_id': user_id,
         'username': username,
@@ -187,7 +183,6 @@ def create_jwt_token(user_id, username, email):
 
 
 def set_jwt_cookie(response, token):
-    """Setează tokenul JWT ca cookie httpOnly pe răspuns."""
     response.set_cookie(
         current_app.config['JWT_COOKIE_NAME'],
         token,
@@ -201,7 +196,6 @@ def set_jwt_cookie(response, token):
 
 
 def clear_jwt_cookie(response):
-    """Șterge cookie-ul JWT."""
     response.set_cookie(
         current_app.config['JWT_COOKIE_NAME'],
         '',
@@ -215,7 +209,6 @@ def clear_jwt_cookie(response):
 
 
 def decode_jwt_token(token):
-    """Decodează și verifică un token JWT. Returnează payload sau None."""
     try:
         return jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
     except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
@@ -251,7 +244,6 @@ def get_current_user():
 
 
 def jwt_required(f):
-    """Decorator care impune prezența unui cookie JWT valid."""
     @wraps(f)
     def decorated(*args, **kwargs):
         user = get_current_user()
@@ -263,7 +255,6 @@ def jwt_required(f):
 
 
 def role_required(role):
-    """Fabrică de decorator care impune un anumit rol verificat din baza de date."""
     if role not in VALID_ROLES:
         raise ValueError(f"Rol necunoscut: {role}")
 
@@ -282,12 +273,10 @@ bibliotecar_required = role_required('bibliotecar')
 
 @main_bp.route('/health', methods=['GET'])
 def health_check():
-    """Endpoint de verificare a stării serverului."""
     return jsonify({'status': 'ok', 'message': 'Server is running'}), 200
 
 @main_bp.route('/', methods=['GET'])
 def index():
-    """Index API — verifică conexiunea la baza de date."""
     return jsonify({
         'name': 'School Library API',
         'version': '1.0.0',
@@ -296,9 +285,10 @@ def index():
 
 @main_bp.route('/books', methods=['GET'])
 def get_books():
-    """Returnează toate cărțile din catalogul bibliotecii."""
     try:
         result = db.session.execute(text('SELECT carte_id, titlu, autor, ISBN, stoc_total, stoc_disponibil, imprumutat, gen, pozitie, cod FROM carti'))
+        os.makedirs(BOOK_PDFS_DIR, exist_ok=True)
+        pdf_ids = {f.rsplit('.', 1)[0] for f in os.listdir(BOOK_PDFS_DIR) if f.endswith('.pdf')}
         books = []
         for row in result:
             books.append({
@@ -311,7 +301,8 @@ def get_books():
                 'imprumutat': row[6],
                 'gen': row[7],
                 'pozitie': row[8],
-                'cod': row[9]
+                'cod': row[9],
+                'has_pdf': str(row[0]) in pdf_ids
             })
         return jsonify({'books': books}), 200
     except Exception:
@@ -322,7 +313,6 @@ def get_books():
 @main_bp.route('/books', methods=['POST'])
 @bibliotecar_required
 def add_book():
-    """Adaugă o carte nouă în colecție. Necesită rol de bibliotecar."""
     data = request.get_json(silent=True) or {}
     titlu = data.get('titlu')
     autor = data.get('autor')
@@ -366,7 +356,6 @@ def add_book():
 @main_bp.route('/books/<int:carte_id>', methods=['PUT'])
 @bibliotecar_required
 def update_book(carte_id):
-    """Actualizează stocul sau detaliile unei cărți. Necesită rol de bibliotecar."""
     data = request.get_json(silent=True) or {}
 
     # Construiește query-ul dinamic de update
@@ -404,7 +393,6 @@ def update_book(carte_id):
 @main_bp.route('/books/<int:carte_id>', methods=['DELETE'])
 @bibliotecar_required
 def delete_book(carte_id):
-    """Șterge o carte și toate înregistrările asociate. Necesită rol de bibliotecar."""
     try:
         db.session.execute(text("DELETE FROM imprumuturi_active WHERE carte_id = :id"), {'id': carte_id})
         db.session.execute(text("DELETE FROM cereri_carti WHERE carte_id = :id"), {'id': carte_id})
@@ -424,11 +412,7 @@ def delete_book(carte_id):
 @main_bp.route('/books/<int:carte_id>/request-fizic', methods=['POST'])
 @jwt_required
 def request_book_fizic(carte_id):
-    """Trimite o cerere de împrumut fizic pentru o carte.
-
-    Notifică prin email toți utilizatorii cu rolul 'bibliotecar'
-    că elevul dorește să ridice cartea.
-    """
+    # Notifica toti bibliotecarii pe email
     user = request.current_user
 
     # Căutăm cartea în baza de date
@@ -454,18 +438,20 @@ def request_book_fizic(carte_id):
         logger.warning('Niciun bibliotecar găsit pentru notificarea cererii %d', carte_id)
         return jsonify({'success': False, 'message': 'Niciun bibliotecar disponibil să proceseze cererea'}), 503
 
-    subject = f'Cerere împrumut carte — {titlu}'
+    subject = f'Cerere imprumut carte: {titlu}'
     html_body = (
-        f'<h2>Cerere nouă de împrumut</h2>'
-        f'<p>Utilizatorul <strong>{user["username"]}</strong> '
-        f'(<a href="mailto:{user["email"]}">{user["email"]}</a>) '
-        f'dorește să împrumute cartea:</p>'
-        f'<ul>'
-        f'<li><strong>Titlu:</strong> {titlu}</li>'
-        f'<li><strong>Autor:</strong> {autor}</li>'
-        f'<li><strong>ID carte:</strong> {carte_id}</li>'
-        f'</ul>'
-        f'<p>Stoc disponibil: {stoc_disponibil}</p>'
+        f'Cerere noua de imprumut\n'
+        f'------------------------\n\n'
+        f'Utilizator: {user["username"]} ({user["email"]})\n\n'
+        f'Carte solicitata:\n'
+        f'  Titlu:  {titlu}\n'
+        f'  Autor:  {autor}\n'
+        f'  ID:     {carte_id}\n\n'
+        f'Stoc disponibil: {stoc_disponibil}\n\n'
+        f'Intra pe platforma pentru a aproba sau respinge cererea.\n\n'
+        f'---\n'
+        f'Biblioteca CNI Suceava\n'
+        f'Mesaj automat, te rugam nu raspunde la acest email.'
     )
 
     # Salvăm cererea în baza de date
@@ -489,7 +475,6 @@ def request_book_fizic(carte_id):
 @main_bp.route('/book-requests', methods=['GET'])
 @bibliotecar_required
 def get_book_requests():
-    """Listează toate cererile de împrumut. Doar bibliotecar."""
     status_filter = request.args.get('status')  # opțional: pending, approved, rejected
     try:
         sql = (
@@ -528,7 +513,6 @@ def get_book_requests():
 @main_bp.route('/book-requests/<int:cerere_id>', methods=['PUT'])
 @bibliotecar_required
 def update_book_request(cerere_id):
-    """Aprobă sau respinge o cerere de împrumut. Doar bibliotecar."""
     data = request.get_json(silent=True) or {}
     status_nou = data.get('status')
     if status_nou not in ('approved', 'rejected'):
@@ -577,46 +561,23 @@ def update_book_request(cerere_id):
         if status_nou == 'approved' and status_vechi != 'approved':
             interval_de_la   = ridicare_de_la_dt.strftime('%d.%m.%Y %H:%M')
             interval_pana_la = ridicare_pana_la_dt.strftime('%d.%m.%Y %H:%M')
-            html_body = f"""
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: Arial, sans-serif; background: #f5f0e8; margin: 0; padding: 0;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0e8; padding: 32px 0;">
-    <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-        <tr>
-          <td style="background:#2c3e50; padding: 24px 32px; text-align:center;">
-            <h1 style="color:#f5f0e8; margin:0; font-size:22px;">📚 Biblioteca CNI Suceava</h1>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 32px;">
-            <p style="font-size:16px; color:#333; margin-top:0;">Salut, <strong>{nume_elev}</strong>!</p>
-            <p style="font-size:15px; color:#333;">Cererea ta de împrumut pentru cartea:</p>
-            <div style="background:#f5f0e8; border-left:4px solid #e74c3c; padding:12px 16px; border-radius:6px; margin:16px 0;">
-              <strong style="font-size:16px; color:#2c3e50;">„{titlu}"</strong><br>
-              <span style="color:#555; font-size:14px;">de {autor}</span>
-            </div>
-            <p style="font-size:15px; color:#2c3e50; font-weight:bold;">✅ a fost <span style="color:#27ae60;">APROBATĂ</span>!</p>
-            <p style="font-size:15px; color:#333;">Poți ridica cartea de la bibliotecă în intervalul:</p>
-            <div style="background:#eaf7ec; border:1px solid #a8e6b8; border-radius:8px; padding:14px 20px; margin:16px 0; text-align:center;">
-              <span style="font-size:18px; font-weight:bold; color:#1a7a3c;">🕐 {interval_de_la} — {interval_pana_la}</span>
-            </div>
-            <p style="font-size:13px; color:#888;">Dacă nu poți ridica cartea în acest interval, te rugăm să contactezi biblioteca.</p>
-            <hr style="border:none; border-top:1px solid #eee; margin:24px 0;">
-            <p style="font-size:12px; color:#aaa; text-align:center; margin:0;">Biblioteca CNI Suceava · Sistem automat, te rugăm nu răspunde la acest email.</p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>"""
+            html_body = (
+                f'Salut, {nume_elev}!\n\n'
+                f'Cererea ta de imprumut pentru cartea:\n\n'
+                f'  Titlu: {titlu}\n'
+                f'  Autor: {autor}\n\n'
+                f'a fost APROBATA.\n\n'
+                f'Poti ridica cartea de la biblioteca in intervalul:\n'
+                f'  {interval_de_la} - {interval_pana_la}\n\n'
+                f'Daca nu poti ridica cartea in acest interval, te rugam sa contactezi biblioteca.\n\n'
+                f'---\n'
+                f'Biblioteca CNI Suceava\n'
+                f'Mesaj automat, te rugam nu raspunde la acest email.'
+            )
             send_email(
                 recipients=[email_elev],
-                subject=f'Cerere aprobată: „{titlu}"',
-                html_body=html_body
+                subject=f'Cerere aprobata: {titlu}',
+                body=html_body
             )
 
         db.session.commit()
@@ -630,10 +591,7 @@ def update_book_request(cerere_id):
 @main_bp.route('/book-requests/<int:cerere_id>/confirma-ridicare', methods=['POST'])
 @bibliotecar_required
 def confirma_ridicare(cerere_id):
-    """Confirmă că elevul a ridicat fizic cartea.
-    Decrementează stoc_disponibil, inserează în imprumuturi_active,
-    marchează cererea ca ridicat.
-    """
+    # Scade stoc, adauga in imprumuturi_active, marcheaza cererea ca ridicat
     try:
         row = db.session.execute(
             text(
@@ -688,12 +646,11 @@ def confirma_ridicare(cerere_id):
         return jsonify({'success': False, 'message': 'Eroare la confirmarea ridicării'}), 500
 
 
-# ── Raport Word ──────────────────────────────────────────────
+# raport
 
 @main_bp.route('/librarian/report/docx', methods=['GET'])
 @bibliotecar_required
 def librarian_report_docx():
-    """Generează un raport Word (.docx) cu toți elevii și cărțile citite/împrumutate."""
     try:
         # Toți utilizatorii obișnuiți (elevi)
         students = db.session.execute(
@@ -840,7 +797,6 @@ def librarian_report_docx():
 @main_bp.route('/admin/users', methods=['GET'])
 @bibliotecar_required
 def admin_get_users():
-    """Listează toate conturile de utilizatori. Doar bibliotecar."""
     try:
         rows = db.session.execute(
             text("SELECT user_id, username, email, rol, telefon FROM users ORDER BY username ASC")
@@ -864,7 +820,6 @@ def admin_get_users():
 @main_bp.route('/admin/users/<int:user_id>', methods=['GET'])
 @bibliotecar_required
 def admin_get_user_detail(user_id):
-    """Returnează detalii complete despre un utilizator. Doar bibliotecar."""
     try:
         user_row = db.session.execute(
             text("SELECT user_id, username, email, rol, telefon, description FROM users WHERE user_id = :uid"),
@@ -968,7 +923,6 @@ def admin_get_user_detail(user_id):
 @main_bp.route('/admin/loans/<int:imprumut_id>/prelungeste', methods=['PUT'])
 @bibliotecar_required
 def prelungeste_imprumut(imprumut_id):
-    """Modifică data scadentă a unui împrumut activ. Necesită bibliotecar."""
     data = request.get_json(silent=True) or {}
     data_noua = (data.get('data_scadenta') or '').strip()
     if not data_noua:
@@ -995,10 +949,7 @@ def prelungeste_imprumut(imprumut_id):
 @main_bp.route('/admin/loans/<int:imprumut_id>/returneaza', methods=['POST'])
 @bibliotecar_required
 def returneaza_imprumut(imprumut_id):
-    """Procesează returnarea unui împrumut activ.
-    Șterge din imprumuturi_active, crește stocul disponibil,
-    și adaugă cartea în carti_citite pentru utilizator.
-    """
+    # Sterge din imprumuturi_active, creste stocul, adauga in carti_citite
     try:
         row = db.session.execute(
             text("SELECT user_id, carte_id FROM imprumuturi_active WHERE imprumut_id = :id"),
@@ -1039,9 +990,6 @@ def returneaza_imprumut(imprumut_id):
 
 @main_bp.route('/reviews', methods=['GET'])
 def get_reviews():
-    """Returnează recenziile pentru o carte dată prin carte_id.
-    Include username, nota și comentariu.
-    """
     carte_id = request.args.get('carte_id')
     if not carte_id:
         return jsonify({'success': False, 'message': 'carte_id este obligatoriu'}), 400
@@ -1083,7 +1031,6 @@ def get_reviews():
 @main_bp.route('/reviews', methods=['POST'])
 @jwt_required
 def submit_review():
-    """Salvează o recenzie pentru o carte. Necesită autentificare."""
     user = request.current_user
     data = request.get_json(silent=True) or {}
     carte_id = data.get('carte_id')
@@ -1134,7 +1081,6 @@ def submit_review():
 @main_bp.route('/reviews/user', methods=['GET'])
 @jwt_required
 def get_user_reviews():
-    """Returnează toate recenziile scrise de utilizatorul autentificat."""
     user_id = request.current_user['user_id']
 
     try:
@@ -1156,10 +1102,9 @@ def get_user_reviews():
         return jsonify({'success': False, 'error': 'Eroare la preluarea recenziilor'}), 500
 
 
-# ── Rute autentificare ────────────────────────────────────────
+# autentificare
 @main_bp.route('/auth/login', methods=['POST'])
 def login():
-    """Login cu verificare bcrypt a parolei. Setează cookie httpOnly JWT."""
     data = request.get_json(silent=True) or {}
     raw_email = data.get('email')
     parola = data.get('password')
@@ -1171,10 +1116,10 @@ def login():
     if not email:
         return jsonify({'success': False, 'message': 'Doar emailurile @cni-sv.ro sunt permise'}), 400
 
-    query = text(
-        "SELECT user_id, username, email, hashed_password, rol FROM users WHERE email = :email"
-    )
-    result = db.session.execute(query, {'email': email}).mappings().first()
+    result = db.session.execute(
+        text("SELECT user_id, username, email, hashed_password, rol FROM users WHERE email = :email"),
+        {'email': email}
+    ).mappings().first()
 
     if not result:
         return jsonify({'success': False, 'message': 'Credențiale invalide'}), 401
@@ -1183,22 +1128,80 @@ def login():
     if not parola_hash or not bcrypt.checkpw(parola.encode('utf-8'), parola_hash.encode('utf-8')):
         return jsonify({'success': False, 'message': 'Credențiale invalide'}), 401
 
-    token = create_jwt_token(
-        user_id=result['user_id'],
-        username=result['username'],
-        email=result['email']
+    # Șterge orice cod vechi pentru acest utilizator
+    db.session.execute(
+        text("DELETE FROM coduri_verificare WHERE user_id = :uid"),
+        {'uid': result['user_id']}
     )
 
-    rol_normalizat = normalize_role(result['rol'])
+    # Generează cod 6 cifre și token temporar
+    code = f"{random.randint(0, 999999):06d}"
+    temp_token = secrets.token_urlsafe(32)
+    expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=10)
 
+    db.session.execute(
+        text("INSERT INTO coduri_verificare (user_id, code, temp_token, expires_at) VALUES (:uid, :code, :token, :exp)"),
+        {'uid': result['user_id'], 'code': code, 'token': temp_token, 'exp': expires_at}
+    )
+    db.session.commit()
+
+    # Trimite codul pe email
+    body = (
+        f'Salut, {result["username"]}!\n\n'
+        f'Codul tau de verificare pentru autentificarea in Biblioteca CNI este:\n\n'
+        f'    {code}\n\n'
+        f'Codul este valabil 10 minute. Nu il impartasi cu nimeni.\n\n'
+        f'Daca nu ai incercat sa te autentifici, ignora acest mesaj.\n\n'
+        f'---\n'
+        f'Biblioteca CNI Suceava\n'
+        f'Mesaj automat, te rugam nu raspunde la acest email.'
+    )
+    send_email([result['email']], 'Cod de verificare - Biblioteca CNI', body)
+
+    return jsonify({'success': True, 'step': 'verify', 'temp_token': temp_token}), 200
+
+
+@main_bp.route('/auth/verify-code', methods=['POST'])
+def verify_code():
+    data = request.get_json(silent=True) or {}
+    temp_token = (data.get('temp_token') or '').strip()
+    code = (data.get('code') or '').strip()
+
+    if not temp_token or not code:
+        return jsonify({'success': False, 'message': 'Token și cod sunt obligatorii'}), 400
+
+    row = db.session.execute(
+        text("SELECT vc.id, vc.user_id, vc.code, vc.expires_at, u.username, u.email, u.rol "
+             "FROM coduri_verificare vc "
+             "JOIN users u ON u.user_id = vc.user_id "
+             "WHERE vc.temp_token = :token"),
+        {'token': temp_token}
+    ).mappings().first()
+
+    if not row:
+        return jsonify({'success': False, 'message': 'Sesiune de verificare invalidă'}), 401
+
+    if datetime.datetime.utcnow() > row['expires_at']:
+        db.session.execute(text("DELETE FROM coduri_verificare WHERE id = :id"), {'id': row['id']})
+        db.session.commit()
+        return jsonify({'success': False, 'message': 'Codul a expirat. Încearcă să te autentifici din nou.'}), 401
+
+    if code != row['code']:
+        return jsonify({'success': False, 'message': 'Cod incorect'}), 401
+
+    # Cod valid — șterge înregistrarea și emite JWT
+    db.session.execute(text("DELETE FROM coduri_verificare WHERE id = :id"), {'id': row['id']})
+    db.session.commit()
+
+    token = create_jwt_token(user_id=row['user_id'], username=row['username'], email=row['email'])
     resp = jsonify({
         'success': True,
         'message': 'Autentificare reușită',
         'user': {
-            'user_id': result['user_id'],
-            'username': result['username'],
-            'email': result['email'],
-            'rol': rol_normalizat
+            'user_id': row['user_id'],
+            'username': row['username'],
+            'email': row['email'],
+            'rol': normalize_role(row['rol'])
         }
     })
     set_jwt_cookie(resp, token)
@@ -1207,7 +1210,6 @@ def login():
 @main_bp.route('/auth/me', methods=['GET'])
 @jwt_required
 def auth_me():
-    """Returnează utilizatorul autentificat curent din cookie-ul JWT."""
     user = request.current_user
     # Citim câmpul club direct din DB (nu e stocat în JWT)
     row = db.session.execute(
@@ -1226,7 +1228,6 @@ def auth_me():
 
 @main_bp.route('/auth/logout', methods=['POST'])
 def logout():
-    """Șterge cookie-ul JWT."""
     resp = jsonify({'success': True, 'message': 'Deconectat cu succes'})
     clear_jwt_cookie(resp)
     return resp, 200
@@ -1235,7 +1236,6 @@ def logout():
 @main_bp.route('/auth/profile', methods=['GET'])
 @jwt_required
 def profile():
-    """Returnează informațiile de profil din sesiunea JWT."""
     user = request.current_user
 
     query = text(
@@ -1256,7 +1256,6 @@ def profile():
 @main_bp.route('/auth/books-read', methods=['GET'])
 @jwt_required
 def books_read():
-    """Returnează cărțile citite de utilizatorul autentificat."""
     user = request.current_user
     user_id = user['user_id']
 
@@ -1282,7 +1281,6 @@ def books_read():
 @main_bp.route('/auth/profile', methods=['PUT'])
 @jwt_required
 def update_profile():
-    """Actualizează descrierea utilizatorului autentificat."""
     user = request.current_user
     data = request.get_json(silent=True) or {}
     description = data.get('description')
@@ -1303,7 +1301,6 @@ def update_profile():
 
 @main_bp.route('/auth/register', methods=['POST'])
 def register():
-    """Înregistrare cu hashing bcrypt al parolei. Setează cookie JWT la succes."""
     data = request.get_json(silent=True) or {}
     username = data.get('user') or data.get('username') or data.get('fullName')
     raw_email = data.get('email')
@@ -1342,26 +1339,12 @@ def register():
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Înregistrarea a eșuat'}), 500
 
-    # Preluăm noul user_id ca să putem emite un token
-    query = text("SELECT user_id FROM users WHERE email = :email")
-    new_user = db.session.execute(query, {'email': email}).mappings().first()
-    token = create_jwt_token(
-        user_id=new_user['user_id'],
-        username=username,
-        email=email
-    )
-
-    resp = jsonify({'success': True, 'message': 'Înregistrare reușită'})
-    set_jwt_cookie(resp, token)
-    return resp, 201
+    return jsonify({'success': True, 'message': 'Cont creat cu succes. Te poti autentifica acum.'}), 201
 
 
 @main_bp.route('/auth/profile-picture', methods=['POST'])
 @jwt_required
 def upload_profile_picture():
-    """Încarcă sau înlocuiește poza de profil a utilizatorului.
-    Așteaptă multipart/form-data cu câmpul 'file'. Utilizatorul e dedus din JWT.
-    """
     user = request.current_user
 
     if 'file' not in request.files:
@@ -1395,10 +1378,7 @@ def upload_profile_picture():
 
 @main_bp.route('/auth/profile-picture/<username>', methods=['GET'])
 def get_profile_picture(username):
-    """Servește poza de profil a unui utilizator după username.
-    Caută <username>.* în folderul profile_pictures.
-    Dacă nu există, returnează default.jpg.
-    """
+    # daca nu exista poza, returneaza default.jpg
     matches = _find_files_by_prefix(PROFILE_PICTURES_DIR, username)
 
     if not matches:
@@ -1410,10 +1390,7 @@ def get_profile_picture(username):
 @main_bp.route('/books/image', methods=['POST'])
 @bibliotecar_required
 def upload_book_image():
-    """Încarcă sau înlocuiește coperta unei cărți.
-    Așteaptă multipart/form-data cu câmpurile 'file' și 'carte_id'.
-    Salvează ca <carte_id>.<ext> în folderul book_images.
-    """
+    # salvat ca <carte_id>.<ext> in book_images/
     carte_id = request.form.get('carte_id')
     if not carte_id:
         return jsonify({'success': False, 'message': 'carte_id is required'}), 400
@@ -1454,9 +1431,6 @@ def upload_book_image():
 
 @main_bp.route('/books/image/<int:carte_id>', methods=['GET'])
 def get_book_image(carte_id):
-    """Servește coperta cărții după carte_id.
-    Caută <carte_id>.* în folderul book_images.
-    """
     matches = _find_files_by_prefix(BOOK_IMAGES_DIR, str(carte_id))
 
     if not matches:
@@ -1465,11 +1439,56 @@ def get_book_image(carte_id):
     return send_from_directory(BOOK_IMAGES_DIR, matches[0])
 
 
-# ── Rute anunțuri ──────────────────────────────────────
+@main_bp.route('/books/pdf', methods=['POST'])
+@bibliotecar_required
+def upload_book_pdf():
+    carte_id = request.form.get('carte_id')
+    if not carte_id:
+        return jsonify({'success': False, 'message': 'carte_id is required'}), 400
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'Niciun fișier trimis'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'Niciun fișier selectat'}), 400
+    if not file.filename.lower().endswith('.pdf'):
+        return jsonify({'success': False, 'message': 'Doar fișiere PDF sunt acceptate'}), 400
+
+    result = db.session.execute(text("SELECT carte_id FROM carti WHERE carte_id = :id"), {'id': carte_id}).mappings().first()
+    if not result:
+        return jsonify({'success': False, 'message': 'Cartea nu a fost găsită'}), 404
+
+    os.makedirs(BOOK_PDFS_DIR, exist_ok=True)
+    old_path = os.path.join(BOOK_PDFS_DIR, f"{carte_id}.pdf")
+    if os.path.exists(old_path):
+        os.remove(old_path)
+
+    file.save(os.path.join(BOOK_PDFS_DIR, f"{carte_id}.pdf"))
+    return jsonify({'success': True, 'message': 'PDF încărcat'}), 200
+
+
+@main_bp.route('/books/pdf/<int:carte_id>', methods=['GET'])
+@jwt_required
+def get_book_pdf(carte_id):
+    pdf_path = os.path.join(BOOK_PDFS_DIR, f"{carte_id}.pdf")
+    if not os.path.exists(pdf_path):
+        return jsonify({'success': False, 'message': 'PDF negăsit'}), 404
+    return send_from_directory(BOOK_PDFS_DIR, f"{carte_id}.pdf", as_attachment=False)
+
+
+@main_bp.route('/books/pdf/<int:carte_id>', methods=['DELETE'])
+@bibliotecar_required
+def delete_book_pdf(carte_id):
+    pdf_path = os.path.join(BOOK_PDFS_DIR, f"{carte_id}.pdf")
+    if not os.path.exists(pdf_path):
+        return jsonify({'success': False, 'message': 'PDF negăsit'}), 404
+    os.remove(pdf_path)
+    return jsonify({'success': True, 'message': 'PDF șters'}), 200
+
+
+# anunturi
 
 @main_bp.route('/anunturi', methods=['GET'])
 def get_anunturi():
-    """Returnează toate anunțurile, cel mai nou primul. Include dacă utilizatorul curent a apreciat fiecare."""
     user = get_current_user()
     user_id = user['user_id'] if user else None
 
@@ -1509,7 +1528,6 @@ def get_anunturi():
 @main_bp.route('/anunturi', methods=['POST'])
 @bibliotecar_required
 def create_anunt():
-    """Creează un anunț nou. Necesită rol de bibliotecar."""
     data = request.get_json(silent=True) or {}
     titlu = data.get('titlu', '').strip()
     anunt = data.get('anunt', '').strip()
@@ -1533,7 +1551,6 @@ def create_anunt():
 @main_bp.route('/anunturi/<int:anunt_id>', methods=['PUT'])
 @bibliotecar_required
 def update_anunt(anunt_id):
-    """Actualizează un anunț. Necesită rol de bibliotecar."""
     data = request.get_json(silent=True) or {}
 
     fields = {}
@@ -1562,7 +1579,6 @@ def update_anunt(anunt_id):
 @main_bp.route('/anunturi/<int:anunt_id>', methods=['DELETE'])
 @bibliotecar_required
 def delete_anunt(anunt_id):
-    """Șterge un anunț. Necesită rol de bibliotecar. Șterge și aprecierile asociate."""
     try:
         result = db.session.execute(text("DELETE FROM anunturi WHERE anunt_id = :id"), {'id': anunt_id})
         db.session.commit()
@@ -1578,7 +1594,6 @@ def delete_anunt(anunt_id):
 @main_bp.route('/anunturi/<int:anunt_id>/like', methods=['POST'])
 @jwt_required
 def toggle_like_anunt(anunt_id):
-    """Toggle apreciere pe un anunț. Doar utilizatori autentificați."""
     user = request.current_user
     user_id = user['user_id']
 
@@ -1623,19 +1638,17 @@ def toggle_like_anunt(anunt_id):
         return jsonify({'success': False, 'message': 'Eroare la toggle apreciere'}), 500
 
 
-# ── Helper AI ────────────────────────────────────────────────
+# ai
 
 GROQ_MODEL = 'llama-3.3-70b-versatile'
 
 def _get_groq_client():
-    """Returnează un client Groq, sau None dacă API key-ul lipsește."""
     api_key = current_app.config.get('GROQ_API_KEY', '')
     if not api_key:
         return None
     return Groq(api_key=api_key)
 
 def _groq_chat(client, prompt):
-    """Trimite un prompt single-turn către Groq și returnează răspunsul text."""
     logger.info('Prompt Groq: %s', prompt[:300])
     raspuns = client.chat.completions.create(
         model=GROQ_MODEL,
@@ -1649,7 +1662,6 @@ def _groq_chat(client, prompt):
 @main_bp.route('/ai/recommend', methods=['GET'])
 @jwt_required
 def ai_recommend():
-    """Returnează recomandări personalizate de cărți bazate pe istoricul de citire."""
     user = request.current_user
     user_id = user['user_id']
 
@@ -1709,7 +1721,6 @@ def ai_recommend():
 @main_bp.route('/ai/review-assist', methods=['POST'])
 @jwt_required
 def ai_review_assist():
-    """Reformulează o ciornă de recenzie într-o recenzie bine scrisă."""
     data = request.get_json(silent=True) or {}
     ciorna = (data.get('draft') or '').strip()
     titlu_carte = (data.get('titlu') or '').strip()
@@ -1738,7 +1749,6 @@ def ai_review_assist():
 
 @main_bp.route('/ai/book-summary/<int:carte_id>', methods=['GET'])
 def ai_book_summary(carte_id):
-    """Rezumă recenziile pentru o carte într-un scurt sumar de opinie."""
     client = _get_groq_client()
     if not client:
         return jsonify({'success': False, 'message': 'AI neconfigurat'}), 503
@@ -1773,7 +1783,6 @@ def ai_book_summary(carte_id):
 
 @main_bp.route('/ai/chat', methods=['POST'])
 def ai_chat():
-    """Chatbot general al bibliotecii. Răspunde la întrebări folosind contextul bibliotecii."""
     data = request.get_json(silent=True) or {}
     message = (data.get('message') or '').strip()
     if not message:
@@ -1819,14 +1828,13 @@ def ai_chat():
         return jsonify({'success': False, 'message': 'Cererea AI a eșuat'}), 500
 
 
-# ── Rute Club de Literatură ────────────────────────────────────
+# club
 
 MAX_INVITE_HOURS = 168  # 7 zile
 
 @main_bp.route('/club/invite', methods=['POST'])
 @bibliotecar_required
 def create_club_invite():
-    """Generează un link de invitație la club. Necesită rol de bibliotecar."""
     data = request.get_json(silent=True) or {}
     try:
         expires_in_hours = int(data.get('expires_in_hours', 24))
@@ -1861,7 +1869,6 @@ def create_club_invite():
 @main_bp.route('/club/join/<token>', methods=['POST'])
 @jwt_required
 def join_club(token):
-    """Validează un token de invitație și adaugă utilizatorul în club."""
     user = request.current_user
 
     try:
@@ -1897,10 +1904,9 @@ def join_club(token):
         return jsonify({'success': False, 'message': 'Eroare la procesarea invitației'}), 500
 
 
-# ── Activități & comentarii club ───────────────────────────────
+# activitati club
 
 def club_required(f):
-    """Decorator — impune ca utilizatorul să fie autentificat ȘI membru al clubului."""
     @wraps(f)
     def decorated(*args, **kwargs):
         user = get_current_user()
@@ -1920,7 +1926,6 @@ TIPURI_VALIDE    = {'anunt', 'sarcina', 'activitate'}
 @main_bp.route('/club/activitati', methods=['GET'])
 @club_required
 def get_activitati():
-    """Returnează activitățile clubului filtrate după săptămână."""
     saptamana = request.args.get('saptamana', 'curenta')
     if saptamana not in SAPTAMANI_VALIDE:
         saptamana = 'curenta'
@@ -1962,7 +1967,6 @@ def get_activitati():
 @main_bp.route('/club/activitati', methods=['POST'])
 @bibliotecar_required
 def create_activitate():
-    """Creează o activitate nouă în club. Necesită rol bibliotecar."""
     data = _get_request_data()
     titlu    = (data.get('titlu') or '').strip()
     continut = (data.get('continut') or '').strip()
@@ -2004,7 +2008,6 @@ def create_activitate():
 
 @main_bp.route('/club/activitati/<int:activitate_id>/imagine', methods=['GET'])
 def get_activitate_image(activitate_id):
-    """Returnează imaginea asociată unei activități de club."""
     matches = _find_files_by_prefix(CLUB_ANNOUNCEMENT_IMAGES_DIR, str(activitate_id))
     if not matches:
         return jsonify({'success': False, 'message': 'Imaginea nu a fost găsită'}), 404
@@ -2014,7 +2017,6 @@ def get_activitate_image(activitate_id):
 @main_bp.route('/club/activitati/<int:activitate_id>', methods=['DELETE'])
 @bibliotecar_required
 def delete_activitate(activitate_id):
-    """Șterge o activitate (+ comentariile ei cascade). Necesită bibliotecar."""
     try:
         for old in _find_files_by_prefix(CLUB_ANNOUNCEMENT_IMAGES_DIR, str(activitate_id)):
             try:
@@ -2036,7 +2038,6 @@ def delete_activitate(activitate_id):
 @main_bp.route('/club/activitati/<int:activitate_id>/comentarii', methods=['GET'])
 @club_required
 def get_comentarii(activitate_id):
-    """Returnează comentariile unui fir de activitate."""
     try:
         rows = db.session.execute(
             text("""
@@ -2066,7 +2067,6 @@ def get_comentarii(activitate_id):
 @main_bp.route('/club/activitati/<int:activitate_id>/comentarii', methods=['POST'])
 @club_required
 def post_comentariu(activitate_id):
-    """Adaugă un comentariu la un fir de activitate."""
     data = request.get_json(silent=True) or {}
     continut = (data.get('continut') or '').strip()
     if not continut:
@@ -2098,7 +2098,6 @@ def post_comentariu(activitate_id):
 @main_bp.route('/club/activitati/<int:activitate_id>/comentarii/<int:comentariu_id>', methods=['DELETE'])
 @club_required
 def delete_comentariu(activitate_id, comentariu_id):
-    """Șterge un comentariu — autorul sau bibliotecar."""
     user = request.current_user
     row = db.session.execute(
         text("SELECT user_id FROM comentarii_activitati WHERE comentariu_id = :cid AND activitate_id = :aid"),

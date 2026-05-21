@@ -35,7 +35,7 @@
               <i class="pi pi-star text-secondary text-xs"></i>
             </div>
             <div class="bg-cream rounded-2xl rounded-tl-none px-3 py-2 max-w-[85%]">
-              <p class="text-dark text-xs leading-relaxed">Salut! Sunt asistentul bibliotecii. Te pot ajuta să găsești cărți, să afli disponibilitatea lor sau orice altceva legat de bibliotecă. 📚</p>
+              <p class="text-dark text-xs leading-relaxed">Salut! Sunt asistentul bibliotecii. Te pot ajuta sa gasesti carti, sa afli disponibilitatea lor sau orice altceva legat de biblioteca.</p>
             </div>
           </div>
 

@@ -48,7 +48,6 @@
               <h1 class="text-lg sm:text-2xl font-bold text-dark">{{ user.name }}</h1>
               <!-- Role badge -->
               <span v-if="isBibliotecar" class="mt-1 px-3 py-0.5 bg-secondary text-white text-xs font-bold rounded-full">Bibliotecar</span>
-              <p class="text-gray-500 text-xs mb-3 mt-1">Membru din {{ user.joinDate }}</p>
             </div>
 
             <!-- Description -->
@@ -211,7 +210,7 @@
           </button>
         </div>
 
-        <!-- ── TAB: CERERI ── -->
+        <!-- tab: cereri -->
         <div v-if="activeTab === 'cereri'" class="mb-8">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
             <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
@@ -300,7 +299,7 @@
 
         </div><!-- end cereri tab -->
 
-        <!-- ── TAB: CĂRȚI ── -->
+        <!-- tab: cărți -->
         <div v-if="activeTab === 'carti'">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
@@ -359,6 +358,7 @@
                   <th class="px-3 sm:px-4 py-3 font-semibold hidden lg:table-cell">Poziție</th>
                   <th class="px-3 sm:px-4 py-3 font-semibold text-center">Stoc</th>
                   <th class="px-3 sm:px-4 py-3 font-semibold text-center">Disponibil</th>
+                  <th class="px-3 sm:px-4 py-3 font-semibold text-center">PDF</th>
                   <th class="px-3 sm:px-4 py-3 font-semibold text-center">Acțiuni</th>
                 </tr>
               </thead>
@@ -402,6 +402,20 @@
                   <td class="px-3 sm:px-4 py-3 text-center">
                     <span :class="book.stoc_disponibil > 0 ? 'text-green-600' : 'text-accent'" class="font-bold">{{ book.stoc_disponibil }}</span>
                   </td>
+                  <!-- PDF -->
+                  <td class="px-3 sm:px-4 py-3 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                      <button v-if="book.has_pdf" @click="openPdfInTab(book.carte_id)" class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Vizualizează PDF">
+                        <i class="pi pi-file-pdf text-sm"></i>
+                      </button>
+                      <button @click="triggerBookPdfInput(book.carte_id)" class="p-2 text-secondary hover:bg-secondary/10 rounded-lg transition-colors" :title="book.has_pdf ? 'Înlocuiește PDF' : 'Încarcă PDF'">
+                        <i :class="book.has_pdf ? 'pi pi-refresh' : 'pi pi-upload'" class="text-sm"></i>
+                      </button>
+                      <button v-if="book.has_pdf" @click="deleteBookPdf(book)" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Șterge PDF">
+                        <i class="pi pi-times text-sm"></i>
+                      </button>
+                    </div>
+                  </td>
                   <!-- Actions -->
                   <td class="px-3 sm:px-4 py-3">
                     <div class="flex items-center justify-center gap-1">
@@ -430,7 +444,7 @@
 
         </div><!-- end carti tab -->
 
-        <!-- ── TAB: ANUNȚURI ── -->
+        <!-- tab: anunțuri -->
         <div v-if="activeTab === 'anunturi'">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
             <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
@@ -481,7 +495,7 @@
           </div>
         </div><!-- end anunturi tab -->
 
-        <!-- ── TAB: ELEVI ── -->
+        <!-- tab: elevi -->
         <div v-if="activeTab === 'elevi'">
           <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2 mb-6">
             <i class="pi pi-users text-secondary"></i> Gestionare Elevi
@@ -666,7 +680,7 @@
           </div>
         </div><!-- end elevi tab -->
 
-        <!-- ── TAB: CLUB ── -->
+        <!-- tab: club -->
         <div v-if="activeTab === 'club'">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
             <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
@@ -725,8 +739,10 @@
 
     <!-- Hidden file input for book images -->
     <input ref="bookImageInput" type="file" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" class="hidden" @change="uploadBookImage">
+    <!-- Hidden file input for book PDFs -->
+    <input ref="bookPdfInput" type="file" accept="application/pdf" class="hidden" @change="uploadBookPdf">
 
-    <!-- ═══════════ MODALS ═══════════ -->
+    <!-- MODALS -->
 
     <!-- Pickup Interval Modal (approve book request) -->
     <div v-if="pickupModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="pickupModalOpen = false">
@@ -1083,7 +1099,7 @@
       </div>
     </div>
 
-    <!-- ═══════════ RETURNARE ÎMPRUMUT MODAL ═══════════ -->
+    <!-- RETURNARE ÎMPRUMUT MODAL -->
     <div v-if="returnareModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="returnareModalOpen = false">
       <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="returnareModalOpen = false"></div>
       <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-sm z-10 p-6 sm:p-8">
@@ -1131,7 +1147,7 @@
       </div>
     </div>
 
-    <!-- ═══════════ USERS LIST MODAL ═══════════ -->
+    <!-- USERS LIST MODAL -->
     <div v-if="usersListOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="usersListOpen = false">
       <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="usersListOpen = false"></div>
       <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-2xl z-10 flex flex-col max-h-[90vh]">
@@ -1185,7 +1201,7 @@
       </div>
     </div>
 
-    <!-- ═══════════ USER DETAIL MODAL ═══════════ -->
+    <!-- USER DETAIL MODAL -->
     <div v-if="userDetailOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="userDetailOpen = false">
       <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="userDetailOpen = false"></div>
       <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-2xl z-10 flex flex-col max-h-[90vh]">
@@ -1336,10 +1352,10 @@ export default {
   name: 'Profile',
   data() {
     return {
-      // ── Admin tabs ──
+      // admin tabs
       activeTab: 'cereri',
 
-      // ── Profilul utilizatorului ──
+      // profilul utilizatorului
       user: {
         name: '',
         profilePicture: '/api/auth/profile-picture/default',
@@ -1360,7 +1376,7 @@ export default {
       editDescription: '',
       profileMsg: { error: '', success: '' },
       savingDescription: false,
-      // ── Panoul bibliotecarului ──
+      // panoul bibliotecarului
       bookRequests: [],
       loadingRequests: false,
       requestFilter: 'pending',
@@ -1380,6 +1396,7 @@ export default {
       loadingBooks: false,
       imageCacheBust: Date.now(),
       bookImageCarteId: null,
+      bookPdfCarteId: null,
       // Invitații club
       inviteExpiry: 24,
       inviteOptions: [
@@ -1408,7 +1425,7 @@ export default {
       deleteBookOpen: false,
       deleteTarget: null,
       deleteMsg: { error: '' },
-      // ── Anunțuri ──
+      // anunțuri
       allAnunturi: [],
       loadingAnunturi: false,
       // Add announcement
@@ -1423,7 +1440,7 @@ export default {
       deleteAnuntOpen: false,
       deleteAnuntTarget: null,
       deleteAnuntMsg: { error: '' },
-      // ── Lista utilizatorilor (bibliotecar) ──
+      // lista utilizatorilor (bibliotecar)
       usersListOpen: false,
       allUsers: [],
       loadingUsers: false,
@@ -1432,7 +1449,7 @@ export default {
       userDetailOpen: false,
       loadingUserDetail: false,
       userDetail: null,
-      // ── Gestionare elevi (panoul nou) ──
+      // gestionare elevi (panoul nou)
       eleviLista: [],
       loadingElevi: false,
       eleviSearch: '',
@@ -1482,7 +1499,7 @@ export default {
     this.loadProfile()
   },
   methods: {
-    // ═══════════ METODE PROFIL ═══════════
+    // metode profil
     openProfileEditModal() {
       this.editDescription = this.user.description || ''
       this.profileMsg = { error: '', success: '' }
@@ -1601,7 +1618,7 @@ export default {
       }
     },
 
-    // ═══════════ METODE BIBLIOTECAR ═══════════
+    // metode bibliotecar
 
     async downloadReport() {
       this.downloadingReport = true
@@ -1626,7 +1643,7 @@ export default {
       }
     },
 
-    // ── Recomandări AI ──
+    // recomandări ai
     async loadAiRecommendations() {
       this.loadingAi = true
       this.aiError = ''
@@ -1650,7 +1667,7 @@ export default {
       }
     },
 
-    // ── Cereri de împrumut ──
+    // cereri de împrumut
     async fetchBookRequests() {
       this.loadingRequests = true
       try {
@@ -1747,7 +1764,7 @@ export default {
       return d.toLocaleDateString('ro-RO', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
     },
 
-    // ── Cărți ──
+    // cărți
     async fetchAllBooks() {
       this.loadingBooks = true
       try {
@@ -1777,7 +1794,7 @@ export default {
       )
     },
 
-    // ── Adăugare carte ──
+    // adăugare carte
     openAddBookModal() {
       this.addForm = { titlu: '', autor: '', ISBN: '', gen: '', stoc_total: 1, stoc_disponibil: 1, pozitie: '', cod: '' }
       this.addMsg = { error: '', success: '' }
@@ -1805,7 +1822,7 @@ export default {
       }
     },
 
-    // ── Editare carte ──
+    // editare carte
     openEditBookModal(book) {
       this.editBookForm = {
         carte_id: book.carte_id,
@@ -1844,7 +1861,7 @@ export default {
       }
     },
 
-    // ── Actualizare rapidă stoc ──
+    // actualizare rapidă stoc
     openStockModal(book) {
       this.stockForm = {
         carte_id: book.carte_id,
@@ -1880,7 +1897,7 @@ export default {
       }
     },
 
-    // ── Ștergere carte ──
+    // ștergere carte
     confirmDeleteBook(book) {
       this.deleteTarget = book
       this.deleteMsg = { error: '' }
@@ -1905,7 +1922,7 @@ export default {
       }
     },
 
-    // ── Încărcare copertă carte ──
+    // încărcare copertă carte
     triggerBookImageInput(carteId) {
       this.bookImageCarteId = carteId
       this.$refs.bookImageInput.click()
@@ -1931,8 +1948,53 @@ export default {
       this.$refs.bookImageInput.value = ''
       this.bookImageCarteId = null
     },
+    triggerBookPdfInput(carteId) {
+      this.bookPdfCarteId = carteId
+      this.$refs.bookPdfInput.click()
+    },
+    async uploadBookPdf(event) {
+      const file = event.target.files[0]
+      if (!file || !this.bookPdfCarteId) return
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('carte_id', this.bookPdfCarteId)
+      try {
+        const res = await fetch('/api/books/pdf', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData
+        })
+        if (res.ok) {
+          const book = this.libBooks.find(b => b.carte_id === this.bookPdfCarteId)
+          if (book) book.has_pdf = true
+          const fbook = this.filteredLibBooks.find(b => b.carte_id === this.bookPdfCarteId)
+          if (fbook) fbook.has_pdf = true
+        }
+      } catch (error) {
+        console.error('PDF upload error:', error)
+      }
+      this.$refs.bookPdfInput.value = ''
+      this.bookPdfCarteId = null
+    },
+    async deleteBookPdf(book) {
+      if (!confirm(`Ștergi PDF-ul pentru „${book.titlu}"?`)) return
+      try {
+        const res = await fetch(`/api/books/pdf/${book.carte_id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        })
+        if (res.ok) {
+          book.has_pdf = false
+        }
+      } catch (error) {
+        console.error('PDF delete error:', error)
+      }
+    },
+    openPdfInTab(carteId) {
+      window.open(`/api/books/pdf/${carteId}`, '_blank')
+    },
 
-    // ═══════════ METODE ANUNȚURI ═══════════
+    // metode anunțuri
     async fetchAllAnunturi() {
       this.loadingAnunturi = true
       try {
@@ -1948,7 +2010,7 @@ export default {
       }
     },
 
-    // ── Adăugare anunț ──
+    // adăugare anunț
     openAddAnuntModal() {
       this.addAnuntForm = { titlu: '', anunt: '' }
       this.addAnuntMsg = { error: '', success: '' }
@@ -1976,7 +2038,7 @@ export default {
       }
     },
 
-    // ── Editare anunț ──
+    // editare anunț
     openEditAnuntModal(a) {
       this.editAnuntForm = {
         anunt_id: a.anunt_id,
@@ -2009,7 +2071,7 @@ export default {
       }
     },
 
-    // ── Ștergere anunț ──
+    // ștergere anunț
     confirmDeleteAnunt(a) {
       this.deleteAnuntTarget = a
       this.deleteAnuntMsg = { error: '' }
@@ -2034,7 +2096,7 @@ export default {
       }
     },
 
-    // ═══════════ METODE CONTURI UTILIZATORI ═══════════
+    // metode conturi utilizatori
     async openUsersListModal() {
       this.usersSearch = ''
       this.usersListOpen = true
@@ -2068,7 +2130,7 @@ export default {
       }
     },
 
-    // ═══════════ METODE GESTIONARE ELEVI (panou nou) ═══════════
+    // metode gestionare elevi (panou nou)
     async fetchEleviLista() {
       this.loadingElevi = true
       try {
@@ -2176,7 +2238,7 @@ export default {
       }
     },
 
-    // ═══════════ METODE INVITAȚII CLUB ═══════════
+    // metode invitații club
     async generateInviteLink() {
       this.inviteLoading = true
       this.inviteError = ''

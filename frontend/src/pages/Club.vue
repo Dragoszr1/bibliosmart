@@ -196,17 +196,6 @@
               @change="onActivityImageChange"
               class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-secondary file:text-white hover:file:bg-secondary/90"
             />
-            <p class="text-[11px] text-gray-400 mt-2">Imaginea va fi încărcată împreună cu anunțul și va apărea în previzualizare.</p>
-          </div>
-          <div v-if="activityImagePreview && addForm.tip === 'anunt'" class="mt-4 border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm">
-            <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">Previzualizare anunț</div>
-            <div>
-              <img :src="activityImagePreview" alt="Previzualizare imagine" class="w-full h-52 object-cover" />
-              <div class="p-4">
-                <h3 class="text-sm font-semibold text-dark mb-2">{{ addForm.titlu || 'Titlul anunțului' }}</h3>
-                <p class="text-sm text-gray-600 whitespace-pre-line">{{ addForm.continut || 'Textul anunțului va apărea aici.' }}</p>
-              </div>
-            </div>
           </div>
         </div>
 

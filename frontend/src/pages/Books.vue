@@ -104,10 +104,16 @@
           class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden hover:shadow-elevated transition-all duration-200 cursor-pointer group"
         >
           <!-- Book Cover -->
-          <div class="relative h-48 bg-cream flex items-center justify-center">
+          <div class="relative h-48 bg-cream flex items-center justify-center overflow-hidden">
+            <img
+              :src="`/api/books/image/${book.id}`"
+              :alt="book.title"
+              class="absolute inset-0 w-full h-full object-cover"
+              @error="$event.target.style.display='none'"
+            >
             <i class="pi pi-book text-5xl text-secondary/20 group-hover:text-secondary/30 transition-colors"></i>
             <!-- Availability Badge -->
-            <span 
+            <span
               :class="[
                 'absolute top-3 right-3 text-xs px-2.5 py-1 rounded-full font-medium',
                 book.available ? 'bg-green-50 text-green-700' : 'bg-red-50 text-accent'
@@ -156,12 +162,21 @@
       
       <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-lg max-h-[85vh] overflow-y-auto z-10">
         <!-- Header -->
-        <div class="sticky top-0 bg-dark px-6 py-5 rounded-t-2xl">
+        <div class="sticky top-0 bg-dark px-6 py-5 rounded-t-2xl flex items-center gap-4">
+          <img
+            v-if="selectedBook"
+            :src="`/api/books/image/${selectedBook.id}`"
+            :alt="selectedBook.title"
+            class="w-14 h-20 object-cover rounded-md flex-shrink-0 shadow"
+            @error="$event.target.style.display='none'"
+          >
+          <div class="flex-1 min-w-0 pr-8">
+            <h3 class="text-lg font-bold text-white">{{ selectedBook?.title }}</h3>
+            <p class="text-white/40 text-sm mt-1">de {{ selectedBook?.author }}</p>
+          </div>
           <button @click="showModal = false" class="absolute top-4 right-4 text-white/40 hover:text-white transition-colors">
             <i class="pi pi-times"></i>
           </button>
-          <h3 class="text-lg font-bold text-white pr-8">{{ selectedBook?.title }}</h3>
-          <p class="text-white/40 text-sm mt-1">de {{ selectedBook?.author }}</p>
         </div>
 
         <!-- Book Info -->
@@ -195,13 +210,22 @@
             <i :class="requestingFizic ? 'pi pi-spin pi-spinner' : 'pi pi-book'" class="text-sm"></i>
             {{ requestingFizic ? 'Se trimite...' : 'Împrumută Fizic' }}
           </button>
-          <button
-            disabled
-            class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 text-gray-400 cursor-not-allowed"
-            title="Disponibil în curând"
+          <a
+            v-if="selectedBook?.has_pdf"
+            :href="`/api/books/pdf/${selectedBook.id}`"
+            target="_blank"
+            class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-all duration-150"
           >
             <i class="pi pi-file-pdf text-sm"></i>
-            PDF (în curând)
+            Citește PDF
+          </a>
+          <button
+            v-else
+            disabled
+            class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 text-gray-400 cursor-not-allowed"
+          >
+            <i class="pi pi-file-pdf text-sm"></i>
+            PDF indisponibil
           </button>
         </div>
 
@@ -386,7 +410,8 @@ export default {
             available: book.stoc_disponibil > 0,
             stoc_disponibil: book.stoc_disponibil,
             imprumutat: book.imprumutat,
-            pozitie: book.pozitie || null
+            pozitie: book.pozitie || null,
+            has_pdf: book.has_pdf || false
           }));
           this.filterBooks();
         }
