@@ -539,7 +539,9 @@ export default {
       this.loadingAiSummary = true;
       this.aiSummary = '';
       try {
-        const res = await fetch(`/api/ai/book-summary/${this.selectedBook.id}`);
+        const res = await fetch(`/api/ai/book-summary/${this.selectedBook.id}`, {
+          credentials: 'include'
+        });
         const data = await res.json();
         if (data.success) {
           this.aiSummary = data.no_reviews ? 'Nicio recenzie disponibilă pentru a genera un rezumat.' : data.summary;

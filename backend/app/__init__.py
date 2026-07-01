@@ -33,4 +33,14 @@ def create_app(config_name=None):
     from app.routes import main_bp
     app.register_blueprint(main_bp)
     
+    @app.after_request
+    def add_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        if not app.debug:
+            response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
+        response.headers['Content-Security-Policy'] = "default-src 'self' data: blob:; frame-ancestors 'none';"
+        return response
+
     return app

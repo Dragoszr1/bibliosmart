@@ -37,6 +37,7 @@ ROLE_ALIASES = {
     'user': 'user'
 }
 EMAIL_REGEX = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9._%+\-]{0,62}[A-Za-z0-9])?@([A-Za-z0-9\-]+\.)+[A-Za-z]{2,63}$")
+USERNAME_REGEX = re.compile(r"^[A-Za-z0-9ăîâșțĂÎÂȘȚ\s._-]{3,50}$")
 PROFILE_PICTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'profile_pictures')
 BOOK_IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'book_images')
 BOOK_PDFS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'book_pdfs')
@@ -326,6 +327,38 @@ def add_book():
     if not titlu or not autor or not isbn or not gen:
         return jsonify({'success': False, 'message': 'titlu, autor, ISBN și gen sunt obligatorii'}), 400
 
+    titlu = str(titlu).strip()
+    autor = str(autor).strip()
+    isbn = str(isbn).strip().replace('-', '').replace(' ', '')
+    gen = str(gen).strip()
+
+    if not titlu or len(titlu) > 50:
+        return jsonify({'success': False, 'message': 'Titlul nu poate fi gol și trebuie să aibă maximum 50 de caractere'}), 400
+    if not autor or len(autor) > 50:
+        return jsonify({'success': False, 'message': 'Autorul nu poate fi gol și trebuie să aibă maximum 50 de caractere'}), 400
+    if not isbn or len(isbn) not in (10, 13) or not isbn.isalnum():
+        return jsonify({'success': False, 'message': 'ISBN-ul trebuie să aibă 10 sau 13 caractere alfanumerice'}), 400
+    if not gen or len(gen) > 255:
+        return jsonify({'success': False, 'message': 'Genul nu poate fi gol și trebuie să aibă maximum 255 de caractere'}), 400
+
+    if pozitie:
+        pozitie = str(pozitie).strip()
+        if len(pozitie) > 100:
+            return jsonify({'success': False, 'message': 'Poziția trebuie să aibă maximum 100 de caractere'}), 400
+    if cod:
+        cod = str(cod).strip()
+        if len(cod) > 50:
+            return jsonify({'success': False, 'message': 'Codul trebuie să aibă maximum 50 de caractere'}), 400
+
+    try:
+        stoc_total = int(stoc_total)
+        stoc_disponibil = int(stoc_disponibil)
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'message': 'Stocul total și disponibil trebuie să fie numere întregi'}), 400
+
+    if stoc_total < 0 or stoc_disponibil < 0 or stoc_disponibil > stoc_total:
+        return jsonify({'success': False, 'message': 'Stocul total/disponibil invalid'}), 400
+
     insert_query = text(
         "INSERT INTO carti (titlu, autor, ISBN, stoc_total, stoc_disponibil, imprumutat, gen, pozitie, cod) "
         "VALUES (:titlu, :autor, :ISBN, :stoc_total, :stoc_disponibil, :imprumutat, :gen, :pozitie, :cod)"
@@ -367,18 +400,66 @@ def update_book(carte_id):
     if not fields:
         return jsonify({'success': False, 'message': 'Niciun câmp de actualizat'}), 400
 
-    set_clause = ', '.join(f"{k} = :{k}" for k in fields)
-    fields['carte_id'] = carte_id
+    # Validare input
+    if 'titlu' in fields:
+        fields['titlu'] = str(fields['titlu']).strip()
+        if not fields['titlu'] or len(fields['titlu']) > 50:
+            return jsonify({'success': False, 'message': 'Titlul nu poate fi gol și trebuie să aibă maximum 50 de caractere'}), 400
+    if 'autor' in fields:
+        fields['autor'] = str(fields['autor']).strip()
+        if not fields['autor'] or len(fields['autor']) > 50:
+            return jsonify({'success': False, 'message': 'Autorul nu poate fi gol și trebuie să aibă maximum 50 de caractere'}), 400
+    if 'ISBN' in fields:
+        isbn = str(fields['ISBN']).strip().replace('-', '').replace(' ', '')
+        if not isbn or len(isbn) not in (10, 13) or not isbn.isalnum():
+            return jsonify({'success': False, 'message': 'ISBN-ul trebuie să aibă 10 sau 13 caractere alfanumerice'}), 400
+        fields['ISBN'] = isbn
+    if 'gen' in fields:
+        fields['gen'] = str(fields['gen']).strip()
+        if not fields['gen'] or len(fields['gen']) > 255:
+            return jsonify({'success': False, 'message': 'Genul nu poate fi gol și trebuie să aibă maximum 255 de caractere'}), 400
+    if 'pozitie' in fields:
+        if fields['pozitie']:
+            fields['pozitie'] = str(fields['pozitie']).strip()
+            if len(fields['pozitie']) > 100:
+                return jsonify({'success': False, 'message': 'Poziția trebuie să aibă maximum 100 de caractere'}), 400
+    if 'cod' in fields:
+        if fields['cod']:
+            fields['cod'] = str(fields['cod']).strip()
+            if len(fields['cod']) > 50:
+                return jsonify({'success': False, 'message': 'Codul trebuie să aibă maximum 50 de caractere'}), 400
 
-    # Actualizează automat flag-ul imprumutat dacă se schimbă stocul
     if 'stoc_total' in fields or 'stoc_disponibil' in fields:
-        set_clause += ', imprumutat = (stoc_disponibil < stoc_total)'
+        book_row = db.session.execute(
+            text("SELECT stoc_total, stoc_disponibil FROM carti WHERE carte_id = :id"),
+            {'id': carte_id}
+        ).fetchone()
+        if not book_row:
+            return jsonify({'success': False, 'message': 'Cartea nu a fost găsită'}), 404
+        
+        current_total, current_disponibil = book_row
+        new_total = fields.get('stoc_total', current_total)
+        new_disponibil = fields.get('stoc_disponibil', current_disponibil)
+        
+        try:
+            new_total = int(new_total)
+            new_disponibil = int(new_disponibil)
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'message': 'Stocul total și disponibil trebuie să fie numere întregi'}), 400
+            
+        if new_total < 0 or new_disponibil < 0 or new_disponibil > new_total:
+            return jsonify({'success': False, 'message': 'Stocul total/disponibil invalid'}), 400
+            
+        fields['stoc_total'] = new_total
+        fields['stoc_disponibil'] = new_disponibil
 
-    update_query = text(f"UPDATE carti SET {set_clause} WHERE carte_id = :carte_id")
+    if 'stoc_total' in fields or 'stoc_disponibil' in fields:
+        fields['imprumutat'] = fields['stoc_disponibil'] < fields['stoc_total']
+
     try:
-        result = db.session.execute(update_query, fields)
+        updated_rows = db.session.query(Carti).filter_by(carte_id=carte_id).update(fields)
         db.session.commit()
-        if result.rowcount == 0:
+        if updated_rows == 0:
             return jsonify({'success': False, 'message': 'Cartea nu a fost găsită'}), 404
     except IntegrityError:
         db.session.rollback()
@@ -1187,7 +1268,9 @@ def verify_code():
         return jsonify({'success': False, 'message': 'Codul a expirat. Încearcă să te autentifici din nou.'}), 401
 
     if code != row['code']:
-        return jsonify({'success': False, 'message': 'Cod incorect'}), 401
+        db.session.execute(text("DELETE FROM coduri_verificare WHERE id = :id"), {'id': row['id']})
+        db.session.commit()
+        return jsonify({'success': False, 'message': 'Cod incorect. Sesiunea de verificare a fost anulată. Te rugăm să încerci din nou.'}), 401
 
     # Cod valid — șterge înregistrarea și emite JWT
     db.session.execute(text("DELETE FROM coduri_verificare WHERE id = :id"), {'id': row['id']})
@@ -1285,6 +1368,11 @@ def update_profile():
     data = request.get_json(silent=True) or {}
     description = data.get('description')
 
+    if description is not None:
+        description = str(description).strip()
+        if len(description) > 255:
+            return jsonify({'success': False, 'message': 'Descrierea este prea lungă (max 255 caractere)'}), 400
+
     update_query = text(
         "UPDATE users SET description = :description WHERE user_id = :user_id"
     )
@@ -1309,14 +1397,18 @@ def register():
     if not username or not raw_email or not parola:
         return jsonify({'success': False, 'message': 'Username, email și parola sunt obligatorii'}), 400
 
+    username = username.strip()
+    if not USERNAME_REGEX.match(username):
+        return jsonify({'success': False, 'message': 'Numele complet trebuie să aibă între 3 și 50 de caractere și să conțină doar litere, cifre, spații, puncte, cratime sau caractere de subliniere'}), 400
+
     email = normalize_cni_email(raw_email)
     if not email:
         return jsonify({'success': False, 'message': 'Doar emailurile @cni-sv.ro sunt permise'}), 400
 
-    if len(parola) < 8:
-        return jsonify({'success': False, 'message': 'Parola trebuie să aibă cel puțin 8 caractere'}), 400
+    if len(parola) < 8 or len(parola) > 128:
+        return jsonify({'success': False, 'message': 'Parola trebuie să aibă între 8 și 128 de caractere'}), 400
 
-    parola_hash = bcrypt.hashpw(parola.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    parola_hash = bcrypt.hashpw(parola.encode('utf-8'), bcrypt.gensalt(12)).decode('utf-8')
     values = {
         'username': username,
         'email': email,
@@ -1561,13 +1653,10 @@ def update_anunt(anunt_id):
     if not fields:
         return jsonify({'success': False, 'message': 'Niciun câmp de actualizat'}), 400
 
-    set_clause = ', '.join(f"{k} = :{k}" for k in fields)
-    fields['anunt_id'] = anunt_id
-
     try:
-        result = db.session.execute(text(f"UPDATE anunturi SET {set_clause} WHERE anunt_id = :anunt_id"), fields)
+        updated_rows = db.session.query(Anunturi).filter_by(anunt_id=anunt_id).update(fields)
         db.session.commit()
-        if result.rowcount == 0:
+        if updated_rows == 0:
             return jsonify({'success': False, 'message': 'Anunțul nu a fost găsit'}), 404
         return jsonify({'success': True, 'message': 'Anunț actualizat'}), 200
     except Exception:
@@ -1648,11 +1737,16 @@ def _get_groq_client():
         return None
     return Groq(api_key=api_key)
 
-def _groq_chat(client, prompt):
+def _groq_chat(client, prompt, system_message=None):
+    messages = []
+    if system_message:
+        messages.append({'role': 'system', 'content': system_message})
+    messages.append({'role': 'user', 'content': prompt})
+    
     logger.info('Prompt Groq: %s', prompt[:300])
     raspuns = client.chat.completions.create(
         model=GROQ_MODEL,
-        messages=[{'role': 'user', 'content': prompt}],
+        messages=messages,
         max_tokens=1024,
         temperature=0.7
     )
@@ -1690,8 +1784,6 @@ def ai_recommend():
         if not read_rows:
             return jsonify({'success': True, 'recommendations': '', 'no_history': True}), 200
 
-        already_have_ids = {r[0] for r in read_rows} | {r[0] for r in borrowed_rows}
-
         read_list = '\n'.join(f'- {r[1]} de {r[2]} (gen: {r[3]})' for r in read_rows)
         borrowed_list = '\n'.join(f'- {r[1]} de {r[2]}' for r in borrowed_rows) or 'niciuna'
         lib_list = '\n'.join(
@@ -1699,11 +1791,13 @@ def ai_recommend():
             for r in all_rows
         )
 
-        prompt = (
+        system_prompt = (
             "Ești bibliotecar la o școală. Ai acces la catalogul COMPLET al bibliotecii de mai jos.\n"
             "Recomandă DOAR cărți care există în catalog și sunt marcate ca 'disponibil'.\n"
-            "Nu inventa titluri sau autori care nu sunt în catalog.\n\n"
-            f"CATALOG COMPLET AL BIBLIOTECII:\n{lib_list}\n\n"
+            "Nu inventa cărți sau autori care nu sunt în catalog.\n\n"
+            f"CATALOG COMPLET AL BIBLIOTECII:\n{lib_list}"
+        )
+        user_prompt = (
             f"Cărți citite de elev (nu le recomanda din nou):\n{read_list}\n\n"
             f"Cărți deja împrumutate/solicitate de elev:\n{borrowed_list}\n\n"
             "Recomandă 3-4 cărți disponibile din catalog pe care elevul nu le-a citit și nu le are deja. "
@@ -1711,7 +1805,7 @@ def ai_recommend():
             "Răspunde în română, prietenos."
         )
 
-        raspuns_ai = _groq_chat(client, prompt)
+        raspuns_ai = _groq_chat(client, user_prompt, system_message=system_prompt)
         return jsonify({'success': True, 'recommendations': raspuns_ai}), 200
     except Exception:
         logger.exception('Eroare AI recommend')
@@ -1733,14 +1827,14 @@ def ai_review_assist():
         return jsonify({'success': False, 'message': 'AI neconfigurat'}), 503
 
     try:
-        prompt = (
-            f"Ești un asistent pentru recenzii de carte. Elevul a scris o ciornă de recenzie pentru "
-            f'cartea "{titlu_carte}". Gândul lui brut:\n"{ciorna}"\n\n'
-            "Rescrie-l ca o recenzie coerentă, bine scrisă, de 2-4 propoziții. "
+        system_prompt = (
+            "Ești un asistent pentru recenzii de carte. "
+            "Rescrie ciorna de recenzie a elevului ca o recenzie coerentă, bine scrisă, de 2-4 propoziții. "
             "Păstrează exact opinia și tonul original al elevului — nu schimba dacă e pozitivă sau negativă. "
             "Nu adăuga informații inventate. Răspunde DOAR cu textul recenziei, fără explicații."
         )
-        raspuns_ai = _groq_chat(client, prompt)
+        user_prompt = f'Carte: "{titlu_carte}"\nGândul brut al elevului:\n"{ciorna}"'
+        raspuns_ai = _groq_chat(client, user_prompt, system_message=system_prompt)
         return jsonify({'success': True, 'review': raspuns_ai}), 200
     except Exception:
         logger.exception('Eroare AI review-assist')
@@ -1748,6 +1842,7 @@ def ai_review_assist():
 
 
 @main_bp.route('/ai/book-summary/<int:carte_id>', methods=['GET'])
+@jwt_required
 def ai_book_summary(carte_id):
     client = _get_groq_client()
     if not client:
@@ -1768,13 +1863,16 @@ def ai_book_summary(carte_id):
             return jsonify({'success': True, 'summary': '', 'no_reviews': True}), 200
 
         review_text = '\n'.join(f'- Nota {r[0]}/5: {r[1]}' for r in reviews)
-        prompt = (
-            f'Carte: "{book_row[0]}" de {book_row[1]}\n'
-            f"Recenzii de la cititori:\n{review_text}\n\n"
-            "Scrie un rezumat de 2-3 propoziții al opiniei generale a cititorilor despre această carte. "
+        system_prompt = (
+            "Ești un asistent de bibliotecă. Rezumă opinia generală a cititorilor despre o carte pe baza recenziilor primite. "
+            "Scrie un rezumat de 2-3 propoziții. "
             "Menționează dacă e apreciată sau nu și de ce. Răspunde în română."
         )
-        raspuns_ai = _groq_chat(client, prompt)
+        user_prompt = (
+            f'Carte: "{book_row[0]}" de {book_row[1]}\n'
+            f"Recenzii de la cititori:\n{review_text}"
+        )
+        raspuns_ai = _groq_chat(client, user_prompt, system_message=system_prompt)
         return jsonify({'success': True, 'summary': raspuns_ai}), 200
     except Exception:
         logger.exception('Eroare AI book-summary pentru carte_id=%d', carte_id)
@@ -1782,6 +1880,7 @@ def ai_book_summary(carte_id):
 
 
 @main_bp.route('/ai/chat', methods=['POST'])
+@jwt_required
 def ai_chat():
     data = request.get_json(silent=True) or {}
     message = (data.get('message') or '').strip()
@@ -1813,15 +1912,14 @@ def ai_chat():
             if read_rows:
                 context_utilizator = '\nCărți citite de utilizatorul curent: ' + ', '.join(f'"{r[0]}"' for r in read_rows) + '\n'
 
-        prompt = (
+        system_prompt = (
             "Ești asistentul virtual al bibliotecii școlii CNI Suceava. "
             "Răspunzi scurt, prietenos și în română. "
             "Folosește DOAR informațiile din catalogul de mai jos — nu inventa cărți sau autori.\n\n"
             f"CATALOG COMPLET:\n{book_list}\n"
-            f"{context_utilizator}\n"
-            f"Întrebarea utilizatorului: {message}"
+            f"{context_utilizator}"
         )
-        raspuns_ai = _groq_chat(client, prompt)
+        raspuns_ai = _groq_chat(client, message, system_message=system_prompt)
         return jsonify({'success': True, 'reply': raspuns_ai}), 200
     except Exception:
         logger.exception('Eroare AI chat')
