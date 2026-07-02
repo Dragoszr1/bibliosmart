@@ -3,14 +3,14 @@ Description=Biblioteca Flask API (Gunicorn)
 After=network.target mysqld.service mariadb.service
 
 [Service]
-User=dragoszr-proiect
-Group=dragoszr-proiect
-WorkingDirectory=/home/dragoszr-proiect/Desktop/biblioteca-repo/backend
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/biblioteca-repo/backend
 Environment="FLASK_ENV=production"
-Environment="PATH=/home/dragoszr-proiect/Desktop/biblioteca-repo/backend/venv/bin"
-ExecStart=/home/dragoszr-proiect/Desktop/biblioteca-repo/backend/venv/bin/gunicorn \
+Environment="PATH=/home/ubuntu/biblioteca-repo/backend/venv/bin"
+ExecStart=/home/ubuntu/biblioteca-repo/backend/venv/bin/gunicorn \
     --workers 3 \
-    --bind 127.0.0.1:5000 \
+    --bind 127.0.0.1:8000 \
     --timeout 60 \
     "app:create_app('production')"
 ExecReload=/bin/kill -s HUP $MAINPID
