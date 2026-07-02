@@ -279,8 +279,8 @@ def health_check():
 @main_bp.route('/', methods=['GET'])
 def index():
     return jsonify({
-        'name': 'School Library API',
-        'version': '1.0.0',
+        'name': 'API site biblioteca CNI Suceava',
+        'version': 'idk(forgot to count lol)',
         'message': 'Database connection established'
     }), 200
 
