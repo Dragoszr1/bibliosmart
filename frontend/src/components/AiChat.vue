@@ -130,6 +130,10 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: text })
         })
+        if (res.status === 401) {
+          this.messages.push({ role: 'ai', text: 'Trebuie să fii autentificat pentru a discuta cu asistentul AI. Te rog loghează-te.' })
+          return
+        }
         const data = await res.json()
         this.messages.push({ role: 'ai', text: data.reply || 'Îmi pare rău, nu am putut răspunde.' })
       } catch {
