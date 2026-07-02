@@ -1,0 +1,97 @@
+CREATE DATABASE IF NOT EXISTS biblioteca;
+USE biblioteca;
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS carti;
+CREATE TABLE carti (
+	carte_id INTEGER NOT NULL AUTO_INCREMENT, 
+	titlu VARCHAR(50) NOT NULL, 
+	autor VARCHAR(50) NOT NULL, 
+	`ISBN` VARCHAR(13) NOT NULL, 
+	stoc_total INTEGER, 
+	stoc_disponibil INTEGER, 
+	imprumutat BOOL, 
+	gen VARCHAR(255) NOT NULL, 
+	pozitie VARCHAR(100), 
+	cod VARCHAR(50), 
+	PRIMARY KEY (carte_id), 
+	UNIQUE (`ISBN`)
+);
+
+DROP TABLE IF EXISTS users;
+CREATE TABLE users (
+	user_id INTEGER NOT NULL AUTO_INCREMENT, 
+	username VARCHAR(50) NOT NULL, 
+	email VARCHAR(50) NOT NULL, 
+	hashed_password VARCHAR(255) NOT NULL, 
+	rol ENUM('user','bibliotecar') NOT NULL, 
+	telefon VARCHAR(50), 
+	description VARCHAR(255), 
+	club BOOL NOT NULL, 
+	PRIMARY KEY (user_id), 
+	UNIQUE (username), 
+	UNIQUE (email), 
+	UNIQUE (telefon)
+);
+
+DROP TABLE IF EXISTS carti_citite;
+CREATE TABLE carti_citite (
+	id INTEGER NOT NULL AUTO_INCREMENT, 
+	user_id INTEGER NOT NULL, 
+	carte_id INTEGER NOT NULL, 
+	PRIMARY KEY (id)
+);
+
+DROP TABLE IF EXISTS recenzii;
+CREATE TABLE recenzii (
+	id INTEGER NOT NULL AUTO_INCREMENT, 
+	user_id INTEGER NOT NULL, 
+	carte_id INTEGER NOT NULL, 
+	nota INTEGER NOT NULL, 
+	comentariu VARCHAR(255) NOT NULL, 
+	PRIMARY KEY (id)
+);
+
+DROP TABLE IF EXISTS anunturi;
+CREATE TABLE anunturi (
+	anunt_id INTEGER NOT NULL AUTO_INCREMENT, 
+	titlu VARCHAR(255) NOT NULL, 
+	anunt TEXT, 
+	data_publicare DATETIME NOT NULL, 
+	aprecieri INTEGER, 
+	PRIMARY KEY (anunt_id)
+);
+
+DROP TABLE IF EXISTS anunturi_aprecieri;
+CREATE TABLE anunturi_aprecieri (
+	id INTEGER NOT NULL AUTO_INCREMENT, 
+	anunt_id INTEGER NOT NULL, 
+	user_id INTEGER NOT NULL, 
+	PRIMARY KEY (id)
+);
+
+DROP TABLE IF EXISTS cereri_carti;
+CREATE TABLE cereri_carti (
+	cerere_id INTEGER NOT NULL AUTO_INCREMENT, 
+	user_id INTEGER NOT NULL, 
+	carte_id INTEGER NOT NULL, 
+	status ENUM('pending','approved','rejected') NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (cerere_id)
+);
+
+DROP TABLE IF EXISTS imprumuturi_active;
+CREATE TABLE imprumuturi_active (
+	imprumut_id INTEGER NOT NULL AUTO_INCREMENT, 
+	user_id INTEGER NOT NULL, 
+	carte_id INTEGER NOT NULL, 
+	data_imprumut DATETIME NOT NULL, 
+	data_scadenta DATETIME NOT NULL, 
+	PRIMARY KEY (imprumut_id), 
+	FOREIGN KEY(user_id) REFERENCES users (user_id) ON DELETE CASCADE, 
+	FOREIGN KEY(carte_id) REFERENCES carti (carte_id) ON DELETE CASCADE
+);
+
+SET FOREIGN_KEY_CHECKS = 1;

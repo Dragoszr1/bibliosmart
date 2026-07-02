@@ -11,6 +11,12 @@ class Config:
     JWT_COOKIE_NAME = 'access_token'
     JWT_COOKIE_SAMESITE = 'Lax'
     JWT_COOKIE_SECURE = False  # Set True in production with HTTPS
+    
+    # SQLAlchemy Pool Options to prevent "MySQL server has gone away"
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+        'pool_recycle': 280,
+    }
 
     # SMTP / Email configuration (Gmail App Password)
     SMTP_HOST = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
