@@ -1414,11 +1414,12 @@ def register():
         'email': email,
         'hashed_password': parola_hash,
         'rol': 'user',
-        'telefon': None
+        'telefon': None,
+        'club': 0
     }
 
     insert_query = text(
-        "INSERT INTO users (username, email, hashed_password, rol, telefon) VALUES (:username, :email, :hashed_password, :rol, :telefon)"
+        "INSERT INTO users (username, email, hashed_password, rol, telefon, club) VALUES (:username, :email, :hashed_password, :rol, :telefon, :club)"
     )
 
     try:

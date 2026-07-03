@@ -94,4 +94,15 @@ CREATE TABLE imprumuturi_active (
 	FOREIGN KEY(carte_id) REFERENCES carti (carte_id) ON DELETE CASCADE
 );
 
+DROP TABLE IF EXISTS coduri_verificare;
+CREATE TABLE coduri_verificare (
+	id INTEGER NOT NULL AUTO_INCREMENT, 
+	user_id INTEGER NOT NULL, 
+	code VARCHAR(6) NOT NULL, 
+	temp_token VARCHAR(255) NOT NULL, 
+	expires_at DATETIME NOT NULL, 
+	PRIMARY KEY (id),
+	FOREIGN KEY(user_id) REFERENCES users (user_id) ON DELETE CASCADE
+);
+
 SET FOREIGN_KEY_CHECKS = 1;
