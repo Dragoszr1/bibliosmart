@@ -78,11 +78,11 @@
           </div>
           <div class="flex gap-4 p-5 rounded-xl bg-white shadow-card border border-gray-100">
             <div class="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-              <i class="pi pi-users text-accent text-lg"></i>
+              <i class="pi pi-compass text-accent text-lg"></i>
             </div>
             <div>
-              <h4 class="font-semibold text-dark mb-1 text-sm">Ghidare Expert</h4>
-              <p class="text-gray-500 text-sm">Bibliotecari gata să te ajute</p>
+              <h4 class="font-semibold text-dark mb-1 text-sm">Ușor de Utilizat</h4>
+              <p class="text-gray-500 text-sm">Navigare simplă și intuitivă pe platformă</p>
             </div>
           </div>
           <div class="flex gap-4 p-5 rounded-xl bg-white shadow-card border border-gray-100">
