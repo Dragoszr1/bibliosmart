@@ -105,4 +105,40 @@ CREATE TABLE coduri_verificare (
 	FOREIGN KEY(user_id) REFERENCES users (user_id) ON DELETE CASCADE
 );
 
+DROP TABLE IF EXISTS club_invites;
+CREATE TABLE club_invites (
+	token VARCHAR(255) NOT NULL, 
+	created_by INTEGER NOT NULL, 
+	expires_at DATETIME NOT NULL, 
+	PRIMARY KEY (token),
+	FOREIGN KEY(created_by) REFERENCES users (user_id) ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS activitati_club;
+CREATE TABLE activitati_club (
+	activitate_id INTEGER NOT NULL AUTO_INCREMENT, 
+	titlu VARCHAR(255) NOT NULL, 
+	continut TEXT, 
+	tip VARCHAR(50) DEFAULT 'activitate', 
+	saptamana VARCHAR(50) DEFAULT 'curenta', 
+	creat_de INTEGER NOT NULL, 
+	creat_la DATETIME DEFAULT CURRENT_TIMESTAMP, 
+	actualizat_la DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
+	nume_imagine VARCHAR(255), 
+	PRIMARY KEY (activitate_id),
+	FOREIGN KEY(creat_de) REFERENCES users (user_id) ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS comentarii_activitati;
+CREATE TABLE comentarii_activitati (
+	comentariu_id INTEGER NOT NULL AUTO_INCREMENT, 
+	activitate_id INTEGER NOT NULL, 
+	user_id INTEGER NOT NULL, 
+	continut TEXT NOT NULL, 
+	creat_la DATETIME DEFAULT CURRENT_TIMESTAMP, 
+	PRIMARY KEY (comentariu_id),
+	FOREIGN KEY(activitate_id) REFERENCES activitati_club (activitate_id) ON DELETE CASCADE,
+	FOREIGN KEY(user_id) REFERENCES users (user_id) ON DELETE CASCADE
+);
+
 SET FOREIGN_KEY_CHECKS = 1;
