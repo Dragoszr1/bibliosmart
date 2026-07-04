@@ -311,6 +311,28 @@ def get_books():
         return jsonify({'error': 'Eroare la preluarea cărților'}), 500
 
 
+@main_bp.route('/books/recent', methods=['GET'])
+def get_recent_books():
+    try:
+        # Fetch the 3 books with the highest ID (assumes carte_id auto-increments and correlates with creation time)
+        result = db.session.execute(text('SELECT carte_id, titlu, autor, gen, stoc_disponibil FROM carti ORDER BY carte_id DESC LIMIT 3'))
+        
+        books = []
+        for row in result:
+            books.append({
+                'carte_id': row[0],
+                'titlu': row[1],
+                'autor': row[2],
+                'gen': row[3],
+                'stoc_disponibil': row[4]
+            })
+            
+        return jsonify({'success': True, 'books': books}), 200
+    except Exception:
+        logger.exception('Eroare la preluarea cărților recente')
+        return jsonify({'success': False, 'message': 'Eroare la preluarea cărților recente'}), 500
+
+
 @main_bp.route('/books', methods=['POST'])
 @bibliotecar_required
 def add_book():
