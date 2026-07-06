@@ -141,4 +141,41 @@ CREATE TABLE comentarii_activitati (
 	FOREIGN KEY(user_id) REFERENCES users (user_id) ON DELETE CASCADE
 );
 
+DROP TABLE IF EXISTS club_threads;
+CREATE TABLE club_threads (
+	thread_id INTEGER NOT NULL AUTO_INCREMENT, 
+	titlu VARCHAR(255) NOT NULL, 
+	continut TEXT NOT NULL, 
+	creat_de INTEGER NOT NULL, 
+	creat_la DATETIME DEFAULT CURRENT_TIMESTAMP, 
+	PRIMARY KEY (thread_id),
+	FOREIGN KEY(creat_de) REFERENCES users (user_id) ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS thread_comments;
+CREATE TABLE thread_comments (
+	comentariu_id INTEGER NOT NULL AUTO_INCREMENT, 
+	thread_id INTEGER NOT NULL, 
+	user_id INTEGER NOT NULL, 
+	continut TEXT NOT NULL, 
+	likes INTEGER DEFAULT 0, 
+	creat_la DATETIME DEFAULT CURRENT_TIMESTAMP, 
+	PRIMARY KEY (comentariu_id),
+	FOREIGN KEY(thread_id) REFERENCES club_threads (thread_id) ON DELETE CASCADE,
+	FOREIGN KEY(user_id) REFERENCES users (user_id) ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS thread_subcomments;
+CREATE TABLE thread_subcomments (
+	subcomentariu_id INTEGER NOT NULL AUTO_INCREMENT, 
+	comentariu_id INTEGER NOT NULL, 
+	user_id INTEGER NOT NULL, 
+	continut TEXT NOT NULL, 
+	likes INTEGER DEFAULT 0, 
+	creat_la DATETIME DEFAULT CURRENT_TIMESTAMP, 
+	PRIMARY KEY (subcomentariu_id),
+	FOREIGN KEY(comentariu_id) REFERENCES thread_comments (comentariu_id) ON DELETE CASCADE,
+	FOREIGN KEY(user_id) REFERENCES users (user_id) ON DELETE CASCADE
+);
+
 SET FOREIGN_KEY_CHECKS = 1;

@@ -1,6 +1,94 @@
 <template>
   <div class="min-h-screen bg-base">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col lg:flex-row gap-8 items-start">
+      
+      <!-- Left Column: Threads Widget -->
+      <aside class="w-full lg:w-80 flex-shrink-0 bg-white rounded-xl shadow-card border border-gray-100 p-5 sm:p-6 sticky top-24">
+        <div class="flex items-center gap-3 mb-6">
+          <h3 class="text-xl font-bold text-dark">Discuții Recente</h3>
+          <div class="flex-1 h-px bg-gray-200"></div>
+        </div>
+        
+        <div class="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+          <!-- Dummy Thread 1 -->
+          <div class="group cursor-pointer">
+            <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">Teorii despre finalul romanului Dune</h4>
+            <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
+              <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> Alex P.</span>
+              <span>•</span>
+              <span class="flex items-center gap-1"><i class="pi pi-comment text-[10px]"></i> 14</span>
+            </div>
+          </div>
+          
+          <div class="h-px bg-gray-100"></div>
+          
+          <!-- Dummy Thread 2 -->
+          <div class="group cursor-pointer">
+            <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">Care este personajul vostru preferat din seria Harry Potter?</h4>
+            <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
+              <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> Maria C.</span>
+              <span>•</span>
+              <span class="flex items-center gap-1"><i class="pi pi-comment text-[10px]"></i> 32</span>
+            </div>
+          </div>
+
+          <div class="h-px bg-gray-100"></div>
+          
+          <!-- Dummy Thread 3 -->
+          <div class="group cursor-pointer">
+            <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">Recomandări de cărți SF pentru începători</h4>
+            <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
+              <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> Vlad M.</span>
+              <span>•</span>
+              <span class="flex items-center gap-1"><i class="pi pi-comment text-[10px]"></i> 8</span>
+            </div>
+          </div>
+
+          <div class="h-px bg-gray-100"></div>
+
+          <!-- Dummy Thread 4 -->
+          <div class="group cursor-pointer">
+            <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">De ce literatura clasică este încă relevantă azi?</h4>
+            <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
+              <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> Ioana D.</span>
+              <span>•</span>
+              <span class="flex items-center gap-1"><i class="pi pi-comment text-[10px]"></i> 45</span>
+            </div>
+          </div>
+
+          <div class="h-px bg-gray-100"></div>
+
+          <!-- Dummy Thread 5 -->
+          <div class="group cursor-pointer">
+            <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">Cea mai bună traducere pentru Stăpânul Inelelor</h4>
+            <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
+              <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> Andrei T.</span>
+              <span>•</span>
+              <span class="flex items-center gap-1"><i class="pi pi-comment text-[10px]"></i> 12</span>
+            </div>
+          </div>
+          
+          <div class="h-px bg-gray-100"></div>
+
+          <!-- Dummy Thread 6 -->
+          <div class="group cursor-pointer">
+            <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">Ce ați citit săptămâna asta? (Megathread)</h4>
+            <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
+              <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> Elena V.</span>
+              <span>•</span>
+              <span class="flex items-center gap-1"><i class="pi pi-comment text-[10px]"></i> 89</span>
+            </div>
+          </div>
+        </div>
+        
+        <button @click="$router.push('/club/threads')" class="w-full mt-6 py-2.5 rounded-lg border border-gray-200 text-sm font-semibold text-dark hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+          <span>Toate discuțiile</span>
+          <i class="pi pi-arrow-right text-xs"></i>
+        </button>
+      </aside>
+
+      <!-- Right Column: Main Activities -->
+      <div class="flex-1 max-w-4xl w-full mx-auto">
 
       <!-- Header -->
       <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -155,6 +243,7 @@
             <p v-if="threadError[act.activitate_id]" class="text-xs text-accent">{{ threadError[act.activitate_id] }}</p>
           </div>
         </div>
+      </div>
       </div>
     </div>
 
@@ -464,3 +553,20 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+</style>

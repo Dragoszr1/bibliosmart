@@ -113,3 +113,45 @@ class ImprumuturiActive(db.Model):
 
     def __repr__(self):
         return f'<ImprumuturiActive {self.imprumut_id}: user={self.user_id} carte={self.carte_id} scadenta={self.data_scadenta}>'
+
+
+class ClubThreads(db.Model):
+    """Modelul tabelei club_threads — thread-urile din clubul de lectură."""
+    __tablename__ = 'club_threads'
+
+    thread_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    titlu = db.Column(db.String(255), nullable=False)
+    continut = db.Column(db.Text, nullable=False)
+    creat_de = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), nullable=False)
+    creat_la = db.Column(db.DateTime, nullable=False, default=db.func.now())
+
+    def __repr__(self):
+        return f'<ClubThreads {self.thread_id}: {self.titlu}>'
+
+class ThreadComments(db.Model):
+    """Modelul tabelei thread_comments — comentariile la thread-uri."""
+    __tablename__ = 'thread_comments'
+
+    comentariu_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    thread_id = db.Column(db.Integer, db.ForeignKey('club_threads.thread_id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), nullable=False)
+    continut = db.Column(db.Text, nullable=False)
+    likes = db.Column(db.Integer, default=0)
+    creat_la = db.Column(db.DateTime, nullable=False, default=db.func.now())
+
+    def __repr__(self):
+        return f'<ThreadComments {self.comentariu_id} la thread {self.thread_id}>'
+
+class ThreadSubcomments(db.Model):
+    """Modelul tabelei thread_subcomments — subcomentariile la comentariile de thread."""
+    __tablename__ = 'thread_subcomments'
+
+    subcomentariu_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    comentariu_id = db.Column(db.Integer, db.ForeignKey('thread_comments.comentariu_id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), nullable=False)
+    continut = db.Column(db.Text, nullable=False)
+    likes = db.Column(db.Integer, default=0)
+    creat_la = db.Column(db.DateTime, nullable=False, default=db.func.now())
+
+    def __repr__(self):
+        return f'<ThreadSubcomments {self.subcomentariu_id} la comentariul {self.comentariu_id}>'

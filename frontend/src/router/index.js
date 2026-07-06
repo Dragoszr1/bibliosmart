@@ -7,6 +7,7 @@ import Books from '../pages/Books.vue'
 import Club from '../pages/Club.vue'
 import ClubJoin from '../pages/ClubJoin.vue'
 import ClubAnterioare from '../pages/ClubAnterioare.vue'
+import ClubThreads from '../pages/ClubThreads.vue'
 
 const routes = [
   {
@@ -38,13 +39,17 @@ const routes = [
   {
     path: '/club',
     component: Club,
-    name: 'Club',
-    meta: { requiresAuth: true }
+    name: 'Club'
   },
   {
     path: '/club/join/:token',
     component: ClubJoin,
     name: 'ClubJoin'
+  },
+  {
+    path: '/club/threads',
+    component: ClubThreads,
+    name: 'ClubThreads'
   },
   {
     path: '/club/anterioare',
