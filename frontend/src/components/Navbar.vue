@@ -7,7 +7,7 @@
           <img src="/logo.webp" alt="Biblioteca" class="h-9 w-9 rounded-lg transition-transform duration-200 group-hover:scale-105">
           <div class="hidden sm:block">
             <h1 class="text-lg font-bold text-white leading-tight">Biblioteca</h1>
-            <p class="text-[11px] text-white/40 font-medium -mt-0.5">C.N.I. „Spiru-Haret"</p>
+            <p class="text-[11px] text-white/40 font-medium -mt-0.5">Colegiul Național de Informatică ,,Spiru-Haret"</p>
           </div>
         </router-link>
 
@@ -19,7 +19,7 @@
             active-class="!text-white bg-white/10"
             exact
           >
-            Principală
+            Acasă
           </router-link>
           <router-link 
             to="/books" 
@@ -75,7 +75,7 @@
       <div v-if="mobileMenuOpen" class="md:hidden bg-dark border-t border-white/5">
         <div class="px-4 py-3 space-y-1">
           <router-link to="/" @click="mobileMenuOpen = false" class="block px-4 py-2.5 text-sm font-medium text-white/70 hover:text-white rounded-lg hover:bg-white/5 transition-all">
-            Principală
+            Acasă
           </router-link>
           <router-link to="/books" @click="mobileMenuOpen = false" class="block px-4 py-2.5 text-sm font-medium text-white/70 hover:text-white rounded-lg hover:bg-white/5 transition-all">
             Cărți
