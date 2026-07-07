@@ -1338,6 +1338,100 @@ def logout():
     return resp, 200
 
 
+@main_bp.route('/auth/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.get_json(silent=True) or {}
+    email = (data.get('email') or '').strip().lower()
+
+    if not email:
+        return jsonify({'success': False, 'message': 'Email-ul este obligatoriu'}), 400
+
+    row = db.session.execute(
+        text("SELECT user_id, username FROM users WHERE email = :email"),
+        {'email': email}
+    ).fetchone()
+
+    if not row:
+        # Prevent email enumeration by returning a generic success message
+        return jsonify({'success': True, 'message': 'Dacă email-ul există, s-a trimis un link de resetare.'}), 200
+
+    user_id = row[0]
+    username = row[1]
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+
+    try:
+        db.session.execute(
+            text("INSERT INTO password_reset_tokens (token, user_id, expires_at) VALUES (:token, :uid, :exp)"),
+            {'token': token, 'uid': user_id, 'exp': expires_at}
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'Eroare la generarea token-ului.'}), 500
+
+    reset_url = f"http://localhost:5173/reset-password/{token}"
+    
+    html_body = (
+        f"Salut {username},\n\n"
+        f"Am primit o cerere de resetare a parolei pentru contul tău.\n"
+        f"Accesează acest link pentru a o reseta:\n"
+        f"{reset_url}\n\n"
+        f"Acest link este valabil o oră. Dacă nu ai cerut asta, ignoră acest email.\n\n"
+        f"Echipa Biblioteca"
+    )
+
+    send_email([email], "Resetare Parolă", html_body)
+
+    return jsonify({'success': True, 'message': 'Dacă email-ul există, s-a trimis un link de resetare.'}), 200
+
+
+@main_bp.route('/auth/reset-password/<token>', methods=['POST'])
+def reset_password(token):
+    data = request.get_json(silent=True) or {}
+    new_password = data.get('password')
+
+    if not new_password or len(new_password) < 6:
+        return jsonify({'success': False, 'message': 'Parola trebuie să aibă minim 6 caractere'}), 400
+
+    now = datetime.datetime.utcnow()
+
+    # Preluăm tokenul
+    row = db.session.execute(
+        text("SELECT user_id, expires_at FROM password_reset_tokens WHERE token = :token"),
+        {'token': token}
+    ).fetchone()
+
+    if not row:
+        return jsonify({'success': False, 'message': 'Token invalid sau expirat.'}), 400
+        
+    user_id = row[0]
+    expires_at = row[1]
+
+    if expires_at < now:
+        db.session.execute(text("DELETE FROM password_reset_tokens WHERE token = :token"), {'token': token})
+        db.session.commit()
+        return jsonify({'success': False, 'message': 'Token expirat.'}), 400
+
+    hashed_pw = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    try:
+        db.session.execute(
+            text("UPDATE users SET hashed_password = :hpw WHERE user_id = :uid"),
+            {'hpw': hashed_pw, 'uid': user_id}
+        )
+        db.session.execute(
+            text("DELETE FROM password_reset_tokens WHERE token = :token"),
+            {'token': token}
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'Eroare la resetarea parolei.'}), 500
+
+    return jsonify({'success': True, 'message': 'Parola a fost resetată cu succes!'}), 200
+
+
 @main_bp.route('/auth/profile', methods=['GET'])
 @jwt_required
 def profile():

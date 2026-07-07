@@ -31,7 +31,10 @@
             >
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1.5">Parolă</label>
+            <div class="flex justify-between mb-1.5">
+              <label class="block text-sm font-medium text-gray-600">Parolă</label>
+              <router-link to="/forgot-password" class="text-sm font-semibold text-secondary hover:text-secondary/80">Ai uitat parola?</router-link>
+            </div>
             <input
               v-model="form.password"
               type="password"

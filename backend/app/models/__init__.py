@@ -155,3 +155,14 @@ class ThreadSubcomments(db.Model):
 
     def __repr__(self):
         return f'<ThreadSubcomments {self.subcomentariu_id} la comentariul {self.comentariu_id}>'
+
+class PasswordResetTokens(db.Model):
+    """Modelul tabelei password_reset_tokens — tokenuri pentru resetarea parolei."""
+    __tablename__ = 'password_reset_tokens'
+
+    token = db.Column(db.String(255), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+
+    def __repr__(self):
+        return f'<PasswordResetTokens {self.token} pentru user_id {self.user_id}>'
