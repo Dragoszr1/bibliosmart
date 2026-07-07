@@ -1370,7 +1370,20 @@ def forgot_password():
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Eroare la generarea token-ului.'}), 500
 
-    reset_url = f"http://localhost:5173/reset-password/{token}"
+    # Determinăm dinamic adresa de bază a frontend-ului
+    frontend_url = request.headers.get('Origin')
+    if not frontend_url:
+        referer = request.headers.get('Referer')
+        if referer:
+            # Păstrăm doar origin-ul din referer (ex. https://site.ro/forgot-password -> https://site.ro)
+            from urllib.parse import urlparse
+            parsed_referer = urlparse(referer)
+            frontend_url = f"{parsed_referer.scheme}://{parsed_referer.netloc}"
+        else:
+            # Fallback dacă antetele lipsesc
+            frontend_url = "http://localhost:5173"
+
+    reset_url = f"{frontend_url}/reset-password/{token}"
     
     html_body = (
         f"Salut {username},\n\n"
