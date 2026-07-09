@@ -1,5 +1,15 @@
 <template>
-  <div class="min-h-screen bg-base">
+  <div class="min-h-screen bg-base relative">
+    
+    <!-- Toast Notification -->
+    <transition name="toast-slide">
+      <div v-if="toastMsg" class="fixed top-24 left-0 right-0 z-[100] flex justify-center pointer-events-none">
+        <div class="bg-white px-6 py-4 rounded-2xl shadow-xl border-b-4 border-green-500 flex items-center gap-3">
+          <i class="pi pi-check-circle text-green-500 text-xl"></i>
+          <span class="text-sm font-bold text-dark">{{ toastMsg }}</span>
+        </div>
+      </div>
+    </transition>
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
       <!-- Header -->
@@ -313,6 +323,7 @@ export default {
       addForm: { titlu: '', continut: '' },
       addError: '',
       addLoading: false,
+      toastMsg: '',
 
       selectedThread: null,
       comments: [],
@@ -390,7 +401,10 @@ export default {
           this.addError = data.error || 'Eroare la crearea discuției.'
         } else {
           this.addModalOpen = false
-          alert(data.message)
+          this.toastMsg = data.message
+          setTimeout(() => {
+            this.toastMsg = ''
+          }, 4000)
           await this.fetchThreads()
         }
       } catch (err) {
@@ -510,6 +524,14 @@ export default {
 </script>
 
 <style scoped>
+.toast-slide-enter-active, .toast-slide-leave-active {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.toast-slide-enter-from, .toast-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-30px);
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
