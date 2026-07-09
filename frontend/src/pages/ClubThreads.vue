@@ -18,7 +18,7 @@
             @click="openAddThreadModal"
             class="px-5 py-2.5 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2 shadow-sm"
           >
-            <i class="pi pi-plus text-xs"></i> Propune Thread
+            <i class="pi pi-plus text-xs"></i> Propune Discuție
           </button>
         </div>
       </div>
@@ -250,7 +250,7 @@
       <div class="w-full max-w-lg bg-white rounded-2xl shadow-modal p-6">
          <div class="flex items-center justify-between mb-5">
           <h2 class="text-lg font-bold text-dark flex items-center gap-2">
-            <i class="pi pi-plus-circle text-secondary"></i> Adaugă un Thread
+            <i class="pi pi-plus-circle text-secondary"></i> Adaugă o Discuție
           </h2>
           <button @click="addModalOpen = false" class="text-gray-400 hover:text-secondary text-2xl font-bold leading-none">&times;</button>
         </div>
@@ -365,7 +365,7 @@ export default {
         })
         const data = await res.json()
         if (!res.ok) {
-          this.addError = data.error || 'Eroare la crearea thread-ului.'
+          this.addError = data.error || 'Eroare la crearea discuției.'
         } else {
           this.addModalOpen = false
           await this.fetchThreads()

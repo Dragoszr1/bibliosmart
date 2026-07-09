@@ -2388,7 +2388,7 @@ def create_club_thread():
         new_thread = ClubThreads(
             titlu=data['titlu'],
             continut=data['continut'],
-            creat_de=request.current_user.user_id
+            creat_de=request.current_user['user_id']
         )
         db.session.add(new_thread)
         db.session.commit()
@@ -2481,7 +2481,7 @@ def add_thread_comment(thread_id):
     try:
         new_comment = ThreadComments(
             thread_id=thread_id,
-            user_id=request.current_user.user_id,
+            user_id=request.current_user['user_id'],
             continut=data['continut']
         )
         db.session.add(new_comment)
@@ -2502,7 +2502,7 @@ def add_thread_subcomment(comentariu_id):
     try:
         new_subcomment = ThreadSubcomments(
             comentariu_id=comentariu_id,
-            user_id=request.current_user.user_id,
+            user_id=request.current_user['user_id'],
             continut=data['continut']
         )
         db.session.add(new_subcomment)
