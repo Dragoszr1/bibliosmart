@@ -686,6 +686,12 @@
             <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
               <i class="pi pi-bookmark text-secondary"></i> Invitații Club de Literatură
             </h2>
+            <button
+              @click="$router.push('/club/threads')"
+              class="px-5 py-2.5 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-lg text-sm transition-all flex items-center gap-2 shadow-sm"
+            >
+              <i class="pi pi-comments text-xs"></i> Mergi la discuții
+            </button>
           </div>
           <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-6">
             <p class="text-sm text-gray-500 mb-4">Generează un link de invitație pe care îl poți trimite elevilor. Link-ul îi va adăuga automat în clubul de literatură.</p>

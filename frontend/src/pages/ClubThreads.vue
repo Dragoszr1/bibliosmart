@@ -23,41 +23,58 @@
         </div>
       </div>
 
+      <!-- Loading / Error -->
+      <div v-if="loading" class="text-center py-20 text-gray-400">
+        <i class="pi pi-spin pi-spinner text-3xl mb-3 block"></i>
+        <p class="text-sm">Se încarcă discuțiile...</p>
+      </div>
+      <div v-else-if="loadError" class="bg-accent/10 border-l-4 border-accent rounded-xl p-4 text-accent text-sm mb-6">
+        {{ loadError }}
+      </div>
+
       <!-- Threads Feed -->
-      <div class="space-y-6">
+      <div v-else class="space-y-6">
+        <div v-if="threads.length === 0" class="text-center py-20 text-gray-400">
+          <p class="text-sm">Nicio discuție creată încă.</p>
+        </div>
         <div
-          v-for="thread in dummyThreads"
-          :key="thread.id"
+          v-for="thread in threads"
+          :key="thread.thread_id"
           class="bg-white rounded-2xl shadow-card border border-gray-100 p-5 sm:p-6"
         >
           <!-- Thread Header -->
           <div class="flex items-start justify-between gap-3">
             <div class="flex-1 min-w-0">
               <div class="flex flex-wrap items-center gap-2 mb-2">
-                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-gray-100 text-gray-600">
-                  <i class="pi pi-tag text-[9px]"></i> {{ thread.tag }}
-                </span>
                 <span class="text-xs text-gray-400 flex items-center gap-1">
-                  <i class="pi pi-clock text-[10px]"></i> {{ thread.timeAgo }}
+                  <i class="pi pi-clock text-[10px]"></i> {{ formatDate(thread.creat_la) }}
                 </span>
               </div>
               <h3 class="text-lg sm:text-xl font-bold text-dark leading-snug cursor-pointer hover:text-secondary transition-colors" @click="openThreadModal(thread)">
-                {{ thread.title }}
+                {{ thread.titlu }}
               </h3>
               <p class="text-sm text-gray-600 mt-2 whitespace-pre-line leading-relaxed line-clamp-3">
-                {{ thread.content }}
+                {{ thread.continut }}
               </p>
             </div>
+            <button
+              v-if="canDeleteThread(thread)"
+              @click="deleteThread(thread.thread_id)"
+              class="text-gray-300 hover:text-accent text-lg leading-none flex-shrink-0 transition-colors"
+              title="Șterge discuția"
+            >
+              <i class="pi pi-trash"></i>
+            </button>
           </div>
 
           <!-- Thread Footer (Author & Action) -->
           <div class="mt-5 flex items-center justify-between border-t border-gray-50 pt-4">
             <div class="flex items-center gap-2 cursor-pointer group">
               <div class="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-secondary text-xs font-bold uppercase group-hover:bg-secondary group-hover:text-white transition-colors">
-                {{ thread.author.charAt(0) }}
+                {{ thread.autor ? thread.autor.charAt(0) : 'U' }}
               </div>
               <div>
-                <p class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors">{{ thread.author }}</p>
+                <p class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors">{{ thread.autor }}</p>
                 <p class="text-[10px] text-gray-400">Membru Club</p>
               </div>
             </div>
@@ -67,7 +84,7 @@
               class="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-dark font-semibold rounded-lg text-sm transition-colors flex items-center gap-2"
             >
               <i class="pi pi-comments text-secondary text-xs"></i>
-              <span>{{ thread.commentsCount }} comentarii</span>
+              <span>Vezi discuția</span>
             </button>
           </div>
         </div>
@@ -81,7 +98,7 @@
         
         <!-- Modal Header -->
         <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-          <h2 class="text-lg font-bold text-dark truncate pr-4">{{ selectedThread.title }}</h2>
+          <h2 class="text-lg font-bold text-dark truncate pr-4">{{ selectedThread.titlu }}</h2>
           <button @click="selectedThread = null" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-500 transition-colors">
             <i class="pi pi-times"></i>
           </button>
@@ -93,58 +110,99 @@
           <div class="mb-8 pb-6 border-b border-gray-100">
             <div class="flex items-center gap-3 mb-4">
                <div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary text-sm font-bold uppercase">
-                {{ selectedThread.author.charAt(0) }}
+                {{ selectedThread.autor ? selectedThread.autor.charAt(0) : 'U' }}
               </div>
               <div>
-                <p class="font-bold text-dark">{{ selectedThread.author }}</p>
-                <p class="text-xs text-gray-500">{{ selectedThread.timeAgo }} • <span class="bg-gray-100 px-1.5 py-0.5 rounded text-[10px]">{{ selectedThread.tag }}</span></p>
+                <p class="font-bold text-dark">{{ selectedThread.autor }}</p>
+                <p class="text-xs text-gray-500">{{ formatDate(selectedThread.creat_la) }}</p>
               </div>
             </div>
-            <p class="text-gray-800 whitespace-pre-line text-sm sm:text-base leading-relaxed">{{ selectedThread.content }}</p>
+            <p class="text-gray-800 whitespace-pre-line text-sm sm:text-base leading-relaxed">{{ selectedThread.continut }}</p>
           </div>
 
           <!-- Comments Section -->
           <h3 class="font-bold text-dark mb-5 text-lg flex items-center gap-2">
-            <i class="pi pi-comments text-secondary"></i> Comentarii ({{ selectedThread.commentsCount }})
+            <i class="pi pi-comments text-secondary"></i> Comentarii ({{ comments.length }})
           </h3>
 
-          <div class="space-y-6">
+          <div v-if="loadingComments" class="text-center py-4 text-gray-400">
+            <i class="pi pi-spin pi-spinner text-2xl"></i>
+          </div>
+
+          <div v-else class="space-y-6">
+            <div v-if="comments.length === 0" class="text-xs text-gray-400 text-center py-2">
+              Niciun comentariu încă. Fii primul care adaugă unul!
+            </div>
+            
             <!-- Parent Comment -->
-            <div v-for="comment in dummyComments" :key="comment.id" class="flex gap-3 sm:gap-4">
-              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-xs font-bold">
-                {{ comment.author.charAt(0) }}
+            <div v-for="comment in comments" :key="comment.comentariu_id" class="flex gap-3 sm:gap-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-xs font-bold uppercase">
+                {{ comment.autor ? comment.autor.charAt(0) : 'U' }}
               </div>
               <div class="flex-1 min-w-0">
-                <div class="bg-gray-50 p-3 sm:p-4 rounded-2xl rounded-tl-none border border-gray-100">
-                  <div class="flex items-center justify-between gap-2 mb-1">
-                    <span class="text-sm font-bold text-dark">{{ comment.author }}</span>
-                    <span class="text-[10px] text-gray-400">{{ comment.timeAgo }}</span>
+                <div class="bg-gray-50 p-3 sm:p-4 rounded-2xl rounded-tl-none border border-gray-100 group relative">
+                  <button
+                    v-if="canDeleteComment(comment)"
+                    @click="deleteComment(comment.comentariu_id)"
+                    class="absolute top-2 right-2 text-gray-300 hover:text-accent text-sm transition-colors opacity-0 group-hover:opacity-100"
+                    title="Șterge comentariul"
+                  >
+                    <i class="pi pi-trash"></i>
+                  </button>
+                  <div class="flex items-center justify-between gap-2 mb-1 pr-6">
+                    <span class="text-sm font-bold text-dark">{{ comment.autor }}</span>
+                    <span class="text-[10px] text-gray-400">{{ formatDate(comment.creat_la) }}</span>
                   </div>
-                  <p class="text-sm text-gray-700">{{ comment.content }}</p>
+                  <p class="text-sm text-gray-700 whitespace-pre-line">{{ comment.continut }}</p>
                 </div>
                 
                 <!-- Comment Actions -->
                 <div class="flex items-center gap-4 mt-1.5 ml-2">
-                  <button class="text-xs font-semibold text-gray-500 hover:text-secondary transition-colors">Răspunde</button>
+                  <button @click="replyTo = replyTo === comment.comentariu_id ? null : comment.comentariu_id" class="text-xs font-semibold text-gray-500 hover:text-secondary transition-colors">Răspunde</button>
                   <button class="text-xs font-semibold text-gray-500 hover:text-red-500 transition-colors flex items-center gap-1"><i class="pi pi-heart text-[10px]"></i> {{ comment.likes }}</button>
+                </div>
+                
+                <!-- Reply Box -->
+                <div v-if="replyTo === comment.comentariu_id" class="mt-3 flex gap-2 ml-4">
+                  <input
+                    v-model="newSubcommentText"
+                    @keydown.enter.exact.prevent="submitSubcomment(comment.comentariu_id)"
+                    type="text"
+                    placeholder="Scrie un răspuns..."
+                    class="flex-1 text-xs border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                  />
+                  <button
+                    @click="submitSubcomment(comment.comentariu_id)"
+                    :disabled="!newSubcommentText.trim()"
+                    class="px-3 py-1.5 bg-secondary hover:bg-secondary/90 disabled:opacity-40 text-white rounded-xl text-xs font-semibold transition-all"
+                  >
+                    Trimite
+                  </button>
                 </div>
 
                 <!-- Sub-comments (Replies) -->
-                <div v-if="comment.replies && comment.replies.length > 0" class="mt-4 space-y-4 relative before:absolute before:left-[-17px] sm:before:left-[-25px] before:top-0 before:bottom-0 before:w-px before:bg-gray-200 ml-4 sm:ml-6">
-                  <div v-for="reply in comment.replies" :key="reply.id" class="flex gap-3 relative before:absolute before:left-[-17px] sm:before:left-[-25px] before:top-4 before:w-3 sm:before:w-5 before:h-px before:bg-gray-200">
-                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 text-[10px] font-bold">
-                      {{ reply.author.charAt(0) }}
+                <div v-if="comment.subcomments && comment.subcomments.length > 0" class="mt-4 space-y-4 relative before:absolute before:left-[-17px] sm:before:left-[-25px] before:top-0 before:bottom-0 before:w-px before:bg-gray-200 ml-4 sm:ml-6">
+                  <div v-for="reply in comment.subcomments" :key="reply.subcomentariu_id" class="flex gap-3 relative before:absolute before:left-[-17px] sm:before:left-[-25px] before:top-4 before:w-3 sm:before:w-5 before:h-px before:bg-gray-200">
+                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 text-[10px] font-bold uppercase">
+                      {{ reply.autor ? reply.autor.charAt(0) : 'U' }}
                     </div>
                     <div class="flex-1 min-w-0">
-                      <div class="bg-gray-50 p-2.5 sm:p-3 rounded-2xl rounded-tl-none border border-gray-100">
-                        <div class="flex items-center justify-between gap-2 mb-1">
-                          <span class="text-xs font-bold text-dark">{{ reply.author }}</span>
-                          <span class="text-[10px] text-gray-400">{{ reply.timeAgo }}</span>
+                      <div class="bg-gray-50 p-2.5 sm:p-3 rounded-2xl rounded-tl-none border border-gray-100 group relative">
+                        <button
+                          v-if="canDeleteSubcomment(reply)"
+                          @click="deleteSubcomment(comment.comentariu_id, reply.subcomentariu_id)"
+                          class="absolute top-2 right-2 text-gray-300 hover:text-accent text-xs transition-colors opacity-0 group-hover:opacity-100"
+                          title="Șterge răspunsul"
+                        >
+                          <i class="pi pi-trash"></i>
+                        </button>
+                        <div class="flex items-center justify-between gap-2 mb-1 pr-6">
+                          <span class="text-xs font-bold text-dark">{{ reply.autor }}</span>
+                          <span class="text-[10px] text-gray-400">{{ formatDate(reply.creat_la) }}</span>
                         </div>
-                        <p class="text-xs text-gray-700"><span class="text-secondary font-semibold">@{{ comment.author }}</span> {{ reply.content }}</p>
+                        <p class="text-xs text-gray-700 whitespace-pre-line"><span class="text-secondary font-semibold">@{{ comment.autor }}</span> {{ reply.continut }}</p>
                       </div>
                       <div class="flex items-center gap-4 mt-1 ml-2">
-                        <button class="text-[11px] font-semibold text-gray-500 hover:text-secondary transition-colors">Răspunde</button>
                         <button class="text-[11px] font-semibold text-gray-500 hover:text-red-500 transition-colors flex items-center gap-1"><i class="pi pi-heart text-[9px]"></i> {{ reply.likes }}</button>
                       </div>
                     </div>
@@ -164,13 +222,20 @@
             </div>
             <div class="flex-1 flex flex-col gap-2">
               <textarea 
+                v-model="newCommentText"
                 rows="2" 
                 placeholder="Adaugă un comentariu la discuție..." 
                 class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-secondary/40 resize-none custom-scrollbar"
               ></textarea>
-              <div class="flex justify-end">
-                <button class="px-5 py-2 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-lg text-sm transition-all flex items-center gap-2">
-                  <i class="pi pi-send text-xs"></i> Postează
+              <div class="flex justify-between items-center">
+                <p v-if="commentError" class="text-xs text-accent">{{ commentError }}</p>
+                <div v-else></div>
+                <button 
+                  @click="submitComment"
+                  :disabled="!newCommentText.trim() || commentLoading"
+                  class="px-5 py-2 bg-secondary hover:bg-secondary/90 disabled:opacity-50 text-white font-semibold rounded-lg text-sm transition-all flex items-center gap-2"
+                >
+                  <i :class="commentLoading ? 'pi pi-spin pi-spinner' : 'pi pi-send'" class="text-xs"></i> Postează
                 </button>
               </div>
             </div>
@@ -180,35 +245,38 @@
       </div>
     </div>
 
-    <!-- Request Thread Modal (Placeholder) -->
+    <!-- Request Thread Modal -->
     <div v-if="addModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="addModalOpen = false">
       <div class="w-full max-w-lg bg-white rounded-2xl shadow-modal p-6">
          <div class="flex items-center justify-between mb-5">
           <h2 class="text-lg font-bold text-dark flex items-center gap-2">
-            <i class="pi pi-plus-circle text-secondary"></i> Propune un Thread
+            <i class="pi pi-plus-circle text-secondary"></i> Adaugă un Thread
           </h2>
           <button @click="addModalOpen = false" class="text-gray-400 hover:text-secondary text-2xl font-bold leading-none">&times;</button>
         </div>
-        <p class="text-sm text-gray-500 mb-5">Thread-ul tău va fi trimis spre moderare. După aprobare de către un bibliotecar, acesta va deveni public.</p>
         
         <div class="space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Titlul discuției</label>
-            <input type="text" placeholder="Ex: Teorii despre finalul..." class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-secondary/40" />
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Titlul discuției *</label>
+            <input v-model="addForm.titlu" type="text" placeholder="Ex: Teorii despre finalul..." class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-secondary/40" />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Conținut / Prima postare</label>
-            <textarea rows="4" placeholder="Dezvoltă ideea aici..." class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-secondary/40 resize-none"></textarea>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Tag (Opțional)</label>
-            <input type="text" placeholder="Ex: SF, Harry Potter, Spoiler" class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-secondary/40" />
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Conținut / Prima postare *</label>
+            <textarea v-model="addForm.continut" rows="4" placeholder="Dezvoltă ideea aici..." class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-secondary/40 resize-none"></textarea>
           </div>
         </div>
 
+        <p v-if="addError" class="mt-3 text-xs text-accent">{{ addError }}</p>
+
         <div class="flex gap-3 mt-6">
-          <button @click="addModalOpen = false" class="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50">Anulează</button>
-          <button class="flex-1 px-4 py-2.5 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-xl text-sm">Trimite spre aprobare</button>
+          <button @click="addModalOpen = false" class="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition-colors">Anulează</button>
+          <button 
+            @click="submitThread" 
+            :disabled="!addForm.titlu.trim() || !addForm.continut.trim() || addLoading"
+            class="flex-1 px-4 py-2.5 bg-secondary hover:bg-secondary/90 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+          >
+            <i :class="addLoading ? 'pi pi-spin pi-spinner' : 'pi pi-check'" class="text-xs"></i> Postează
+          </button>
         </div>
       </div>
     </div>
@@ -221,90 +289,207 @@ export default {
   name: 'ClubThreads',
   data() {
     return {
+      currentUser: null,
+      loading: true,
+      loadError: '',
+      threads: [],
+      
       addModalOpen: false,
+      addForm: { titlu: '', continut: '' },
+      addError: '',
+      addLoading: false,
+
       selectedThread: null,
+      comments: [],
+      loadingComments: false,
       
-      // Dummy data for skeleton
-      dummyThreads: [
-        {
-          id: 1,
-          title: 'Teorii despre finalul romanului Dune',
-          content: 'Am terminat de citit prima carte din seria Dune și finalul m-a lăsat cu foarte multe semne de întrebare. Ce credeți că se va întâmpla cu Paul Atreides și cu Fremenii? Vi se pare că transformarea lui a fost prea bruscă?\n\nAș vrea să discutăm despre implicațiile politice din universul creat de Frank Herbert. (Vă rog fără spoilere din Mântuitorul Dunei!)',
-          author: 'Alex Popescu',
-          timeAgo: 'Acum 2 ore',
-          tag: 'Science Fiction',
-          commentsCount: 14
-        },
-        {
-          id: 2,
-          title: 'Care este personajul vostru preferat din seria Harry Potter?',
-          content: 'Facem un scurt sondaj informal. Fiecare să spună personajul preferat și un motiv clar. Incep eu: Severus Snape, pentru că are cel mai complex arc de redempțiune din toată literatura young adult contemporană.',
-          author: 'Maria C.',
-          timeAgo: 'Acum 1 zi',
-          tag: 'Fantasy',
-          commentsCount: 32
-        },
-        {
-          id: 3,
-          title: 'Recomandări de cărți SF pentru începători',
-          content: 'Salutare club! Nu am citit niciodată literatură SF hardcore dar aș vrea să încep. Îmi plac filmele precum Interstellar sau Arrival. Ce cărți, de preferat nu foarte groase, mi-ați recomanda pentru a intra în acest univers?',
-          author: 'Vlad M.',
-          timeAgo: 'Acum 3 zile',
-          tag: 'Recomandări',
-          commentsCount: 8
-        }
-      ],
+      newCommentText: '',
+      commentLoading: false,
+      commentError: '',
       
-      // Dummy comments for the opened thread
-      dummyComments: [
-        {
-          id: 101,
-          author: 'Cristi Dan',
-          content: 'Cred că transformarea lui Paul a fost inevitabilă având în vedere expunerea la mirodenie și presiunea pe care o avea pe umeri.',
-          timeAgo: 'Acum 1 oră',
-          likes: 5,
-          replies: [
-            {
-              id: 201,
-              author: 'Alex Popescu',
-              content: 'Exact! Deși pe alocuri pare că și-a pierdut umanitatea în favoarea "scopului măreț".',
-              timeAgo: 'Acum 45 minute',
-              likes: 2
-            },
-            {
-              id: 202,
-              author: 'Diana R.',
-              content: 'Subscriu la faza cu pierderea umanității. Herbert a descris perfect povara puterii absolute.',
-              timeAgo: 'Acum 30 minute',
-              likes: 4
-            }
-          ]
-        },
-        {
-          id: 102,
-          author: 'Andrei T.',
-          content: 'Eu zic să citești Mântuitorul Dunei, îți va răspunde la jumătate din întrebările astea, iar pentru restul îți va genera altele noi =)))',
-          timeAgo: 'Acum 10 minute',
-          likes: 8,
-          replies: []
-        }
-      ]
+      replyTo: null,
+      newSubcommentText: ''
     }
   },
+  async mounted() {
+    await this.fetchMe()
+    await this.fetchThreads()
+  },
   methods: {
+    async fetchMe() {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' })
+        if (res.ok) this.currentUser = await res.json()
+      } catch { /* ignore */ }
+    },
+    async fetchThreads() {
+      this.loading = true
+      this.loadError = ''
+      try {
+        const res = await fetch('/api/club/threads', { credentials: 'include' })
+        if (res.status === 403) {
+          this.$router.push('/')
+          return
+        }
+        const data = await res.json()
+        if (!res.ok) {
+          this.loadError = data.error || 'Eroare la încărcarea discuțiilor.'
+        } else {
+          this.threads = data.threads || []
+        }
+      } catch (err) {
+        this.loadError = 'Eroare de rețea.'
+      } finally {
+        this.loading = false
+      }
+    },
+    formatDate(dateString) {
+      if (!dateString) return ''
+      const d = new Date(dateString)
+      return d.toLocaleDateString('ro-RO', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })
+    },
     openAddThreadModal() {
+      this.addForm = { titlu: '', continut: '' }
+      this.addError = ''
       this.addModalOpen = true
     },
-    openThreadModal(thread) {
+    async submitThread() {
+      this.addError = ''
+      this.addLoading = true
+      try {
+        const res = await fetch('/api/club/threads', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.addForm)
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          this.addError = data.error || 'Eroare la crearea thread-ului.'
+        } else {
+          this.addModalOpen = false
+          await this.fetchThreads()
+        }
+      } catch (err) {
+        this.addError = 'Eroare de rețea.'
+      } finally {
+        this.addLoading = false
+      }
+    },
+    canDeleteThread(thread) {
+      if (!this.currentUser) return false
+      return this.currentUser.rol === 'bibliotecar' || thread.autor_id === this.currentUser.user_id
+    },
+    async deleteThread(threadId) {
+      if (!confirm('Sigur doriți să ștergeți această discuție?')) return
+      try {
+        const res = await fetch(`/api/club/threads/${threadId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        })
+        if (res.ok) {
+          this.threads = this.threads.filter(t => t.thread_id !== threadId)
+        }
+      } catch (err) { /* ignore */ }
+    },
+    async openThreadModal(thread) {
       this.selectedThread = thread
-      // In viitor, aici vom face un fetch call ca sa incarcam comentariile in functie de thread.id
-      document.body.style.overflow = 'hidden' // prevent body scrolling
+      document.body.style.overflow = 'hidden'
+      await this.fetchComments(thread.thread_id)
+    },
+    async fetchComments(threadId) {
+      this.loadingComments = true
+      this.comments = []
+      try {
+        const res = await fetch(`/api/club/threads/${threadId}`, { credentials: 'include' })
+        const data = await res.json()
+        if (res.ok && data.thread) {
+          this.comments = data.thread.comments || []
+        }
+      } catch (err) { /* ignore */ } finally {
+        this.loadingComments = false
+      }
+    },
+    async submitComment() {
+      if (!this.newCommentText.trim() || !this.selectedThread) return
+      this.commentError = ''
+      this.commentLoading = true
+      try {
+        const res = await fetch(`/api/club/threads/${this.selectedThread.thread_id}/comments`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ continut: this.newCommentText })
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          this.commentError = data.error || 'Eroare la postare.'
+        } else {
+          this.newCommentText = ''
+          await this.fetchComments(this.selectedThread.thread_id)
+        }
+      } catch (err) {
+        this.commentError = 'Eroare de rețea.'
+      } finally {
+        this.commentLoading = false
+      }
+    },
+    canDeleteComment(comment) {
+      if (!this.currentUser) return false
+      return this.currentUser.rol === 'bibliotecar' || comment.autor_id === this.currentUser.user_id
+    },
+    async deleteComment(commentId) {
+      if (!confirm('Sigur doriți să ștergeți comentariul?')) return
+      try {
+        const res = await fetch(`/api/club/threads/comments/${commentId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        })
+        if (res.ok) {
+          this.comments = this.comments.filter(c => c.comentariu_id !== commentId)
+        }
+      } catch (err) { /* ignore */ }
+    },
+    async submitSubcomment(commentId) {
+      if (!this.newSubcommentText.trim()) return
+      try {
+        const res = await fetch(`/api/club/threads/comments/${commentId}/subcomments`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ continut: this.newSubcommentText })
+        })
+        if (res.ok) {
+          this.replyTo = null
+          this.newSubcommentText = ''
+          await this.fetchComments(this.selectedThread.thread_id)
+        }
+      } catch (err) { /* ignore */ }
+    },
+    canDeleteSubcomment(subcomment) {
+      if (!this.currentUser) return false
+      return this.currentUser.rol === 'bibliotecar' || subcomment.autor_id === this.currentUser.user_id
+    },
+    async deleteSubcomment(commentId, subcommentId) {
+      if (!confirm('Sigur doriți să ștergeți acest răspuns?')) return
+      try {
+        const res = await fetch(`/api/club/threads/subcomments/${subcommentId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        })
+        if (res.ok) {
+          const c = this.comments.find(x => x.comentariu_id === commentId)
+          if (c) {
+            c.subcomments = c.subcomments.filter(s => s.subcomentariu_id !== subcommentId)
+          }
+        }
+      } catch (err) { /* ignore */ }
     }
   },
   watch: {
     selectedThread(newVal) {
       if (!newVal) {
-        document.body.style.overflow = 'auto' // restore body scrolling
+        document.body.style.overflow = 'auto'
       }
     }
   }

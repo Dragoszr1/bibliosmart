@@ -2544,3 +2544,60 @@ def like_thread_subcomment(subcomentariu_id):
         db.session.rollback()
         logger.error(f"Eroare la aprecierea subcomentariului: {e}")
         return jsonify({'error': 'A apărut o eroare la aprecierea subcomentariului.'}), 500
+
+@main_bp.route('/club/threads/<int:thread_id>', methods=['DELETE'])
+@club_required
+def delete_club_thread(thread_id):
+    try:
+        thread = db.session.query(ClubThreads).filter_by(thread_id=thread_id).first()
+        if not thread:
+            return jsonify({'error': 'Thread-ul nu a fost găsit.'}), 404
+            
+        if request.current_user['rol'] != 'bibliotecar' and thread.creat_de != request.current_user['user_id']:
+            return jsonify({'error': 'Nu aveți permisiunea de a șterge acest thread.'}), 403
+            
+        db.session.delete(thread)
+        db.session.commit()
+        return jsonify({'message': 'Thread șters cu succes.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Eroare la ștergerea thread-ului: {e}")
+        return jsonify({'error': 'A apărut o eroare la ștergerea thread-ului.'}), 500
+
+@main_bp.route('/club/threads/comments/<int:comentariu_id>', methods=['DELETE'])
+@club_required
+def delete_thread_comment(comentariu_id):
+    try:
+        comment = db.session.query(ThreadComments).filter_by(comentariu_id=comentariu_id).first()
+        if not comment:
+            return jsonify({'error': 'Comentariul nu a fost găsit.'}), 404
+            
+        if request.current_user['rol'] != 'bibliotecar' and comment.user_id != request.current_user['user_id']:
+            return jsonify({'error': 'Nu aveți permisiunea de a șterge acest comentariu.'}), 403
+            
+        db.session.delete(comment)
+        db.session.commit()
+        return jsonify({'message': 'Comentariu șters cu succes.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Eroare la ștergerea comentariului: {e}")
+        return jsonify({'error': 'A apărut o eroare la ștergerea comentariului.'}), 500
+
+@main_bp.route('/club/threads/subcomments/<int:subcomentariu_id>', methods=['DELETE'])
+@club_required
+def delete_thread_subcomment(subcomentariu_id):
+    try:
+        subcomment = db.session.query(ThreadSubcomments).filter_by(subcomentariu_id=subcomentariu_id).first()
+        if not subcomment:
+            return jsonify({'error': 'Subcomentariul nu a fost găsit.'}), 404
+            
+        if request.current_user['rol'] != 'bibliotecar' and subcomment.user_id != request.current_user['user_id']:
+            return jsonify({'error': 'Nu aveți permisiunea de a șterge acest subcomentariu.'}), 403
+            
+        db.session.delete(subcomment)
+        db.session.commit()
+        return jsonify({'message': 'Subcomentariu șters cu succes.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Eroare la ștergerea subcomentariului: {e}")
+        return jsonify({'error': 'A apărut o eroare la ștergerea subcomentariului.'}), 500

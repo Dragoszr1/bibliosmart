@@ -10,74 +10,21 @@
         </div>
         
         <div class="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-          <!-- Dummy Thread 1 -->
-          <div class="group cursor-pointer">
-            <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">Teorii despre finalul romanului Dune</h4>
-            <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
-              <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> Alex P.</span>
-              <span>•</span>
-              <span class="flex items-center gap-1"><i class="pi pi-comment text-[10px]"></i> 14</span>
+          <template v-if="recentThreads.length > 0">
+            <div v-for="(thread, index) in recentThreads" :key="thread.id">
+              <div class="group cursor-pointer">
+                <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">{{ thread.title }}</h4>
+                <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                  <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> {{ thread.author }}</span>
+                  <span>•</span>
+                  <span class="flex items-center gap-1"><i class="pi pi-comment text-[10px]"></i> {{ thread.commentsCount }}</span>
+                </div>
+              </div>
+              <div v-if="index < recentThreads.length - 1" class="h-px bg-gray-100 mt-4"></div>
             </div>
-          </div>
-          
-          <div class="h-px bg-gray-100"></div>
-          
-          <!-- Dummy Thread 2 -->
-          <div class="group cursor-pointer">
-            <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">Care este personajul vostru preferat din seria Harry Potter?</h4>
-            <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
-              <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> Maria C.</span>
-              <span>•</span>
-              <span class="flex items-center gap-1"><i class="pi pi-comment text-[10px]"></i> 32</span>
-            </div>
-          </div>
-
-          <div class="h-px bg-gray-100"></div>
-          
-          <!-- Dummy Thread 3 -->
-          <div class="group cursor-pointer">
-            <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">Recomandări de cărți SF pentru începători</h4>
-            <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
-              <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> Vlad M.</span>
-              <span>•</span>
-              <span class="flex items-center gap-1"><i class="pi pi-comment text-[10px]"></i> 8</span>
-            </div>
-          </div>
-
-          <div class="h-px bg-gray-100"></div>
-
-          <!-- Dummy Thread 4 -->
-          <div class="group cursor-pointer">
-            <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">De ce literatura clasică este încă relevantă azi?</h4>
-            <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
-              <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> Ioana D.</span>
-              <span>•</span>
-              <span class="flex items-center gap-1"><i class="pi pi-comment text-[10px]"></i> 45</span>
-            </div>
-          </div>
-
-          <div class="h-px bg-gray-100"></div>
-
-          <!-- Dummy Thread 5 -->
-          <div class="group cursor-pointer">
-            <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">Cea mai bună traducere pentru Stăpânul Inelelor</h4>
-            <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
-              <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> Andrei T.</span>
-              <span>•</span>
-              <span class="flex items-center gap-1"><i class="pi pi-comment text-[10px]"></i> 12</span>
-            </div>
-          </div>
-          
-          <div class="h-px bg-gray-100"></div>
-
-          <!-- Dummy Thread 6 -->
-          <div class="group cursor-pointer">
-            <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">Ce ați citit săptămâna asta? (Megathread)</h4>
-            <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
-              <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> Elena V.</span>
-              <span>•</span>
-              <span class="flex items-center gap-1"><i class="pi pi-comment text-[10px]"></i> 89</span>
-            </div>
+          </template>
+          <div v-else class="text-xs text-gray-400 text-center py-4">
+            Nu există discuții recente.
           </div>
         </div>
         
@@ -331,6 +278,7 @@ export default {
       loading: true,
       loadError: '',
       activitati: [],
+      recentThreads: [],
       currentUser: null,
 
       // Thread state (per activitate_id)
