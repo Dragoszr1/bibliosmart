@@ -281,6 +281,21 @@
       </div>
     </div>
 
+    <!-- Custom Delete Modal -->
+    <div v-if="deleteModal.open" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="deleteModal.open = false">
+      <div class="w-full max-w-sm bg-white rounded-2xl shadow-modal p-6 text-center border border-gray-100">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="pi pi-exclamation-triangle text-red-500 text-3xl"></i>
+        </div>
+        <h3 class="text-lg font-bold text-dark mb-2">Ești sigur că vrei să ștergi?</h3>
+        <p class="text-sm text-gray-500 mb-6">Această acțiune este ireversibilă.</p>
+        <div class="flex gap-3">
+          <button @click="deleteModal.open = false" class="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-dark font-semibold rounded-xl text-sm transition-colors">Nu, anulează</button>
+          <button @click="confirmDelete" class="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl text-sm transition-colors">Da, șterge</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -308,7 +323,14 @@ export default {
       commentError: '',
       
       replyTo: null,
-      newSubcommentText: ''
+      newSubcommentText: '',
+      
+      deleteModal: {
+        open: false,
+        type: null, // 'thread', 'comment', 'subcomment'
+        id: null,
+        parentId: null
+      }
     }
   },
   async mounted() {
@@ -368,6 +390,7 @@ export default {
           this.addError = data.error || 'Eroare la crearea discuției.'
         } else {
           this.addModalOpen = false
+          alert(data.message)
           await this.fetchThreads()
         }
       } catch (err) {
@@ -378,19 +401,10 @@ export default {
     },
     canDeleteThread(thread) {
       if (!this.currentUser) return false
-      return this.currentUser.rol === 'bibliotecar' || thread.autor_id === this.currentUser.user_id
+      return this.currentUser.rol === 'bibliotecar'
     },
-    async deleteThread(threadId) {
-      if (!confirm('Sigur doriți să ștergeți această discuție?')) return
-      try {
-        const res = await fetch(`/api/club/threads/${threadId}`, {
-          method: 'DELETE',
-          credentials: 'include'
-        })
-        if (res.ok) {
-          this.threads = this.threads.filter(t => t.thread_id !== threadId)
-        }
-      } catch (err) { /* ignore */ }
+    deleteThread(threadId) {
+      this.deleteModal = { open: true, type: 'thread', id: threadId, parentId: null }
     },
     async openThreadModal(thread) {
       this.selectedThread = thread
@@ -436,19 +450,10 @@ export default {
     },
     canDeleteComment(comment) {
       if (!this.currentUser) return false
-      return this.currentUser.rol === 'bibliotecar' || comment.autor_id === this.currentUser.user_id
+      return this.currentUser.rol === 'bibliotecar'
     },
-    async deleteComment(commentId) {
-      if (!confirm('Sigur doriți să ștergeți comentariul?')) return
-      try {
-        const res = await fetch(`/api/club/threads/comments/${commentId}`, {
-          method: 'DELETE',
-          credentials: 'include'
-        })
-        if (res.ok) {
-          this.comments = this.comments.filter(c => c.comentariu_id !== commentId)
-        }
-      } catch (err) { /* ignore */ }
+    deleteComment(commentId) {
+      this.deleteModal = { open: true, type: 'comment', id: commentId, parentId: null }
     },
     async submitSubcomment(commentId) {
       if (!this.newSubcommentText.trim()) return
@@ -468,19 +473,27 @@ export default {
     },
     canDeleteSubcomment(subcomment) {
       if (!this.currentUser) return false
-      return this.currentUser.rol === 'bibliotecar' || subcomment.autor_id === this.currentUser.user_id
+      return this.currentUser.rol === 'bibliotecar'
     },
-    async deleteSubcomment(commentId, subcommentId) {
-      if (!confirm('Sigur doriți să ștergeți acest răspuns?')) return
+    deleteSubcomment(commentId, subcommentId) {
+      this.deleteModal = { open: true, type: 'subcomment', id: subcommentId, parentId: commentId }
+    },
+    async confirmDelete() {
+      const { type, id, parentId } = this.deleteModal
+      this.deleteModal.open = false
+      
       try {
-        const res = await fetch(`/api/club/threads/subcomments/${subcommentId}`, {
-          method: 'DELETE',
-          credentials: 'include'
-        })
-        if (res.ok) {
-          const c = this.comments.find(x => x.comentariu_id === commentId)
-          if (c) {
-            c.subcomments = c.subcomments.filter(s => s.subcomentariu_id !== subcommentId)
+        if (type === 'thread') {
+          const res = await fetch(`/api/club/threads/${id}`, { method: 'DELETE', credentials: 'include' })
+          if (res.ok) this.threads = this.threads.filter(t => t.thread_id !== id)
+        } else if (type === 'comment') {
+          const res = await fetch(`/api/club/threads/comments/${id}`, { method: 'DELETE', credentials: 'include' })
+          if (res.ok) this.comments = this.comments.filter(c => c.comentariu_id !== id)
+        } else if (type === 'subcomment') {
+          const res = await fetch(`/api/club/threads/subcomments/${id}`, { method: 'DELETE', credentials: 'include' })
+          if (res.ok) {
+            const c = this.comments.find(x => x.comentariu_id === parentId)
+            if (c) c.subcomments = c.subcomments.filter(s => s.subcomentariu_id !== id)
           }
         }
       } catch (err) { /* ignore */ }

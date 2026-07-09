@@ -124,6 +124,7 @@ class ClubThreads(db.Model):
     continut = db.Column(db.Text, nullable=False)
     creat_de = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), nullable=False)
     creat_la = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    aprobat = db.Column(db.Boolean, nullable=False, default=False)
 
     def __repr__(self):
         return f'<ClubThreads {self.thread_id}: {self.titlu}>'

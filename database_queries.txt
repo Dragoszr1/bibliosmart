@@ -148,6 +148,7 @@ CREATE TABLE club_threads (
 	continut TEXT NOT NULL, 
 	creat_de INTEGER NOT NULL, 
 	creat_la DATETIME DEFAULT CURRENT_TIMESTAMP, 
+	aprobat BOOL DEFAULT 0,
 	PRIMARY KEY (thread_id),
 	FOREIGN KEY(creat_de) REFERENCES users (user_id) ON DELETE CASCADE
 );

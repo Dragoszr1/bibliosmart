@@ -2360,7 +2360,7 @@ def get_club_threads():
             ClubThreads.creat_la,
             Users.username,
             Users.user_id.label('autor_id')
-        ).join(Users, ClubThreads.creat_de == Users.user_id).order_by(ClubThreads.creat_la.desc()).all()
+        ).join(Users, ClubThreads.creat_de == Users.user_id).filter(ClubThreads.aprobat == True).order_by(ClubThreads.creat_la.desc()).all()
         
         result = []
         for t in threads:
@@ -2385,18 +2385,65 @@ def create_club_thread():
         return jsonify({'error': 'Titlul și conținutul sunt obligatorii.'}), 400
         
     try:
+        is_aprobat = True if request.current_user['rol'] == 'bibliotecar' else False
         new_thread = ClubThreads(
             titlu=data['titlu'],
             continut=data['continut'],
-            creat_de=request.current_user['user_id']
+            creat_de=request.current_user['user_id'],
+            aprobat=is_aprobat
         )
         db.session.add(new_thread)
         db.session.commit()
-        return jsonify({'message': 'Thread creat cu succes.', 'thread_id': new_thread.thread_id}), 201
+        msg = 'Discuția a fost creată și este publică.' if is_aprobat else 'Discuția ta a fost trimisă spre moderare.'
+        return jsonify({'message': msg, 'thread_id': new_thread.thread_id, 'aprobat': is_aprobat}), 201
     except Exception as e:
         db.session.rollback()
         logger.error(f"Eroare la crearea thread-ului: {e}")
         return jsonify({'error': 'A apărut o eroare la crearea thread-ului.'}), 500
+
+@main_bp.route('/club/threads/pending', methods=['GET'])
+@bibliotecar_required
+def get_pending_threads():
+    try:
+        threads = db.session.query(
+            ClubThreads.thread_id,
+            ClubThreads.titlu,
+            ClubThreads.continut,
+            ClubThreads.creat_la,
+            Users.username,
+            Users.user_id.label('autor_id')
+        ).join(Users, ClubThreads.creat_de == Users.user_id).filter(ClubThreads.aprobat == False).order_by(ClubThreads.creat_la.desc()).all()
+        
+        result = []
+        for t in threads:
+            result.append({
+                'thread_id': t.thread_id,
+                'titlu': t.titlu,
+                'continut': t.continut,
+                'creat_la': t.creat_la.isoformat() if t.creat_la else None,
+                'autor': t.username,
+                'autor_id': t.autor_id
+            })
+        return jsonify({'threads': result}), 200
+    except Exception as e:
+        logger.error(f"Eroare la preluarea discuțiilor în așteptare: {e}")
+        return jsonify({'error': 'A apărut o eroare la preluarea discuțiilor în așteptare.'}), 500
+
+@main_bp.route('/club/threads/<int:thread_id>/approve', methods=['POST'])
+@bibliotecar_required
+def approve_club_thread(thread_id):
+    try:
+        thread = db.session.query(ClubThreads).filter_by(thread_id=thread_id).first()
+        if not thread:
+            return jsonify({'error': 'Discuția nu a fost găsită.'}), 404
+            
+        thread.aprobat = True
+        db.session.commit()
+        return jsonify({'message': 'Discuție aprobată cu succes.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Eroare la aprobarea discuției: {e}")
+        return jsonify({'error': 'A apărut o eroare la aprobarea discuției.'}), 500
 
 @main_bp.route('/club/threads/<int:thread_id>', methods=['GET'])
 @club_required
@@ -2553,8 +2600,8 @@ def delete_club_thread(thread_id):
         if not thread:
             return jsonify({'error': 'Thread-ul nu a fost găsit.'}), 404
             
-        if request.current_user['rol'] != 'bibliotecar' and thread.creat_de != request.current_user['user_id']:
-            return jsonify({'error': 'Nu aveți permisiunea de a șterge acest thread.'}), 403
+        if request.current_user['rol'] != 'bibliotecar':
+            return jsonify({'error': 'Nu aveți permisiunea de a șterge.'}), 403
             
         db.session.delete(thread)
         db.session.commit()
@@ -2572,8 +2619,8 @@ def delete_thread_comment(comentariu_id):
         if not comment:
             return jsonify({'error': 'Comentariul nu a fost găsit.'}), 404
             
-        if request.current_user['rol'] != 'bibliotecar' and comment.user_id != request.current_user['user_id']:
-            return jsonify({'error': 'Nu aveți permisiunea de a șterge acest comentariu.'}), 403
+        if request.current_user['rol'] != 'bibliotecar':
+            return jsonify({'error': 'Nu aveți permisiunea de a șterge.'}), 403
             
         db.session.delete(comment)
         db.session.commit()
@@ -2591,8 +2638,8 @@ def delete_thread_subcomment(subcomentariu_id):
         if not subcomment:
             return jsonify({'error': 'Subcomentariul nu a fost găsit.'}), 404
             
-        if request.current_user['rol'] != 'bibliotecar' and subcomment.user_id != request.current_user['user_id']:
-            return jsonify({'error': 'Nu aveți permisiunea de a șterge acest subcomentariu.'}), 403
+        if request.current_user['rol'] != 'bibliotecar':
+            return jsonify({'error': 'Nu aveți permisiunea de a șterge.'}), 403
             
         db.session.delete(subcomment)
         db.session.commit()

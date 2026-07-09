@@ -195,7 +195,7 @@
               { key: 'carti',    label: 'Cărți',    icon: 'pi pi-book' },
             ]"
             :key="tab.key"
-            @click="activeTab = tab.key"
+            @click="changeTab(tab.key)"
             :class="[
               'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 whitespace-nowrap flex-shrink-0',
               activeTab === tab.key
@@ -736,6 +736,33 @@
             </div>
             <div v-if="inviteError" class="mt-4 bg-accent/10 border-l-4 border-accent rounded-lg p-3">
               <p class="text-accent text-xs">{{ inviteError }}</p>
+            </div>
+          </div>
+          
+          <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2 mt-8 mb-4">
+            <i class="pi pi-comments text-secondary"></i> Discuții în așteptare
+          </h2>
+          <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-6">
+            <div v-if="pendingThreadsLoading" class="text-center py-6">
+              <i class="pi pi-spin pi-spinner text-gray-400 text-2xl"></i>
+            </div>
+            <div v-else-if="pendingThreads.length === 0" class="text-center py-6 text-gray-500 text-sm">
+              Nicio discuție în așteptare.
+            </div>
+            <div v-else class="space-y-4">
+              <div v-for="thread in pendingThreads" :key="thread.thread_id" class="border border-gray-100 rounded-xl p-4 bg-gray-50">
+                <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+                  <div class="flex-1">
+                    <h3 class="font-bold text-dark">{{ thread.titlu }}</h3>
+                    <p class="text-xs text-gray-500 mb-2">Propus de <b>{{ thread.autor }}</b> • {{ formatDate(thread.creat_la) }}</p>
+                    <p class="text-sm text-gray-700 whitespace-pre-line">{{ thread.continut }}</p>
+                  </div>
+                  <div class="flex flex-row sm:flex-col gap-2 flex-shrink-0">
+                    <button @click="approveThread(thread.thread_id)" class="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 justify-center"><i class="pi pi-check text-[10px]"></i> Aprobă</button>
+                    <button @click="rejectThread(thread.thread_id)" class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 justify-center"><i class="pi pi-times text-[10px]"></i> Respinge</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div><!-- end club tab -->
@@ -1415,7 +1442,10 @@ export default {
       inviteExpiresAt: '',
       inviteCopied: false,
       inviteError: '',
-      // Add book
+      inviteExpiry: 1, // days
+      
+      pendingThreads: [],
+      pendingThreadsLoading: false,     // Add book
       addBookOpen: false,
       addForm: { titlu: '', autor: '', ISBN: '', gen: '', stoc_total: 1, stoc_disponibil: 1, pozitie: '', cod: '' },
       addMsg: { error: '', success: '' },
@@ -1505,6 +1535,12 @@ export default {
     this.loadProfile()
   },
   methods: {
+    changeTab(tabKey) {
+      this.activeTab = tabKey
+      if (tabKey === 'club') {
+        this.fetchPendingThreads()
+      }
+    },
     // metode profil
     openProfileEditModal() {
       this.editDescription = this.user.description || ''
@@ -2269,6 +2305,36 @@ export default {
       } finally {
         this.inviteLoading = false
       }
+    },
+    async fetchPendingThreads() {
+      this.pendingThreadsLoading = true
+      try {
+        const res = await fetch('/api/club/threads/pending', { credentials: 'include' })
+        const data = await res.json()
+        if (res.ok) {
+          this.pendingThreads = data.threads || []
+        }
+      } catch (err) { /* ignore */ } finally {
+        this.pendingThreadsLoading = false
+      }
+    },
+    async approveThread(threadId) {
+      if (!confirm('Aprobați această discuție?')) return
+      try {
+        const res = await fetch(`/api/club/threads/${threadId}/approve`, { method: 'POST', credentials: 'include' })
+        if (res.ok) {
+          this.pendingThreads = this.pendingThreads.filter(t => t.thread_id !== threadId)
+        }
+      } catch (err) { /* ignore */ }
+    },
+    async rejectThread(threadId) {
+      if (!confirm('Respingeți (ștergeți) această discuție?')) return
+      try {
+        const res = await fetch(`/api/club/threads/${threadId}`, { method: 'DELETE', credentials: 'include' })
+        if (res.ok) {
+          this.pendingThreads = this.pendingThreads.filter(t => t.thread_id !== threadId)
+        }
+      } catch (err) { /* ignore */ }
     },
     async copyInviteLink() {
       try {
