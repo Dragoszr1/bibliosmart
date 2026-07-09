@@ -11,13 +11,11 @@
         
         <div class="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
           <template v-if="recentThreads.length > 0">
-            <div v-for="(thread, index) in recentThreads" :key="thread.id">
-              <div class="group cursor-pointer">
-                <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">{{ thread.title }}</h4>
+            <div v-for="(thread, index) in recentThreads" :key="thread.thread_id">
+              <div class="group cursor-pointer" @click="$router.push('/club/threads?id=' + thread.thread_id)">
+                <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">{{ thread.titlu }}</h4>
                 <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                  <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> {{ thread.author }}</span>
-                  <span>•</span>
-                  <span class="flex items-center gap-1"><i class="pi pi-comment text-[10px]"></i> {{ thread.commentsCount }}</span>
+                  <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> {{ thread.autor }}</span>
                 </div>
               </div>
               <div v-if="index < recentThreads.length - 1" class="h-px bg-gray-100 mt-4"></div>
@@ -309,8 +307,18 @@ export default {
   async mounted() {
     await this.fetchMe()
     await this.fetchActivitati()
+    await this.fetchRecentThreads()
   },
   methods: {
+    async fetchRecentThreads() {
+      try {
+        const res = await fetch('/api/club/threads', { credentials: 'include' })
+        const data = await res.json()
+        if (res.ok) {
+          this.recentThreads = (data.threads || []).slice(0, 5)
+        }
+      } catch (err) { /* ignore */ }
+    },
     async fetchMe() {
       try {
         const res = await fetch('/api/auth/me', { credentials: 'include' })

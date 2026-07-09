@@ -369,6 +369,15 @@ export default {
           this.loadError = data.error || 'Eroare la încărcarea discuțiilor.'
         } else {
           this.threads = data.threads || []
+          
+          if (this.$route.query.id) {
+            const targetId = parseInt(this.$route.query.id, 10)
+            const targetThread = this.threads.find(t => t.thread_id === targetId)
+            if (targetThread) {
+              this.openThreadModal(targetThread)
+            }
+            this.$router.replace({ query: {} })
+          }
         }
       } catch (err) {
         this.loadError = 'Eroare de rețea.'
