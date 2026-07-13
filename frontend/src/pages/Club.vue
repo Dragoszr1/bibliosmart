@@ -3,34 +3,40 @@
     <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col lg:flex-row gap-8 items-start">
       
       <!-- Left Column: Threads Widget -->
-      <aside class="w-full lg:w-80 flex-shrink-0 bg-white rounded-xl shadow-card border border-gray-100 p-5 sm:p-6 sticky top-24">
-        <div class="flex items-center gap-3 mb-6">
-          <h3 class="text-xl font-bold text-dark">Discuții Recente</h3>
-          <div class="flex-1 h-px bg-gray-200"></div>
-        </div>
+      <ScrollWidget class="w-full lg:w-80 flex-shrink-0 sticky top-24">
+        <template #title>Discuții Recente</template>
         
         <div class="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
           <template v-if="recentThreads.length > 0">
             <div v-for="(thread, index) in recentThreads" :key="thread.thread_id">
               <div class="group cursor-pointer" @click="$router.push('/club/threads?id=' + thread.thread_id)">
-                <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">{{ thread.titlu }}</h4>
-                <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                <h4 class="text-sm font-semibold text-[#4a2e15] group-hover:text-[#b88034] transition-colors line-clamp-2">{{ thread.titlu }}</h4>
+                <div class="flex items-center gap-2 mt-2 text-xs text-[#856b50]">
                   <span class="flex items-center gap-1"><i class="pi pi-user text-[10px]"></i> {{ thread.autor }}</span>
                 </div>
               </div>
-              <div v-if="index < recentThreads.length - 1" class="h-px bg-gray-100 mt-4"></div>
+              <div v-if="index < recentThreads.length - 1" class="h-px bg-[#d1b07d]/50 mt-4"></div>
             </div>
           </template>
-          <div v-else class="text-xs text-gray-400 text-center py-4">
+          <div v-else class="text-xs text-[#856b50] text-center py-4">
             Nu există discuții recente.
           </div>
         </div>
         
-        <button @click="$router.push('/club/threads')" class="w-full mt-6 py-2.5 rounded-lg border border-gray-200 text-sm font-semibold text-dark hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-          <span>Toate discuțiile</span>
-          <i class="pi pi-arrow-right text-xs"></i>
-        </button>
-      </aside>
+        <template #footer>
+          <button @click="$router.push('/club/threads')" class="w-full flex items-center justify-center gap-2 border-2 border-[#cca36b] text-[#6b421c] py-2.5 rounded-lg hover:bg-[#f6e5c8] hover:border-[#b88034] transition-all duration-300 group">
+            <span class="font-semibold">Toate discuțiile</span>
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              class="h-5 w-5 transform group-hover:translate-x-1 transition-transform duration-300" 
+              viewBox="0 0 20 20" 
+              fill="currentColor"
+            >
+              <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </template>
+      </ScrollWidget>
 
       <!-- Right Column: Main Activities -->
       <div class="flex-1 max-w-4xl w-full mx-auto">
@@ -39,21 +45,21 @@
       <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold text-dark flex items-center gap-2">
-            <i class="pi pi-bookmark-fill text-secondary"></i> Club de Lectură
+            <i class="pi pi-bookmark-fill text-[#8b4513]"></i> Club de Lectură
           </h1>
           <p class="text-gray-500 text-sm mt-1">Activitățile săptămânii curente</p>
         </div>
         <div class="flex flex-wrap gap-2 self-start">
           <router-link
             to="/club/anterioare"
-            class="px-4 py-2.5 border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold rounded-xl text-sm transition-all flex items-center gap-2"
+            class="px-4 py-2.5 border border-[#8b4513]/20 hover:bg-[#8b4513]/5 text-gray-600 font-semibold rounded-xl text-sm transition-all flex items-center gap-2"
           >
             <i class="pi pi-history text-xs"></i> Săptămâna anterioară
           </router-link>
           <button
             v-if="isBibliotecar"
             @click="openAddModal"
-            class="px-5 py-2.5 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2"
+            class="px-5 py-2.5 bg-[#8b4513] hover:bg-[#8b4513]/90 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2"
           >
             <i class="pi pi-plus text-xs"></i> Activitate nouă
           </button>
@@ -76,60 +82,60 @@
       <div v-else-if="activitati.length === 0" class="text-center py-20 text-gray-400">
         <i class="pi pi-calendar text-4xl mb-3 block text-gray-200"></i>
         <p class="text-sm">Nicio activitate pentru săptămâna curentă.</p>
-        <p v-if="isBibliotecar" class="text-xs mt-1 text-secondary cursor-pointer hover:underline" @click="openAddModal">
+        <p v-if="isBibliotecar" class="text-xs mt-1 text-[#8b4513] cursor-pointer hover:underline" @click="openAddModal">
           Adaugă prima activitate →
         </p>
       </div>
 
       <!-- Activity feed -->
       <div v-else class="space-y-6">
-        <div
+        <DecoratedBox
           v-for="act in activitati"
           :key="act.activitate_id"
-          class="bg-white rounded-2xl shadow-card border border-gray-100"
         >
           <!-- Activity header -->
-          <div class="p-5 sm:p-6">
-            <div class="flex items-start justify-between gap-3">
+          <template #heading>
+            <div class="flex items-start justify-between gap-3 text-left">
               <div class="flex-1 min-w-0">
                 <div class="flex flex-wrap items-center gap-2 mb-1">
                   <span
                     :class="tipBadge(act.tip).cls"
-                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold font-sans"
                   >
                     <i :class="tipBadge(act.tip).icon" class="text-[10px]"></i>
                     {{ tipBadge(act.tip).label }}
                   </span>
-                  <span class="text-xs text-gray-400">{{ act.creat_la }} · {{ act.autor }}</span>
-                  <span v-if="act.autor_rol === 'bibliotecar'" class="text-xs bg-secondary/10 text-secondary font-semibold px-2 py-0.5 rounded-full">bibliotecar</span>
+                  <span class="text-xs text-[#8b4513]/70 font-sans">{{ act.creat_la }} · {{ act.autor }}</span>
+                  <span v-if="act.autor_rol === 'bibliotecar'" class="text-xs bg-[#8b4513]/10 text-[#8b4513] font-semibold px-2 py-0.5 rounded-full font-sans">bibliotecar</span>
                 </div>
-                <h3 class="text-base sm:text-lg font-bold text-dark leading-snug">{{ act.titlu }}</h3>
-                <p v-if="act.continut" class="text-sm text-gray-600 mt-2 whitespace-pre-line leading-relaxed">{{ act.continut }}</p>
-                <img v-if="act.imagine_url && act.tip === 'anunt'" :src="act.imagine_url" alt="Imagine anunț" class="w-full h-56 object-cover rounded-2xl mt-4" />
+                <h3 class="text-base sm:text-lg font-bold text-[#2a1c10] leading-snug">{{ act.titlu }}</h3>
               </div>
               <button
                 v-if="isBibliotecar"
                 @click="confirmDelete(act)"
-                class="text-gray-300 hover:text-accent text-lg leading-none flex-shrink-0 transition-colors"
+                class="text-[#8b4513]/30 hover:text-red-500 text-lg leading-none flex-shrink-0 transition-colors"
                 title="Șterge activitatea"
               >
                 <i class="pi pi-trash"></i>
               </button>
             </div>
+          </template>
 
-            <!-- Thread toggle -->
-            <button
-              @click="toggleThread(act.activitate_id)"
-              class="mt-4 text-xs font-semibold text-secondary hover:underline flex items-center gap-1"
-            >
-              <i class="pi pi-comments text-xs"></i>
-              <span v-if="openThreads[act.activitate_id]">Ascunde comentariile</span>
-              <span v-else>{{ act.nr_comentarii > 0 ? `${act.nr_comentarii} comentarii` : 'Comentează' }}</span>
-            </button>
-          </div>
+          <p v-if="act.continut" class="text-sm text-[#3b2b18] mt-2 whitespace-pre-line leading-relaxed font-sans">{{ act.continut }}</p>
+          <img v-if="act.imagine_url && act.tip === 'anunt'" :src="act.imagine_url" alt="Imagine anunț" class="w-full h-56 object-cover rounded-[2px_6px_3px_5px] mt-4" />
+
+          <!-- Thread toggle -->
+          <button
+            @click="toggleThread(act.activitate_id)"
+            class="mt-4 text-xs font-semibold text-[#8b4513] hover:underline flex items-center gap-1 font-sans"
+          >
+            <i class="pi pi-comments text-xs"></i>
+            <span v-if="openThreads[act.activitate_id]">Ascunde comentariile</span>
+            <span v-else>{{ act.nr_comentarii > 0 ? `${act.nr_comentarii} comentarii` : 'Comentează' }}</span>
+          </button>
 
           <!-- Thread panel -->
-          <div v-if="openThreads[act.activitate_id]" class="border-t border-gray-100 bg-gray-50 rounded-b-2xl px-5 sm:px-6 py-4 space-y-4">
+          <div v-if="openThreads[act.activitate_id]" class="border-t border-[#8b4513]/20 bg-transparent mt-4 pt-4 space-y-4 font-sans">
             <!-- Loading comments -->
             <div v-if="loadingThread[act.activitate_id]" class="text-center text-gray-400 text-sm py-4">
               <i class="pi pi-spin pi-spinner mr-1"></i> Se încarcă...
@@ -141,13 +147,13 @@
               :key="com.comentariu_id"
               class="flex gap-3"
             >
-              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-secondary text-xs font-bold uppercase">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#8b4513]/10 flex items-center justify-center text-[#8b4513] text-xs font-bold uppercase">
                 {{ com.autor.charAt(0) }}
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 mb-0.5">
                   <span class="text-xs font-bold text-dark">{{ com.autor }}</span>
-                  <span v-if="com.autor_rol === 'bibliotecar'" class="text-[10px] bg-secondary/10 text-secondary font-semibold px-1.5 py-0.5 rounded-full">bibliotecar</span>
+                  <span v-if="com.autor_rol === 'bibliotecar'" class="text-[10px] bg-[#8b4513]/10 text-[#8b4513] font-semibold px-1.5 py-0.5 rounded-full">bibliotecar</span>
                   <span class="text-[11px] text-gray-400">{{ com.creat_la }}</span>
                 </div>
                 <p class="text-sm text-gray-700 whitespace-pre-line">{{ com.continut }}</p>
@@ -175,46 +181,46 @@
                 type="text"
                 placeholder="Scrie un comentariu... (Enter pentru a trimite)"
                 maxlength="2000"
-                class="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-secondary/40 placeholder-gray-400"
+                class="flex-1 text-sm border border-[#8b4513]/20 rounded-xl px-3 py-2 bg-papyrus-light focus:outline-none focus:ring-2 focus:ring-[#8b4513]/40 placeholder-gray-400"
               />
               <button
                 @click="submitComment(act.activitate_id)"
                 :disabled="!(newComment[act.activitate_id] || '').trim()"
-                class="px-4 py-2 bg-secondary hover:bg-secondary/90 disabled:opacity-40 text-white rounded-xl text-sm font-semibold transition-all"
+                class="px-4 py-2 bg-[#8b4513] hover:bg-[#8b4513]/90 disabled:opacity-40 text-white rounded-xl text-sm font-semibold transition-all"
               >
                 <i class="pi pi-send text-xs"></i>
               </button>
             </div>
-            <p v-if="threadError[act.activitate_id]" class="text-xs text-accent">{{ threadError[act.activitate_id] }}</p>
+            <p v-if="threadError[act.activitate_id]" class="text-xs text-red-500">{{ threadError[act.activitate_id] }}</p>
           </div>
-        </div>
+        </DecoratedBox>
       </div>
       </div>
     </div>
 
     <!-- Add Activity Modal -->
     <div v-if="addModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="addModalOpen = false">
-      <div class="w-full max-w-lg bg-white rounded-2xl shadow-modal p-6">
+      <div class="w-full max-w-lg bg-papyrus-light rounded-2xl shadow-modal p-6">
         <div class="flex items-center justify-between mb-5">
           <h2 class="text-lg font-bold text-dark flex items-center gap-2">
-            <i class="pi pi-plus-circle text-secondary"></i> Activitate nouă
+            <i class="pi pi-plus-circle text-[#8b4513]"></i> Activitate nouă
           </h2>
-          <button @click="addModalOpen = false" class="text-gray-400 hover:text-secondary text-2xl font-bold leading-none">&times;</button>
+          <button @click="addModalOpen = false" class="text-gray-400 hover:text-[#8b4513] text-2xl font-bold leading-none">&times;</button>
         </div>
 
         <div class="space-y-4">
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">Titlu *</label>
-            <input v-model="addForm.titlu" type="text" maxlength="255" placeholder="Titlul activității..." class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-secondary/40" />
+            <input v-model="addForm.titlu" type="text" maxlength="255" placeholder="Titlul activității..." class="w-full text-sm border border-[#8b4513]/20 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#8b4513]/40" />
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">Descriere</label>
-            <textarea v-model="addForm.continut" rows="4" maxlength="5000" placeholder="Detalii, instrucțiuni, linkuri..." class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-secondary/40 resize-none"></textarea>
+            <textarea v-model="addForm.continut" rows="4" maxlength="5000" placeholder="Detalii, instrucțiuni, linkuri..." class="w-full text-sm border border-[#8b4513]/20 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#8b4513]/40 resize-none"></textarea>
           </div>
           <div class="flex gap-3">
             <div class="flex-1">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Tip</label>
-              <select v-model="addForm.tip" @change="onActivityTypeChange" class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-secondary/40 bg-white">
+              <select v-model="addForm.tip" @change="onActivityTypeChange" class="w-full text-sm border border-[#8b4513]/20 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#8b4513]/40 bg-papyrus-light">
                 <option value="activitate">Activitate</option>
                 <option value="sarcina">Sarcină</option>
                 <option value="anunt">Anunț</option>
@@ -228,7 +234,7 @@
               type="file"
               accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
               @change="onActivityImageChange"
-              class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-secondary file:text-white hover:file:bg-secondary/90"
+              class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#8b4513] file:text-white hover:file:bg-[#8b4513]/90"
             />
           </div>
         </div>
@@ -236,13 +242,13 @@
         <p v-if="addError" class="mt-3 text-xs text-accent">{{ addError }}</p>
 
         <div class="flex gap-3 mt-6">
-          <button @click="addModalOpen = false" class="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition-colors">
+          <button @click="addModalOpen = false" class="flex-1 px-4 py-2.5 border border-[#8b4513]/20 text-gray-600 font-semibold rounded-xl text-sm hover:bg-[#8b4513]/5 transition-colors">
             Anulează
           </button>
           <button
             @click="submitActivity"
             :disabled="addSaving || !addForm.titlu.trim()"
-            class="flex-1 px-4 py-2.5 bg-secondary hover:bg-secondary/90 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+            class="flex-1 px-4 py-2.5 bg-[#8b4513] hover:bg-[#8b4513]/90 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
           >
             <i :class="addSaving ? 'pi pi-spin pi-spinner' : 'pi pi-check'" class="text-xs"></i>
             Publică
@@ -253,12 +259,12 @@
 
     <!-- Delete confirm modal -->
     <div v-if="deleteTarget" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="deleteTarget = null">
-      <div class="w-full max-w-sm bg-white rounded-2xl shadow-modal p-6 text-center">
+      <div class="w-full max-w-sm bg-papyrus-light rounded-2xl shadow-modal p-6 text-center">
         <i class="pi pi-exclamation-triangle text-3xl text-accent mb-3 block"></i>
         <h3 class="font-bold text-dark mb-1">Ștergi activitatea?</h3>
         <p class="text-sm text-gray-500 mb-5">„{{ deleteTarget.titlu }}" și toate comentariile aferente vor fi șterse definitiv.</p>
         <div class="flex gap-3">
-          <button @click="deleteTarget = null" class="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50">Anulează</button>
+          <button @click="deleteTarget = null" class="flex-1 px-4 py-2.5 border border-[#8b4513]/20 text-gray-600 font-semibold rounded-xl text-sm hover:bg-[#8b4513]/5">Anulează</button>
           <button @click="executeDelete" :disabled="deleteSaving" class="flex-1 px-4 py-2.5 bg-accent hover:bg-accent/90 disabled:opacity-50 text-white font-semibold rounded-xl text-sm">
             <i :class="deleteSaving ? 'pi pi-spin pi-spinner' : 'pi pi-trash'" class="text-xs mr-1"></i>Șterge
           </button>
@@ -269,8 +275,12 @@
 </template>
 
 <script>
+import DecoratedBox from '../components/DecoratedBox.vue'
+import ScrollWidget from '../components/ScrollWidget.vue'
+
 export default {
   name: 'Club',
+  components: { DecoratedBox, ScrollWidget },
   data() {
     return {
       loading: true,
@@ -352,7 +362,7 @@ export default {
       const map = {
         anunt:      { label: 'Anunț',      icon: 'pi pi-megaphone', cls: 'bg-blue-50 text-blue-600' },
         sarcina:    { label: 'Sarcină',    icon: 'pi pi-check-square', cls: 'bg-amber-50 text-amber-600' },
-        activitate: { label: 'Activitate', icon: 'pi pi-star', cls: 'bg-secondary/10 text-secondary' }
+        activitate: { label: 'Activitate', icon: 'pi pi-star', cls: 'bg-[#8b4513]/10 text-[#8b4513]' }
       }
       return map[tip] || map.activitate
     },

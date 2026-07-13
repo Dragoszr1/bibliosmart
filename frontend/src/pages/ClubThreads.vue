@@ -4,7 +4,7 @@
     <!-- Toast Notification -->
     <transition name="toast-slide">
       <div v-if="toastMsg" class="fixed top-24 left-0 right-0 z-[100] flex justify-center pointer-events-none">
-        <div class="bg-white px-6 py-4 rounded-2xl shadow-xl border-b-4 border-green-500 flex items-center gap-3">
+        <div class="bg-papyrus-light px-6 py-4 rounded-2xl shadow-xl border-b-4 border-green-500 flex items-center gap-3">
           <i class="pi pi-check-circle text-green-500 text-xl"></i>
           <span class="text-sm font-bold text-dark">{{ toastMsg }}</span>
         </div>
@@ -15,18 +15,18 @@
       <!-- Header -->
       <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <button @click="$router.push('/club')" class="text-sm text-gray-500 hover:text-secondary mb-2 flex items-center gap-1 transition-colors">
+          <button @click="$router.push('/club')" class="text-sm text-gray-500 hover:text-[#8b4513] mb-2 flex items-center gap-1 transition-colors">
             <i class="pi pi-arrow-left text-xs"></i> Înapoi la Club
           </button>
           <h1 class="text-2xl sm:text-3xl font-bold text-dark flex items-center gap-2">
-            <i class="pi pi-comments text-secondary"></i> Toate Discuțiile
+            <i class="pi pi-comments text-[#8b4513]"></i> Toate Discuțiile
           </h1>
           <p class="text-gray-500 text-sm mt-1">Participă la discuțiile comunității sau propune un subiect nou</p>
         </div>
         <div class="flex self-start">
           <button
             @click="openAddThreadModal"
-            class="px-5 py-2.5 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2 shadow-sm"
+            class="px-5 py-2.5 bg-[#8b4513] hover:bg-[#8b4513]/90 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2 shadow-sm"
           >
             <i class="pi pi-plus text-xs"></i> Propune Discuție
           </button>
@@ -50,7 +50,7 @@
         <div
           v-for="thread in threads"
           :key="thread.thread_id"
-          class="bg-white rounded-2xl shadow-card border border-gray-100 p-5 sm:p-6"
+          class="bg-papyrus-light rounded-2xl shadow-card border border-[#8b4513]/10 p-5 sm:p-6"
         >
           <!-- Thread Header -->
           <div class="flex items-start justify-between gap-3">
@@ -60,7 +60,7 @@
                   <i class="pi pi-clock text-[10px]"></i> {{ formatDate(thread.creat_la) }}
                 </span>
               </div>
-              <h3 class="text-lg sm:text-xl font-bold text-dark leading-snug cursor-pointer hover:text-secondary transition-colors" @click="openThreadModal(thread)">
+              <h3 class="text-lg sm:text-xl font-bold text-dark leading-snug cursor-pointer hover:text-[#8b4513] transition-colors" @click="openThreadModal(thread)">
                 {{ thread.titlu }}
               </h3>
               <p class="text-sm text-gray-600 mt-2 whitespace-pre-line leading-relaxed line-clamp-3">
@@ -80,20 +80,20 @@
           <!-- Thread Footer (Author & Action) -->
           <div class="mt-5 flex items-center justify-between border-t border-gray-50 pt-4">
             <div class="flex items-center gap-2 cursor-pointer group">
-              <div class="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-secondary text-xs font-bold uppercase group-hover:bg-secondary group-hover:text-white transition-colors">
+              <div class="w-8 h-8 rounded-full bg-[#8b4513]/10 flex items-center justify-center text-[#8b4513] text-xs font-bold uppercase group-hover:bg-[#8b4513] group-hover:text-white transition-colors">
                 {{ thread.autor ? thread.autor.charAt(0) : 'U' }}
               </div>
               <div>
-                <p class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors">{{ thread.autor }}</p>
+                <p class="text-sm font-semibold text-dark group-hover:text-[#8b4513] transition-colors">{{ thread.autor }}</p>
                 <p class="text-[10px] text-gray-400">Membru Club</p>
               </div>
             </div>
             
             <button
               @click="openThreadModal(thread)"
-              class="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-dark font-semibold rounded-lg text-sm transition-colors flex items-center gap-2"
+              class="px-4 py-2 bg-[#8b4513]/5 hover:bg-gray-100 text-dark font-semibold rounded-lg text-sm transition-colors flex items-center gap-2"
             >
-              <i class="pi pi-comments text-secondary text-xs"></i>
+              <i class="pi pi-comments text-[#8b4513] text-xs"></i>
               <span>Vezi discuția</span>
             </button>
           </div>
@@ -104,10 +104,10 @@
 
     <!-- Thread Details & Comments Modal -->
     <div v-if="selectedThread" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-6" @click.self="selectedThread = null">
-      <div class="w-full max-w-3xl max-h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div class="w-full max-w-3xl max-h-[90vh] bg-papyrus-light rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         
         <!-- Modal Header -->
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+        <div class="px-6 py-4 border-b border-[#8b4513]/10 flex items-center justify-between bg-[#8b4513]/5">
           <h2 class="text-lg font-bold text-dark truncate pr-4">{{ selectedThread.titlu }}</h2>
           <button @click="selectedThread = null" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-500 transition-colors">
             <i class="pi pi-times"></i>
@@ -117,9 +117,9 @@
         <!-- Modal Scrollable Content -->
         <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
           <!-- Main Thread Content inside modal -->
-          <div class="mb-8 pb-6 border-b border-gray-100">
+          <div class="mb-8 pb-6 border-b border-[#8b4513]/10">
             <div class="flex items-center gap-3 mb-4">
-               <div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary text-sm font-bold uppercase">
+               <div class="w-10 h-10 rounded-full bg-[#8b4513]/10 flex items-center justify-center text-[#8b4513] text-sm font-bold uppercase">
                 {{ selectedThread.autor ? selectedThread.autor.charAt(0) : 'U' }}
               </div>
               <div>
@@ -132,7 +132,7 @@
 
           <!-- Comments Section -->
           <h3 class="font-bold text-dark mb-5 text-lg flex items-center gap-2">
-            <i class="pi pi-comments text-secondary"></i> Comentarii ({{ comments.length }})
+            <i class="pi pi-comments text-[#8b4513]"></i> Comentarii ({{ comments.length }})
           </h3>
 
           <div v-if="loadingComments" class="text-center py-4 text-gray-400">
@@ -146,11 +146,11 @@
             
             <!-- Parent Comment -->
             <div v-for="comment in comments" :key="comment.comentariu_id" class="flex gap-3 sm:gap-4">
-              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-xs font-bold uppercase">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#8b4513]/10 flex items-center justify-center text-[#8b4513] text-xs font-bold uppercase">
                 {{ comment.autor ? comment.autor.charAt(0) : 'U' }}
               </div>
               <div class="flex-1 min-w-0">
-                <div class="bg-gray-50 p-3 sm:p-4 rounded-2xl rounded-tl-none border border-gray-100 group relative">
+                <div class="bg-[#8b4513]/5 p-3 sm:p-4 rounded-2xl rounded-tl-none border border-[#8b4513]/10 group relative">
                   <button
                     v-if="canDeleteComment(comment)"
                     @click="deleteComment(comment.comentariu_id)"
@@ -168,7 +168,7 @@
                 
                 <!-- Comment Actions -->
                 <div class="flex items-center gap-4 mt-1.5 ml-2">
-                  <button @click="replyTo = replyTo === comment.comentariu_id ? null : comment.comentariu_id" class="text-xs font-semibold text-gray-500 hover:text-secondary transition-colors">Răspunde</button>
+                  <button @click="replyTo = replyTo === comment.comentariu_id ? null : comment.comentariu_id" class="text-xs font-semibold text-gray-500 hover:text-[#8b4513] transition-colors">Răspunde</button>
                   <button class="text-xs font-semibold text-gray-500 hover:text-red-500 transition-colors flex items-center gap-1"><i class="pi pi-heart text-[10px]"></i> {{ comment.likes }}</button>
                 </div>
                 
@@ -179,12 +179,12 @@
                     @keydown.enter.exact.prevent="submitSubcomment(comment.comentariu_id)"
                     type="text"
                     placeholder="Scrie un răspuns..."
-                    class="flex-1 text-xs border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                    class="flex-1 text-xs border border-[#8b4513]/20 rounded-xl px-3 py-2 bg-papyrus-light focus:outline-none focus:ring-2 focus:ring-[#8b4513]/40"
                   />
                   <button
                     @click="submitSubcomment(comment.comentariu_id)"
                     :disabled="!newSubcommentText.trim()"
-                    class="px-3 py-1.5 bg-secondary hover:bg-secondary/90 disabled:opacity-40 text-white rounded-xl text-xs font-semibold transition-all"
+                    class="px-3 py-1.5 bg-[#8b4513] hover:bg-[#8b4513]/90 disabled:opacity-40 text-white rounded-xl text-xs font-semibold transition-all"
                   >
                     Trimite
                   </button>
@@ -193,11 +193,11 @@
                 <!-- Sub-comments (Replies) -->
                 <div v-if="comment.subcomments && comment.subcomments.length > 0" class="mt-4 space-y-4 relative before:absolute before:left-[-17px] sm:before:left-[-25px] before:top-0 before:bottom-0 before:w-px before:bg-gray-200 ml-4 sm:ml-6">
                   <div v-for="reply in comment.subcomments" :key="reply.subcomentariu_id" class="flex gap-3 relative before:absolute before:left-[-17px] sm:before:left-[-25px] before:top-4 before:w-3 sm:before:w-5 before:h-px before:bg-gray-200">
-                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 text-[10px] font-bold uppercase">
+                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-[#8b4513]/20 flex items-center justify-center text-[#8b4513] text-[10px] font-bold uppercase">
                       {{ reply.autor ? reply.autor.charAt(0) : 'U' }}
                     </div>
                     <div class="flex-1 min-w-0">
-                      <div class="bg-gray-50 p-2.5 sm:p-3 rounded-2xl rounded-tl-none border border-gray-100 group relative">
+                      <div class="bg-[#8b4513]/5 p-2.5 sm:p-3 rounded-2xl rounded-tl-none border border-[#8b4513]/10 group relative">
                         <button
                           v-if="canDeleteSubcomment(reply)"
                           @click="deleteSubcomment(comment.comentariu_id, reply.subcomentariu_id)"
@@ -210,7 +210,7 @@
                           <span class="text-xs font-bold text-dark">{{ reply.autor }}</span>
                           <span class="text-[10px] text-gray-400">{{ formatDate(reply.creat_la) }}</span>
                         </div>
-                        <p class="text-xs text-gray-700 whitespace-pre-line"><span class="text-secondary font-semibold">@{{ comment.autor }}</span> {{ reply.continut }}</p>
+                        <p class="text-xs text-gray-700 whitespace-pre-line"><span class="text-[#8b4513] font-semibold">@{{ comment.autor }}</span> {{ reply.continut }}</p>
                       </div>
                       <div class="flex items-center gap-4 mt-1 ml-2">
                         <button class="text-[11px] font-semibold text-gray-500 hover:text-red-500 transition-colors flex items-center gap-1"><i class="pi pi-heart text-[9px]"></i> {{ reply.likes }}</button>
@@ -225,7 +225,7 @@
         </div>
 
         <!-- Add Comment Footer -->
-        <div class="p-4 sm:p-6 border-t border-gray-100 bg-white">
+        <div class="p-4 sm:p-6 border-t border-[#8b4513]/10 bg-papyrus-light">
           <div class="flex gap-3">
             <div class="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center">
               <i class="pi pi-user text-gray-400 text-xs"></i>
@@ -235,7 +235,7 @@
                 v-model="newCommentText"
                 rows="2" 
                 placeholder="Adaugă un comentariu la discuție..." 
-                class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-secondary/40 resize-none custom-scrollbar"
+                class="w-full text-sm border border-[#8b4513]/20 rounded-xl px-3 py-2 bg-[#8b4513]/5 focus:bg-papyrus-light focus:outline-none focus:ring-2 focus:ring-[#8b4513]/40 resize-none custom-scrollbar"
               ></textarea>
               <div class="flex justify-between items-center">
                 <p v-if="commentError" class="text-xs text-accent">{{ commentError }}</p>
@@ -243,7 +243,7 @@
                 <button 
                   @click="submitComment"
                   :disabled="!newCommentText.trim() || commentLoading"
-                  class="px-5 py-2 bg-secondary hover:bg-secondary/90 disabled:opacity-50 text-white font-semibold rounded-lg text-sm transition-all flex items-center gap-2"
+                  class="px-5 py-2 bg-[#8b4513] hover:bg-[#8b4513]/90 disabled:opacity-50 text-white font-semibold rounded-lg text-sm transition-all flex items-center gap-2"
                 >
                   <i :class="commentLoading ? 'pi pi-spin pi-spinner' : 'pi pi-send'" class="text-xs"></i> Postează
                 </button>
@@ -257,33 +257,33 @@
 
     <!-- Request Thread Modal -->
     <div v-if="addModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="addModalOpen = false">
-      <div class="w-full max-w-lg bg-white rounded-2xl shadow-modal p-6">
+      <div class="w-full max-w-lg bg-papyrus-light rounded-2xl shadow-modal p-6">
          <div class="flex items-center justify-between mb-5">
           <h2 class="text-lg font-bold text-dark flex items-center gap-2">
-            <i class="pi pi-plus-circle text-secondary"></i> Adaugă o Discuție
+            <i class="pi pi-plus-circle text-[#8b4513]"></i> Adaugă o Discuție
           </h2>
-          <button @click="addModalOpen = false" class="text-gray-400 hover:text-secondary text-2xl font-bold leading-none">&times;</button>
+          <button @click="addModalOpen = false" class="text-gray-400 hover:text-[#8b4513] text-2xl font-bold leading-none">&times;</button>
         </div>
         
         <div class="space-y-4">
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">Titlul discuției *</label>
-            <input v-model="addForm.titlu" type="text" placeholder="Ex: Teorii despre finalul..." class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-secondary/40" />
+            <input v-model="addForm.titlu" type="text" placeholder="Ex: Teorii despre finalul..." class="w-full text-sm border border-[#8b4513]/20 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#8b4513]/40" />
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">Conținut / Prima postare *</label>
-            <textarea v-model="addForm.continut" rows="4" placeholder="Dezvoltă ideea aici..." class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-secondary/40 resize-none"></textarea>
+            <textarea v-model="addForm.continut" rows="4" placeholder="Dezvoltă ideea aici..." class="w-full text-sm border border-[#8b4513]/20 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#8b4513]/40 resize-none"></textarea>
           </div>
         </div>
 
         <p v-if="addError" class="mt-3 text-xs text-accent">{{ addError }}</p>
 
         <div class="flex gap-3 mt-6">
-          <button @click="addModalOpen = false" class="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition-colors">Anulează</button>
+          <button @click="addModalOpen = false" class="flex-1 px-4 py-2.5 border border-[#8b4513]/20 text-gray-600 font-semibold rounded-xl text-sm hover:bg-[#8b4513]/5 transition-colors">Anulează</button>
           <button 
             @click="submitThread" 
             :disabled="!addForm.titlu.trim() || !addForm.continut.trim() || addLoading"
-            class="flex-1 px-4 py-2.5 bg-secondary hover:bg-secondary/90 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+            class="flex-1 px-4 py-2.5 bg-[#8b4513] hover:bg-[#8b4513]/90 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
           >
             <i :class="addLoading ? 'pi pi-spin pi-spinner' : 'pi pi-check'" class="text-xs"></i> Postează
           </button>
@@ -293,7 +293,7 @@
 
     <!-- Custom Delete Modal -->
     <div v-if="deleteModal.open" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="deleteModal.open = false">
-      <div class="w-full max-w-sm bg-white rounded-2xl shadow-modal p-6 text-center border border-gray-100">
+      <div class="w-full max-w-sm bg-papyrus-light rounded-2xl shadow-modal p-6 text-center border border-[#8b4513]/10">
         <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <i class="pi pi-exclamation-triangle text-red-500 text-3xl"></i>
         </div>

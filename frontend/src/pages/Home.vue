@@ -6,7 +6,7 @@
       <div class="max-w-3xl mx-auto px-6 text-center relative z-10">
         <h2 class="text-3xl sm:text-5xl font-bold text-white mb-3 tracking-tight">Bine ai venit la Biblioteca</h2>
         <p class="text-white/80 text-sm sm:text-base font-medium mb-2">Colegiului Național de Informatică „Spiru-Haret"</p>
-        <p class="text-white/45 text-sm sm:text-base italic">„Locul unde cunoașterea prinde viață"</p>
+        <p class="text-white/90 text-sm sm:text-base italic">„Locul unde cunoașterea prinde viață"</p>
       </div>
     </section>
 
@@ -26,6 +26,7 @@
             <div class="flex-1 h-px bg-gray-200"></div>
           </div>
 
+
           <!-- Loading -->
           <div v-if="loadingAnunturi" class="text-center py-16">
             <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
@@ -33,29 +34,30 @@
 
           <!-- Announcements List -->
           <div v-else class="space-y-4">
-            <article 
+            <DecoratedBox 
               v-for="a in anunturi" 
               :key="a.anunt_id"
-              class="bg-white rounded-xl p-5 sm:p-6 shadow-card border border-gray-100 hover:shadow-elevated transition-shadow duration-200"
             >
-              <div class="flex items-start justify-between gap-4 mb-3">
-                <h3 class="text-lg font-semibold text-dark">{{ a.titlu }}</h3>
-                <time class="text-xs text-gray-400 whitespace-nowrap mt-1">{{ a.data_publicare }}</time>
-              </div>
-              <p class="text-gray-600 text-sm leading-relaxed whitespace-pre-line mb-4">{{ a.anunt }}</p>
+              <template #heading>
+                <div class="flex items-start justify-between gap-4 text-left">
+                  <span class="text-xl font-bold">{{ a.titlu }}</span>
+                  <time class="text-xs text-[#8b4513]/70 whitespace-nowrap mt-1 font-sans">{{ a.data_publicare }}</time>
+                </div>
+              </template>
+              <p class="text-[#3b2b18] text-sm leading-relaxed whitespace-pre-line mb-4 font-sans">{{ a.anunt }}</p>
               <button 
                 @click="toggleLike(a)"
                 :class="[
-                  'inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full transition-all duration-150',
+                  'inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full transition-all duration-150 font-sans',
                   a.liked 
-                    ? 'bg-secondary/10 text-secondary' 
-                    : 'text-gray-400 hover:text-secondary hover:bg-secondary/5'
+                    ? 'bg-[#8b4513]/10 text-[#8b4513]' 
+                    : 'text-[#8b4513]/50 hover:text-[#8b4513] hover:bg-[#8b4513]/5'
                 ]"
               >
                 <i :class="a.liked ? 'pi pi-thumbs-up-fill' : 'pi pi-thumbs-up'" class="text-xs"></i>
                 <span>{{ a.aprecieri }}</span>
               </button>
-            </article>
+            </DecoratedBox>
 
             <!-- Empty State -->
             <div v-if="anunturi.length === 0" class="text-center py-16">
@@ -71,43 +73,43 @@
         <section>
           <div class="flex items-center gap-3 mb-8">
             <h2 class="text-2xl font-bold text-dark">Facilități</h2>
-            <div class="flex-1 h-px bg-gray-200"></div>
+            <div class="flex-1 h-px bg-[#8b4513]/20"></div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="flex gap-4 p-5 rounded-xl bg-white shadow-card border border-gray-100">
-              <div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center flex-shrink-0">
-                <i class="pi pi-book text-secondary text-lg"></i>
+            <div class="flex gap-4 p-5 rounded-xl bg-papyrus-light shadow-card border border-[#8b4513]/10">
+              <div class="w-10 h-10 rounded-lg bg-[#8b4513]/10 flex items-center justify-center flex-shrink-0">
+                <i class="pi pi-book text-[#8b4513] text-lg"></i>
               </div>
               <div>
                 <h4 class="font-semibold text-dark mb-1 text-sm">Colecție Vastă</h4>
-                <p class="text-gray-500 text-sm">Mii de cărți în toate genurile</p>
+                <p class="text-[#8b4513]/70 text-sm">Mii de cărți în toate genurile</p>
               </div>
             </div>
-            <div class="flex gap-4 p-5 rounded-xl bg-white shadow-card border border-gray-100">
-              <div class="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-                <i class="pi pi-compass text-accent text-lg"></i>
+            <div class="flex gap-4 p-5 rounded-xl bg-papyrus-light shadow-card border border-[#8b4513]/10">
+              <div class="w-10 h-10 rounded-lg bg-[#8b4513]/10 flex items-center justify-center flex-shrink-0">
+                <i class="pi pi-compass text-[#8b4513] text-lg"></i>
               </div>
               <div>
                 <h4 class="font-semibold text-dark mb-1 text-sm">Ușor de Utilizat</h4>
-                <p class="text-gray-500 text-sm">Navigare simplă și intuitivă pe platformă</p>
+                <p class="text-[#8b4513]/70 text-sm">Navigare simplă și intuitivă pe platformă</p>
               </div>
             </div>
-            <div class="flex gap-4 p-5 rounded-xl bg-white shadow-card border border-gray-100">
-              <div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center flex-shrink-0">
-                <i class="pi pi-sync text-secondary text-lg"></i>
+            <div class="flex gap-4 p-5 rounded-xl bg-papyrus-light shadow-card border border-[#8b4513]/10">
+              <div class="w-10 h-10 rounded-lg bg-[#8b4513]/10 flex items-center justify-center flex-shrink-0">
+                <i class="pi pi-sync text-[#8b4513] text-lg"></i>
               </div>
               <div>
                 <h4 class="font-semibold text-dark mb-1 text-sm">Împrumut Ușor</h4>
-                <p class="text-gray-500 text-sm">Proces simplu de împrumut</p>
+                <p class="text-[#8b4513]/70 text-sm">Proces simplu de împrumut</p>
               </div>
             </div>
-            <div class="flex gap-4 p-5 rounded-xl bg-white shadow-card border border-gray-100">
-              <div class="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-                <i class="pi pi-tablet text-accent text-lg"></i>
+            <div class="flex gap-4 p-5 rounded-xl bg-papyrus-light shadow-card border border-[#8b4513]/10">
+              <div class="w-10 h-10 rounded-lg bg-[#8b4513]/10 flex items-center justify-center flex-shrink-0">
+                <i class="pi pi-tablet text-[#8b4513] text-lg"></i>
               </div>
               <div>
                 <h4 class="font-semibold text-dark mb-1 text-sm">Acces Digital</h4>
-                <p class="text-gray-500 text-sm">Cărți electronice și resurse</p>
+                <p class="text-[#8b4513]/70 text-sm">Cărți electronice și resurse</p>
               </div>
             </div>
           </div>
@@ -116,19 +118,16 @@
 
       <!-- Right Column: Recent Books Widget -->
       <div class="w-full max-w-sm mx-auto xl:mx-0">
-        <aside class="bg-white rounded-xl shadow-card border border-gray-100 p-5 sm:p-6 sticky top-24">
-          <div class="flex items-center gap-3 mb-6">
-            <h3 class="text-xl font-bold text-dark">Cărți Noi</h3>
-            <div class="flex-1 h-px bg-gray-200"></div>
-          </div>
+        <ScrollWidget class="sticky top-24">
+          <template #title>Cărți Noi</template>
           
           <!-- Loading state -->
           <div v-if="loadingCarti" class="flex justify-center py-8">
-            <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
+            <i class="pi pi-spin pi-spinner text-2xl text-[#8b4513]"></i>
           </div>
           
-          <div v-else-if="cartiRecente.length === 0" class="text-center py-8">
-            <p class="text-sm text-gray-500">Nu am găsit cărți.</p>
+          <div v-else-if="cartiRecente.length === 0" class="text-center py-8 text-[#856b50] font-medium">
+            Nu am găsit cărți.
           </div>
           
           <div v-else class="space-y-5">
@@ -138,32 +137,45 @@
               class="flex gap-4 items-center group cursor-pointer"
               @click="$router.push('/books')"
             >
-              <div class="w-16 h-24 bg-gray-200 rounded-md overflow-hidden flex-shrink-0 relative shadow-sm group-hover:shadow-md transition-shadow">
+              <div class="w-16 h-24 bg-[#cca36b]/20 rounded-md overflow-hidden flex-shrink-0 relative shadow-sm group-hover:shadow-md transition-shadow border border-[#cca36b]/30">
                 <img :src="`/api/books/image/${carte.carte_id}`" @error="$event.target.src='https://placehold.co/100x150/e2e8f0/64748b?text=Carte'" alt="Book Cover" class="w-full h-full object-cover" />
               </div>
               <div class="flex-1">
-                <h4 class="text-sm font-semibold text-dark group-hover:text-secondary transition-colors line-clamp-2">{{ carte.titlu }}</h4>
-                <p class="text-xs text-gray-500 mt-1">{{ carte.autor }}</p>
+                <h4 class="text-sm font-semibold text-[#4a2e15] group-hover:text-[#b88034] transition-colors line-clamp-2">{{ carte.titlu }}</h4>
+                <p class="text-xs text-[#856b50] mt-1">{{ carte.autor }}</p>
                 <div class="mt-2 flex items-center gap-2">
-                  <span class="text-[10px] font-bold px-2 py-0.5 bg-secondary/10 text-secondary rounded-full truncate max-w-[120px]">{{ carte.gen || 'General' }}</span>
+                  <span class="text-[10px] font-bold px-2 py-0.5 bg-[#8b4513]/10 text-[#8b4513] rounded-full truncate max-w-[120px]">{{ carte.gen || 'General' }}</span>
                 </div>
               </div>
             </div>
           </div>
           
-          <button @click="$router.push('/books')" class="w-full mt-6 py-2.5 rounded-lg border border-gray-200 text-sm font-semibold text-dark hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-            <span>Vezi colecția completă</span>
-            <i class="pi pi-arrow-right text-xs"></i>
-          </button>
-        </aside>
+          <template #footer>
+            <button @click="$router.push('/books')" class="w-full flex items-center justify-center gap-2 border-2 border-[#cca36b] text-[#6b421c] py-2.5 rounded-lg hover:bg-[#f6e5c8] hover:border-[#b88034] transition-all duration-300 group">
+              <span class="font-semibold">Vezi colecția completă</span>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                class="h-5 w-5 transform group-hover:translate-x-1 transition-transform duration-300" 
+                viewBox="0 0 20 20" 
+                fill="currentColor"
+              >
+                <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </template>
+        </ScrollWidget>
       </div>
     </main>
   </div>
 </template>
 
 <script>
+import DecoratedBox from '../components/DecoratedBox.vue'
+import ScrollWidget from '../components/ScrollWidget.vue'
+
 export default {
   name: 'Home',
+  components: { DecoratedBox, ScrollWidget },
   data() {
     return {
       anunturi: [],
