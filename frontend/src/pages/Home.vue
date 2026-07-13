@@ -1,12 +1,25 @@
 <template>
   <div>
     <!-- Hero Section -->
-    <section class="bg-dark py-16 sm:py-24 relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-br from-secondary/20 via-transparent to-accent/10"></div>
-      <div class="max-w-3xl mx-auto px-6 text-center relative z-10">
-        <h2 class="text-3xl sm:text-5xl font-bold text-white mb-3 tracking-tight">Bine ai venit la Biblioteca</h2>
-        <p class="text-white/80 text-sm sm:text-base font-medium mb-2">Colegiului Național de Informatică „Spiru-Haret"</p>
-        <p class="text-white/90 text-sm sm:text-base italic">„Locul unde cunoașterea prinde viață"</p>
+    <section class="bg-dark py-20 sm:py-32 relative overflow-hidden flex items-center min-h-[400px]">
+      <div class="absolute inset-0 z-0">
+        <img src="/hero-bg.jpg" alt="Library Background" class="w-full h-full object-cover opacity-60" />
+        <div class="absolute inset-0 bg-gradient-to-r from-dark/90 via-dark/50 to-transparent"></div>
+      </div>
+      <div class="w-full max-w-[1440px] mx-auto px-6 relative z-10">
+        <div class="max-w-2xl text-center sm:text-left flex flex-col items-center sm:items-start mx-auto sm:mx-0">
+          <!-- Decoration -->
+          <img src="/logo.webp" alt="Biblioteca Logo" class="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl shadow-2xl mb-6 border-2 border-white/10 hover:scale-105 transition-transform duration-300" />
+          
+          <h2 class="text-4xl sm:text-6xl font-extrabold text-white mb-4 tracking-tight drop-shadow-lg font-display">Bine ai venit la Biblioteca</h2>
+          <p class="text-white/90 text-lg sm:text-xl font-medium mb-3 tracking-wide drop-shadow-md">Colegiului Național de Informatică „Spiru-Haret"</p>
+          
+          <div class="flex items-center justify-center sm:justify-start gap-4 mt-6 w-full">
+             <div class="h-px flex-1 max-w-[50px] sm:hidden bg-gradient-to-l from-accent to-transparent"></div>
+             <p class="text-accent/90 text-sm sm:text-base italic font-serif tracking-widest shrink-0">„Locul unde cunoașterea prinde viață"</p>
+             <div class="h-px flex-1 max-w-[100px] bg-gradient-to-r from-accent to-transparent"></div>
+          </div>
+        </div>
       </div>
     </section>
 
