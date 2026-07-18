@@ -29,8 +29,8 @@
       <!-- Left Spacer for centering -->
       <div class="hidden xl:block"></div>
 
-      <!-- Center Column: Announcements & Features -->
-      <div class="w-full max-w-3xl mx-auto space-y-16">
+      <!-- Center Column: Announcements -->
+      <div class="w-full max-w-3xl mx-auto xl:col-start-2">
         
         <!-- Announcements -->
         <section>
@@ -81,56 +81,10 @@
             </div>
           </div>
         </section>
-
-        <!-- Features Section -->
-        <section>
-          <div class="flex items-center gap-3 mb-8">
-            <h2 class="text-2xl font-bold text-dark">Facilități</h2>
-            <div class="flex-1 h-px bg-[#8b4513]/20"></div>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="flex gap-4 p-5 rounded-xl bg-papyrus-light shadow-card border border-[#8b4513]/10">
-              <div class="w-10 h-10 rounded-lg bg-[#8b4513]/10 flex items-center justify-center flex-shrink-0">
-                <i class="pi pi-book text-[#8b4513] text-lg"></i>
-              </div>
-              <div>
-                <h4 class="font-semibold text-dark mb-1 text-sm">Colecție Vastă</h4>
-                <p class="text-[#8b4513]/70 text-sm">Mii de cărți în toate genurile</p>
-              </div>
-            </div>
-            <div class="flex gap-4 p-5 rounded-xl bg-papyrus-light shadow-card border border-[#8b4513]/10">
-              <div class="w-10 h-10 rounded-lg bg-[#8b4513]/10 flex items-center justify-center flex-shrink-0">
-                <i class="pi pi-compass text-[#8b4513] text-lg"></i>
-              </div>
-              <div>
-                <h4 class="font-semibold text-dark mb-1 text-sm">Ușor de Utilizat</h4>
-                <p class="text-[#8b4513]/70 text-sm">Navigare simplă și intuitivă pe platformă</p>
-              </div>
-            </div>
-            <div class="flex gap-4 p-5 rounded-xl bg-papyrus-light shadow-card border border-[#8b4513]/10">
-              <div class="w-10 h-10 rounded-lg bg-[#8b4513]/10 flex items-center justify-center flex-shrink-0">
-                <i class="pi pi-sync text-[#8b4513] text-lg"></i>
-              </div>
-              <div>
-                <h4 class="font-semibold text-dark mb-1 text-sm">Împrumut Ușor</h4>
-                <p class="text-[#8b4513]/70 text-sm">Proces simplu de împrumut</p>
-              </div>
-            </div>
-            <div class="flex gap-4 p-5 rounded-xl bg-papyrus-light shadow-card border border-[#8b4513]/10">
-              <div class="w-10 h-10 rounded-lg bg-[#8b4513]/10 flex items-center justify-center flex-shrink-0">
-                <i class="pi pi-tablet text-[#8b4513] text-lg"></i>
-              </div>
-              <div>
-                <h4 class="font-semibold text-dark mb-1 text-sm">Acces Digital</h4>
-                <p class="text-[#8b4513]/70 text-sm">Cărți electronice și resurse</p>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
 
       <!-- Right Column: Recent Books Widget -->
-      <div class="w-full max-w-sm mx-auto xl:mx-0">
+      <div class="w-full max-w-sm mx-auto xl:mx-0 xl:col-start-3 xl:row-span-2 mt-8 xl:mt-0">
         <ScrollWidget class="sticky top-24">
           <template #title>Cărți Noi</template>
           
@@ -177,6 +131,54 @@
             </button>
           </template>
         </ScrollWidget>
+      </div>
+
+      <!-- Features Section -->
+      <div class="w-full max-w-3xl mx-auto xl:col-start-2 mt-12 xl:mt-0">
+        <section>
+          <div class="flex items-center gap-3 mb-8">
+            <h2 class="text-2xl font-bold text-dark">Facilități</h2>
+            <div class="flex-1 h-px bg-[#8b4513]/20"></div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex gap-4 p-5 rounded-xl bg-papyrus-light shadow-card border border-[#8b4513]/10">
+              <div class="w-10 h-10 rounded-lg bg-[#8b4513]/10 flex items-center justify-center flex-shrink-0">
+                <i class="pi pi-book text-[#8b4513] text-lg"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-dark mb-1 text-sm">Colecție Vastă</h4>
+                <p class="text-[#8b4513]/70 text-sm">Mii de cărți în toate genurile</p>
+              </div>
+            </div>
+            <div class="flex gap-4 p-5 rounded-xl bg-papyrus-light shadow-card border border-[#8b4513]/10">
+              <div class="w-10 h-10 rounded-lg bg-[#8b4513]/10 flex items-center justify-center flex-shrink-0">
+                <i class="pi pi-compass text-[#8b4513] text-lg"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-dark mb-1 text-sm">Ușor de Utilizat</h4>
+                <p class="text-[#8b4513]/70 text-sm">Navigare simplă și intuitivă pe platformă</p>
+              </div>
+            </div>
+            <div class="flex gap-4 p-5 rounded-xl bg-papyrus-light shadow-card border border-[#8b4513]/10">
+              <div class="w-10 h-10 rounded-lg bg-[#8b4513]/10 flex items-center justify-center flex-shrink-0">
+                <i class="pi pi-sync text-[#8b4513] text-lg"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-dark mb-1 text-sm">Împrumut Ușor</h4>
+                <p class="text-[#8b4513]/70 text-sm">Proces simplu de împrumut</p>
+              </div>
+            </div>
+            <div class="flex gap-4 p-5 rounded-xl bg-papyrus-light shadow-card border border-[#8b4513]/10">
+              <div class="w-10 h-10 rounded-lg bg-[#8b4513]/10 flex items-center justify-center flex-shrink-0">
+                <i class="pi pi-tablet text-[#8b4513] text-lg"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-dark mb-1 text-sm">Acces Digital</h4>
+                <p class="text-[#8b4513]/70 text-sm">Cărți electronice și resurse</p>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   </div>

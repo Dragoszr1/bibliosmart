@@ -31,7 +31,24 @@ def create_app(config_name=None):
     
     # Register blueprints
     from app.routes import main_bp
+    from app.routes.auth_routes import auth_bp
+    from app.routes.books_routes import books_bp, requests_bp
+    from app.routes.admin_routes import admin_bp, librarian_bp
+    from app.routes.reviews_routes import reviews_bp
+    from app.routes.anunturi_routes import anunturi_bp
+    from app.routes.ai_routes import ai_bp
+    from app.routes.club_routes import club_bp
+    
     app.register_blueprint(main_bp)
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(books_bp, url_prefix='/api/books')
+    app.register_blueprint(requests_bp, url_prefix='/api/book-requests')
+    app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    app.register_blueprint(librarian_bp, url_prefix='/api/librarian')
+    app.register_blueprint(reviews_bp, url_prefix='/api/reviews')
+    app.register_blueprint(anunturi_bp, url_prefix='/api/anunturi')
+    app.register_blueprint(ai_bp, url_prefix='/api/ai')
+    app.register_blueprint(club_bp, url_prefix='/api/club')
     
     @app.after_request
     def add_security_headers(response):
