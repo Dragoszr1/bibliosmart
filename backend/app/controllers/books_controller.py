@@ -264,7 +264,7 @@ def request_book_fizic(user, carte_id):
 
     try:
         db.session.execute(
-            text("INSERT INTO cereri_carti (user_id, carte_id) VALUES (:uid, :cid)"),
+            text("INSERT INTO cereri_carti (user_id, carte_id, created_at, updated_at) VALUES (:uid, :cid, NOW(), NOW())"),
             {'uid': user['user_id'], 'cid': carte_id}
         )
         db.session.commit()
