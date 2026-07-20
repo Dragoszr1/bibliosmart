@@ -98,7 +98,7 @@
       <!-- Books Grid -->
       <div v-if="filteredBooks.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         <div 
-          v-for="book in filteredBooks"
+          v-for="book in paginatedBooks"
           :key="book.id"
           @click="openBookDetail(book)"
           class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden hover:shadow-elevated transition-all duration-200 cursor-pointer group"
@@ -108,6 +108,7 @@
             <img
               :src="`/api/books/image/${book.id}`"
               :alt="book.title"
+              loading="lazy"
               class="absolute inset-0 w-full h-full object-cover"
               @error="$event.target.style.display='none'"
             >
@@ -138,6 +139,31 @@
             </span>
           </div>
         </div>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div v-if="totalPages > 1" class="flex justify-center items-center gap-4 mt-10">
+        <button 
+          @click="currentPage > 1 ? currentPage-- : null"
+          :disabled="currentPage === 1"
+          class="px-4 py-2 rounded-lg font-medium text-sm transition-colors border"
+          :class="currentPage === 1 ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-secondary/30 text-secondary hover:bg-secondary/5'"
+        >
+          <i class="pi pi-chevron-left mr-1 text-xs"></i> Înapoi
+        </button>
+        
+        <span class="text-sm font-medium text-dark">
+          Pagina {{ currentPage }} din {{ totalPages }}
+        </span>
+
+        <button 
+          @click="currentPage < totalPages ? currentPage++ : null"
+          :disabled="currentPage === totalPages"
+          class="px-4 py-2 rounded-lg font-medium text-sm transition-colors border"
+          :class="currentPage === totalPages ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-secondary/30 text-secondary hover:bg-secondary/5'"
+        >
+          Înainte <i class="pi pi-chevron-right ml-1 text-xs"></i>
+        </button>
       </div>
 
       <!-- Empty State -->
@@ -348,6 +374,8 @@
 </template>
 
 <script>
+import localforage from 'localforage';
+
 export default {
   name: 'Books',
   data() {
@@ -359,6 +387,8 @@ export default {
       filterAvailability: '',
       allBooks: [],
       filteredBooks: [],
+      currentPage: 1,
+      itemsPerPage: 12,
       showModal: false,
       selectedBook: null,
       reviews: [],
@@ -384,6 +414,14 @@ export default {
     }
   },
   computed: {
+    paginatedBooks() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.filteredBooks.slice(start, end);
+    },
+    totalPages() {
+      return Math.ceil(this.filteredBooks.length / this.itemsPerPage);
+    },
     allGenres() {
       return [...new Set(this.allBooks.map(b => b.genre).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ro'))
     },
@@ -397,10 +435,18 @@ export default {
   methods: {
     async fetchBooks() {
       try {
+        // Încercăm să luăm datele din cache (localforage/IndexedDB) mai întâi pentru afișare instantanee
+        const cachedBooks = await localforage.getItem('cachedBookList');
+        if (cachedBooks && cachedBooks.length > 0) {
+          this.allBooks = cachedBooks;
+          this.filterBooks();
+        }
+
+        // Preluăm datele proaspete din rețea
         const response = await fetch('/api/books');
         const data = await response.json();
         if (data.books) {
-          this.allBooks = data.books.map(book => ({
+          const freshBooks = data.books.map(book => ({
             id: book.carte_id,
             title: book.titlu,
             author: book.autor,
@@ -413,7 +459,13 @@ export default {
             pozitie: book.pozitie || null,
             has_pdf: book.has_pdf || false
           }));
-          this.filterBooks();
+
+          // Actualizăm UI-ul și cache-ul doar dacă datele s-au schimbat sau cache-ul era gol
+          if (!cachedBooks || JSON.stringify(cachedBooks) !== JSON.stringify(freshBooks)) {
+            this.allBooks = freshBooks;
+            this.filterBooks();
+            await localforage.setItem('cachedBookList', freshBooks);
+          }
         }
       } catch (error) {
         console.error('Error fetching books:', error);
@@ -443,6 +495,7 @@ export default {
       result = [...result];
       this.sortBooks(result);
       this.filteredBooks = result;
+      this.currentPage = 1; // Resetează la pagina 1 la aplicarea filtrelor noi
     },
     sortBooks(books) {
       switch (this.sortType) {
