@@ -76,7 +76,7 @@ CREATE TABLE cereri_carti (
 	cerere_id INTEGER NOT NULL AUTO_INCREMENT, 
 	user_id INTEGER NOT NULL, 
 	carte_id INTEGER NOT NULL, 
-	status ENUM('pending','approved','rejected') NOT NULL, 
+	status ENUM('pending','approved','rejected','ridicat') NOT NULL, 
 	created_at DATETIME NOT NULL, 
 	updated_at DATETIME NOT NULL, 
 	ridicare_de_la DATETIME,
