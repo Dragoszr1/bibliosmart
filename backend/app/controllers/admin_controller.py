@@ -37,14 +37,26 @@ def librarian_report_docx():
         for r in borrow_rows:
             borrow_map.setdefault(r[0], []).append((r[1], r[2], r[3], r[4]))
 
-        approved_rows = db.session.execute(
-            text(
-                "SELECT cr.user_id, c.titlu, c.autor, cr.ridicare_de_la, cr.ridicare_pana_la "
-                "FROM cereri_carti cr JOIN carti c ON cr.carte_id = c.carte_id "
-                "WHERE cr.status = 'approved' "
-                "ORDER BY cr.updated_at ASC"
-            )
-        ).fetchall()
+        try:
+            approved_rows = db.session.execute(
+                text(
+                    "SELECT cr.user_id, c.titlu, c.autor, cr.ridicare_de_la, cr.ridicare_pana_la "
+                    "FROM cereri_carti cr JOIN carti c ON cr.carte_id = c.carte_id "
+                    "WHERE cr.status = 'approved' "
+                    "ORDER BY cr.updated_at ASC"
+                )
+            ).fetchall()
+        except Exception:
+            db.session.rollback()
+            approved_rows = db.session.execute(
+                text(
+                    "SELECT cr.user_id, c.titlu, c.autor, NULL, NULL "
+                    "FROM cereri_carti cr JOIN carti c ON cr.carte_id = c.carte_id "
+                    "WHERE cr.status = 'approved' "
+                    "ORDER BY cr.updated_at ASC"
+                )
+            ).fetchall()
+
         approved_map = {}
         for r in approved_rows:
             approved_map.setdefault(r[0], []).append((r[1], r[2], r[3], r[4]))
@@ -194,17 +206,32 @@ def admin_get_user_detail(user_id):
             {'uid': user_id}
         ).fetchall()
 
-        history_rows = db.session.execute(
-            text("""
-                SELECT cc.cerere_id, c.titlu, c.autor, cc.status, cc.created_at,
-                       cc.ridicare_de_la, cc.ridicare_pana_la
-                FROM cereri_carti cc
-                JOIN carti c ON cc.carte_id = c.carte_id
-                WHERE cc.user_id = :uid
-                ORDER BY cc.created_at DESC
-            """),
-            {'uid': user_id}
-        ).fetchall()
+        try:
+            history_rows = db.session.execute(
+                text("""
+                    SELECT cc.cerere_id, c.titlu, c.autor, cc.status, cc.created_at,
+                           cc.ridicare_de_la, cc.ridicare_pana_la
+                    FROM cereri_carti cc
+                    JOIN carti c ON cc.carte_id = c.carte_id
+                    WHERE cc.user_id = :uid
+                    ORDER BY cc.created_at DESC
+                """),
+                {'uid': user_id}
+            ).fetchall()
+            has_ridicare = True
+        except Exception:
+            db.session.rollback()
+            history_rows = db.session.execute(
+                text("""
+                    SELECT cc.cerere_id, c.titlu, c.autor, cc.status, cc.created_at
+                    FROM cereri_carti cc
+                    JOIN carti c ON cc.carte_id = c.carte_id
+                    WHERE cc.user_id = :uid
+                    ORDER BY cc.created_at DESC
+                """),
+                {'uid': user_id}
+            ).fetchall()
+            has_ridicare = False
 
         review_rows = db.session.execute(
             text("""
@@ -244,9 +271,9 @@ def admin_get_user_detail(user_id):
                 {
                     'cerere_id': r[0], 'titlu': r[1], 'autor': r[2],
                     'status': r[3],
-                    'created_at': r[4].isoformat() if r[4] else None,
-                    'ridicare_de_la': r[5].strftime('%d.%m.%Y %H:%M') if r[5] else None,
-                    'ridicare_pana_la': r[6].strftime('%d.%m.%Y %H:%M') if r[6] else None
+                    'created_at': r[4].isoformat() if r[4] and hasattr(r[4], 'isoformat') else str(r[4]) if r[4] else None,
+                    'ridicare_de_la': (r[5].strftime('%d.%m.%Y %H:%M') if hasattr(r[5], 'strftime') else str(r[5])) if has_ridicare and len(r) > 5 and r[5] else None,
+                    'ridicare_pana_la': (r[6].strftime('%d.%m.%Y %H:%M') if hasattr(r[6], 'strftime') else str(r[6])) if has_ridicare and len(r) > 6 and r[6] else None
                 }
                 for r in history_rows
             ],

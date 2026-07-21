@@ -79,6 +79,8 @@ CREATE TABLE cereri_carti (
 	status ENUM('pending','approved','rejected') NOT NULL, 
 	created_at DATETIME NOT NULL, 
 	updated_at DATETIME NOT NULL, 
+	ridicare_de_la DATETIME,
+	ridicare_pana_la DATETIME,
 	PRIMARY KEY (cerere_id)
 );
 

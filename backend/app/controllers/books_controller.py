@@ -351,8 +351,8 @@ def update_book_request(cerere_id):
                 return jsonify({'success': False, 'message': 'Format dată invalid pentru intervalul de ridicare'}), 400
 
             db.session.execute(
-                text("UPDATE cereri_carti SET status = :status WHERE cerere_id = :id"),
-                {'status': status_nou, 'id': cerere_id}
+                text("UPDATE cereri_carti SET status = :status, ridicare_de_la = :r_de_la, ridicare_pana_la = :r_pana_la WHERE cerere_id = :id"),
+                {'status': status_nou, 'r_de_la': ridicare_de_la_dt, 'r_pana_la': ridicare_pana_la_dt, 'id': cerere_id}
             )
         else:
             db.session.execute(
