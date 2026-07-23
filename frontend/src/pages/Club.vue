@@ -108,7 +108,7 @@
                   <span class="text-xs text-[#8b4513]/70 font-sans">{{ act.creat_la }} · {{ act.autor }}</span>
                   <span v-if="act.autor_rol === 'bibliotecar'" class="text-xs bg-[#8b4513]/10 text-[#8b4513] font-semibold px-2 py-0.5 rounded-full font-sans">bibliotecar</span>
                 </div>
-                <h3 class="text-base sm:text-lg font-bold text-[#2a1c10] leading-snug">{{ act.titlu }}</h3>
+                <h3 class="text-base sm:text-lg font-bold text-[#2a1c10] leading-snug break-words">{{ act.titlu }}</h3>
               </div>
               <button
                 v-if="isBibliotecar"
@@ -121,7 +121,7 @@
             </div>
           </template>
 
-          <p v-if="act.continut" class="text-sm text-[#3b2b18] mt-2 whitespace-pre-line leading-relaxed font-sans">{{ act.continut }}</p>
+          <p v-if="act.continut" class="text-sm text-[#3b2b18] mt-2 whitespace-pre-line leading-relaxed font-sans break-words">{{ act.continut }}</p>
           <img v-if="act.imagine_url && act.tip === 'anunt'" :src="act.imagine_url" alt="Imagine anunț" class="w-full h-56 object-cover rounded-[2px_6px_3px_5px] mt-4" />
 
           <!-- Thread toggle -->
@@ -156,7 +156,7 @@
                   <span v-if="com.autor_rol === 'bibliotecar'" class="text-[10px] bg-[#8b4513]/10 text-[#8b4513] font-semibold px-1.5 py-0.5 rounded-full">bibliotecar</span>
                   <span class="text-[11px] text-gray-400">{{ com.creat_la }}</span>
                 </div>
-                <p class="text-sm text-gray-700 whitespace-pre-line">{{ com.continut }}</p>
+                <p class="text-sm text-gray-700 whitespace-pre-line break-words">{{ com.continut }}</p>
               </div>
               <button
                 v-if="canDeleteComment(com)"

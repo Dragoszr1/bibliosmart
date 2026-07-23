@@ -60,10 +60,10 @@
                   <i class="pi pi-clock text-[10px]"></i> {{ formatDate(thread.creat_la) }}
                 </span>
               </div>
-              <h3 class="text-lg sm:text-xl font-bold text-dark leading-snug cursor-pointer hover:text-[#8b4513] transition-colors" @click="openThreadModal(thread)">
+              <h3 class="text-lg sm:text-xl font-bold text-dark leading-snug cursor-pointer hover:text-[#8b4513] transition-colors break-words" @click="openThreadModal(thread)">
                 {{ thread.titlu }}
               </h3>
-              <p class="text-sm text-gray-600 mt-2 whitespace-pre-line leading-relaxed line-clamp-3">
+              <p class="text-sm text-gray-600 mt-2 whitespace-pre-line leading-relaxed line-clamp-3 break-words">
                 {{ thread.continut }}
               </p>
             </div>
@@ -127,7 +127,7 @@
                 <p class="text-xs text-gray-500">{{ formatDate(selectedThread.creat_la) }}</p>
               </div>
             </div>
-            <p class="text-gray-800 whitespace-pre-line text-sm sm:text-base leading-relaxed">{{ selectedThread.continut }}</p>
+            <p class="text-gray-800 whitespace-pre-line text-sm sm:text-base leading-relaxed break-words">{{ selectedThread.continut }}</p>
           </div>
 
           <!-- Comments Section -->
@@ -163,7 +163,7 @@
                     <span class="text-sm font-bold text-dark">{{ comment.autor }}</span>
                     <span class="text-[10px] text-gray-400">{{ formatDate(comment.creat_la) }}</span>
                   </div>
-                  <p class="text-sm text-gray-700 whitespace-pre-line">{{ comment.continut }}</p>
+                  <p class="text-sm text-gray-700 whitespace-pre-line break-words">{{ comment.continut }}</p>
                 </div>
                 
                 <!-- Comment Actions -->
@@ -210,7 +210,7 @@
                           <span class="text-xs font-bold text-dark">{{ reply.autor }}</span>
                           <span class="text-[10px] text-gray-400">{{ formatDate(reply.creat_la) }}</span>
                         </div>
-                        <p class="text-xs text-gray-700 whitespace-pre-line"><span class="text-[#8b4513] font-semibold">@{{ comment.autor }}</span> {{ reply.continut }}</p>
+                        <p class="text-xs text-gray-700 whitespace-pre-line break-words"><span class="text-[#8b4513] font-semibold">@{{ comment.autor }}</span> {{ reply.continut }}</p>
                       </div>
                       <div class="flex items-center gap-4 mt-1 ml-2">
                         <button class="text-[11px] font-semibold text-gray-500 hover:text-red-500 transition-colors flex items-center gap-1"><i class="pi pi-heart text-[9px]"></i> {{ reply.likes }}</button>
