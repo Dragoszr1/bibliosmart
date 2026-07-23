@@ -18,7 +18,8 @@
           <h1 class="text-xl font-bold text-dark">Biblioteca</h1>
         </div>
 
-        <form @submit.prevent="handleSignup" class="space-y-5">
+        <!-- STEP 1: credentials -->
+        <form v-if="step === 'credentials'" @submit.prevent="handleSignup" class="space-y-5">
           <div>
             <label for="fullName" class="block text-sm font-medium text-gray-600 mb-1.5">Nume Complet</label>
             <input
@@ -82,12 +83,58 @@
             <p class="text-green-700 text-sm">{{ successMessage }}</p>
           </div>
 
-          <button type="submit" class="btn-primary w-full">
-            Creare Cont
+          <button type="submit" :disabled="loading" class="btn-primary w-full flex items-center justify-center gap-2">
+            <i v-if="loading" class="pi pi-spin pi-spinner text-sm"></i>
+            {{ loading ? 'Se procesează...' : 'Creare Cont' }}
           </button>
         </form>
 
-        <p class="mt-6 text-center text-gray-500 text-sm">
+        <!-- STEP 2: 2FA code -->
+        <form v-else @submit.prevent="handleVerifyCode" class="space-y-5">
+          <div class="text-center mb-2">
+            <div class="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-3">
+              <i class="pi pi-envelope text-secondary text-xl"></i>
+            </div>
+            <p class="text-sm text-gray-600">Am trimis un cod de 6 cifre la</p>
+            <p class="text-sm font-semibold text-dark">{{ form.email }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1.5">Cod de verificare</label>
+            <input
+              v-model="code"
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              placeholder="000000"
+              class="input-field text-center text-2xl font-mono tracking-[0.5em]"
+              autocomplete="one-time-code"
+              required
+              autofocus
+            >
+          </div>
+
+          <p class="text-xs text-gray-400 text-center">Codul expiră în 10 minute. Verifică și folderul spam.</p>
+
+          <div v-if="errorMessage" class="bg-red-50 border-l-4 border-accent rounded-lg p-3">
+            <p class="text-accent text-sm">{{ errorMessage }}</p>
+          </div>
+          
+          <div v-if="successMessage" class="bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
+            <p class="text-green-700 text-sm">{{ successMessage }}</p>
+          </div>
+
+          <button type="submit" :disabled="loading || code.length !== 6" class="btn-primary w-full flex items-center justify-center gap-2">
+            <i v-if="loading" class="pi pi-spin pi-spinner text-sm"></i>
+            {{ loading ? 'Se verifică...' : 'Verifică codul' }}
+          </button>
+
+          <button type="button" @click="resetToCredentials" class="w-full text-sm text-gray-400 hover:text-secondary text-center transition-colors">
+            Înapoi
+          </button>
+        </form>
+
+        <p v-if="step === 'credentials'" class="mt-6 text-center text-gray-500 text-sm">
           Ai deja un cont?
           <router-link to="/login" class="text-secondary hover:text-secondary/80 font-semibold">Conectare</router-link>
         </p>
@@ -101,6 +148,7 @@ export default {
   name: 'Signup',
   data() {
     return {
+      step: 'credentials',
       form: {
         fullName: '',
         email: '',
@@ -108,8 +156,11 @@ export default {
         confirmPassword: '',
         agreeToTerms: false
       },
+      code: '',
+      tempToken: '',
       errorMessage: '',
-      successMessage: ''
+      successMessage: '',
+      loading: false
     }
   },
   methods: {
@@ -139,6 +190,7 @@ export default {
         return
       }
 
+      this.loading = true
       try {
         const response = await fetch('/api/auth/register', {
           method: 'POST',
@@ -154,17 +206,52 @@ export default {
         })
 
         const data = await response.json()
-        if (response.ok) {
-          this.successMessage = 'Cont creat cu succes! Te redirecționăm la pagina de autentificare...'
-          setTimeout(() => {
-            this.$router.push('/login')
-          }, 2000)
+        if (response.ok && data.step === 'verify') {
+          this.tempToken = data.temp_token
+          this.step = 'verify'
+          this.successMessage = data.message || 'Cod trimis.'
         } else {
           this.errorMessage = data.message || 'Eroare la înregistrare'
         }
       } catch (error) {
         this.errorMessage = 'Eroare de rețea. Încearcă din nou.'
+      } finally {
+        this.loading = false
       }
+    },
+    async handleVerifyCode() {
+      this.errorMessage = ''
+      this.successMessage = ''
+      this.loading = true
+      try {
+        const res = await fetch('/api/auth/verify-register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ temp_token: this.tempToken, code: this.code })
+        })
+        const data = await res.json()
+        if (res.ok) {
+          this.successMessage = 'Cont creat cu succes! Te redirecționăm la autentificare...'
+          setTimeout(() => {
+            this.$router.push('/login')
+          }, 2000)
+        } else {
+          this.errorMessage = data.message || 'Cod incorect'
+          this.code = ''
+        }
+      } catch {
+        this.errorMessage = 'Eroare de rețea. Încearcă din nou.'
+      } finally {
+        this.loading = false
+      }
+    },
+    resetToCredentials() {
+      this.step = 'credentials'
+      this.code = ''
+      this.tempToken = ''
+      this.errorMessage = ''
+      this.successMessage = ''
     }
   }
 }

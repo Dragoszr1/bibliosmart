@@ -1,27 +1,38 @@
 <template>
-  <div id="app" class="min-h-screen">
+  <div id="app" class="font-sans text-[#2a1410] bg-cream min-h-screen pb-20">
     <!-- Hero Section -->
-    <section class="bg-dark py-16 sm:py-24 relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-br from-secondary/20 via-transparent to-accent/10"></div>
-      <div class="max-w-3xl mx-auto px-6 text-center relative z-10">
-        <h2 class="text-3xl sm:text-5xl font-bold text-white mb-3 tracking-tight">
+    <section class="relative overflow-hidden border-b border-[#ede0cc] min-h-[240px] flex items-center">
+      <div
+        class="absolute inset-0"
+        style="background: linear-gradient(105deg, rgba(45,16,24,0.95) 0%, rgba(45,16,24,0.85) 100%)"
+      ></div>
+      <div
+        class="absolute inset-0 opacity-[0.03]"
+        style="background-image: repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(201,168,76,1) 39px, rgba(201,168,76,1) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(201,168,76,1) 39px, rgba(201,168,76,1) 40px)"
+      ></div>
+      <div class="max-w-7xl mx-auto px-6 py-12 relative w-full text-center sm:text-left z-10">
+        <h2 class="text-4xl sm:text-5xl font-black text-white mb-2 tracking-tight drop-shadow font-display uppercase">
           {{ isBibliotecar ? 'Panou Bibliotecar' : 'Profilul Meu' }}
         </h2>
-        <p class="text-white/50 text-sm sm:text-lg font-normal">Bine ai revenit, {{ user.name }}</p>
+        <div class="flex items-center justify-center sm:justify-start gap-4 w-full opacity-90">
+             <div class="h-px flex-1 max-w-[30px] sm:hidden bg-gradient-to-l from-[#c9a84c] to-transparent"></div>
+             <p class="text-[#c9a84c] text-sm sm:text-base italic font-serif tracking-widest shrink-0">Bine ai revenit, {{ user.name }}</p>
+             <div class="h-px flex-1 max-w-[80px] bg-gradient-to-r from-[#c9a84c] to-transparent"></div>
+        </div>
       </div>
     </section>
 
     <!-- Main Content -->
-    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+    <main class="max-w-7xl mx-auto px-6 py-10">
       <!-- Top Row: Profile + Reviews side by side -->
-      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6 sm:mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
         <!-- Left: Profile Card -->
         <div class="lg:col-span-2">
-          <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-5 sm:p-6 h-full">
+          <div class="bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 p-5 sm:p-6 h-full flex flex-col">
             <!-- Profile Picture -->
-            <div class="flex flex-col items-center mb-4">
-              <div class="relative group mb-3">
-                <div class="w-24 sm:w-28 h-24 sm:h-28 rounded-full bg-cream shadow-card border-2 border-gray-100 overflow-hidden">
+            <div class="flex flex-col items-center mb-5">
+              <div class="relative group mb-4">
+                <div class="w-28 h-28 rounded-sm bg-cream-dark shadow-sm border border-[#2a1410]/10 overflow-hidden">
                   <img 
                     :src="user.profilePicture" 
                     :alt="user.name"
@@ -33,7 +44,7 @@
                   @click="triggerFileInput"
                   class="absolute inset-0 flex items-center justify-center cursor-pointer"
                 >
-                  <div class="w-24 sm:w-28 h-24 sm:h-28 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                  <div class="absolute inset-0 bg-dark/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                     <i class="pi pi-camera text-white text-xl"></i>
                   </div>
                 </div>
@@ -45,34 +56,34 @@
                   @change="uploadProfilePicture"
                 >
               </div>
-              <h1 class="text-lg sm:text-2xl font-bold text-dark">{{ user.name }}</h1>
+              <h1 class="text-xl sm:text-2xl font-bold font-display uppercase tracking-tight text-[#2a1410] text-center">{{ user.name }}</h1>
               <!-- Role badge -->
-              <span v-if="isBibliotecar" class="mt-1 px-3 py-0.5 bg-secondary text-white text-xs font-bold rounded-full">Bibliotecar</span>
+              <span v-if="isBibliotecar" class="mt-2 px-3 py-1 bg-[#c9a84c] text-dark font-mono text-[9px] tracking-widest font-bold uppercase rounded-sm">Bibliotecar</span>
             </div>
 
             <!-- Description -->
-            <div v-if="user.description" class="mb-4 px-1">
-              <p class="text-gray-700 text-xs sm:text-sm leading-relaxed">{{ user.description }}</p>
+            <div v-if="user.description" class="mb-5 px-2 text-center flex-1">
+              <p class="text-[#3b2b18] text-sm font-serif italic leading-relaxed">{{ user.description }}</p>
             </div>
-            <div v-else class="mb-4 px-1">
-              <p class="text-gray-400 text-xs sm:text-sm italic">Nicio descriere încă.</p>
+            <div v-else class="mb-5 px-2 text-center flex-1 flex items-center justify-center">
+              <p class="text-[#7a5a55] text-sm italic font-serif">Nicio descriere încă.</p>
             </div>
 
             <!-- Stats -->
-            <div class="flex items-center justify-center gap-4 py-3 border-t border-secondary/15">
+            <div class="flex items-center justify-center gap-8 py-5 border-t border-[#2a1410]/10">
               <div class="text-center">
-                <p class="text-lg sm:text-xl font-bold text-secondary">{{ user.totalBooksRead }}</p>
-                <p class="text-gray-500 text-xs">Cărți citite</p>
+                <p class="text-2xl font-black text-[#2a1410] font-display">{{ user.totalBooksRead }}</p>
+                <p class="font-mono text-[10px] tracking-widest uppercase text-[#7a5a55] mt-1">Cărți Citite</p>
               </div>
-              <div class="w-px h-8 bg-secondary/20"></div>
+              <div class="w-px h-10 bg-[#2a1410]/10"></div>
               <div class="text-center">
-                <p class="text-lg sm:text-xl font-bold text-secondary">{{ user.userReviews.length }}</p>
-                <p class="text-gray-500 text-xs">Recenzii</p>
+                <p class="text-2xl font-black text-[#2a1410] font-display">{{ user.userReviews.length }}</p>
+                <p class="font-mono text-[10px] tracking-widest uppercase text-[#7a5a55] mt-1">Recenzii</p>
               </div>
             </div>
 
             <!-- Edit Button -->
-            <button @click="openProfileEditModal" class="btn-primary w-full mt-4 text-xs sm:text-sm">
+            <button @click="openProfileEditModal" class="w-full px-5 py-3 mt-2 rounded-sm font-mono text-xs uppercase tracking-wider transition-colors border border-[#2a1410]/20 text-[#2a1410] hover:bg-[#c9a84c] hover:border-[#c9a84c] font-bold">
               Editează Profil
             </button>
           </div>
@@ -80,9 +91,9 @@
 
         <!-- Right: User Reviews -->
         <div class="lg:col-span-3">
-          <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-5 sm:p-6 h-full flex flex-col">
-            <h2 class="text-lg sm:text-xl font-bold text-dark mb-4 flex items-center gap-2">
-              <i class="pi pi-star text-secondary"></i> Recenziile Mele
+          <div class="bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 p-5 sm:p-6 h-full flex flex-col">
+            <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] mb-5 flex items-center gap-2">
+              <i class="pi pi-star text-[#c9a84c]"></i> Recenziile Mele
             </h2>
 
             <!-- Loading -->
@@ -91,24 +102,24 @@
             </div>
 
             <!-- Empty state -->
-            <div v-else-if="user.userReviews.length === 0" class="flex-1 flex flex-col items-center justify-center py-8">
-              <i class="pi pi-comments text-3xl text-gray-300 mb-2"></i>
-              <p class="text-gray-500 text-sm">Nicio recenzie încă</p>
+            <div v-else-if="user.userReviews.length === 0" class="flex-1 flex flex-col items-center justify-center py-8 border border-dashed border-[#2a1410]/10 rounded-sm bg-cream-dark">
+              <i class="pi pi-comments text-3xl text-[#2a1410]/20 mb-3"></i>
+              <p class="text-[#7a5a55] font-serif italic text-sm">Nicio recenzie încă</p>
             </div>
 
             <!-- Reviews list -->
-            <div v-else class="flex-1 space-y-3 overflow-y-auto max-h-[400px] pr-1">
-              <div v-for="review in user.userReviews" :key="review.id" class="bg-cream rounded-xl p-3 sm:p-4">
-                <div class="flex items-start justify-between gap-2 mb-1">
+            <div v-else class="flex-1 space-y-4 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+              <div v-for="review in user.userReviews" :key="review.id" class="bg-cream rounded-sm p-5 border border-[#2a1410]/5">
+                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
                   <div class="min-w-0">
-                    <h3 class="text-sm font-bold text-dark truncate">{{ review.titlu }}</h3>
-                    <p class="text-gray-500 text-xs">de {{ review.autor }}</p>
+                    <h3 class="text-sm font-bold text-[#2a1410] truncate">{{ review.titlu }}</h3>
+                    <p class="font-mono text-[10px] tracking-widest uppercase text-[#7a5a55] mt-1">de {{ review.autor }}</p>
                   </div>
-                  <div class="flex items-center gap-0.5 flex-shrink-0">
-                    <span v-for="star in 5" :key="star" :class="star <= review.nota ? 'text-accent' : 'text-gray-300'" class="text-sm">★</span>
+                  <div class="flex items-center gap-1 flex-shrink-0">
+                    <span v-for="star in 5" :key="star" :class="star <= review.nota ? 'text-[#c9a84c]' : 'text-[#2a1410]/10'" class="text-[10px]">★</span>
                   </div>
                 </div>
-                <p class="text-gray-700 text-xs sm:text-sm leading-relaxed mt-2">{{ review.comentariu }}</p>
+                <p class="text-[#3b2b18] text-sm font-serif italic leading-relaxed mt-3">{{ review.comentariu }}</p>
               </div>
             </div>
           </div>
@@ -117,64 +128,66 @@
 
       <!-- Books Read (regular users) -->
       <div v-if="!isBibliotecar">
-        <h2 class="text-lg sm:text-xl font-bold text-dark mb-4 flex items-center gap-2">
-          <i class="pi pi-book text-secondary"></i> Cărțile Citite
+        <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] mb-5 mt-10 flex items-center gap-2">
+          <i class="pi pi-book text-[#c9a84c]"></i> Cărțile Citite
         </h2>
 
-        <div v-if="user.booksRead.length === 0" class="bg-white rounded-2xl shadow-card border border-gray-100 p-8 sm:p-12 text-center">
-          <i class="pi pi-book text-4xl sm:text-5xl text-secondary mb-4"></i>
-          <p class="text-gray-600 text-sm sm:text-lg">Nici o carte citită</p>
+        <div v-if="user.booksRead.length === 0" class="bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 p-8 sm:p-12 text-center">
+          <i class="pi pi-book text-4xl sm:text-5xl text-[#2a1410]/20 mb-4 block"></i>
+          <p class="text-[#7a5a55] font-serif italic text-sm sm:text-base">Nici o carte citită încă.</p>
         </div>
 
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5">
           <div 
             v-for="(book, index) in user.booksRead" 
             :key="index"
-            class="bg-white rounded-xl shadow-card border border-gray-100 p-3 sm:p-6 text-center hover:shadow-elevated transition-shadow"
+            class="bg-white rounded-sm border border-[#2a1410]/10 shadow-[0_1px_4px_rgba(42,20,16,0.04)] p-3 text-center hover:shadow-[0_4px_16px_rgba(155,27,48,0.12)] transition-shadow flex flex-col"
           >
-            <div class="mb-3 sm:mb-4 h-32 sm:h-40 rounded-lg bg-cream border border-gray-100 flex items-center justify-center">
-              <i class="pi pi-book text-5xl sm:text-6xl text-secondary"></i>
+            <div class="mb-3 h-32 rounded-sm bg-cream-dark flex items-center justify-center relative overflow-hidden shrink-0 border border-[#2a1410]/5">
+              <i class="pi pi-check text-4xl text-[#c9a84c]/50"></i>
             </div>
-            <h3 class="text-sm sm:text-lg font-bold text-dark mb-1">{{ book.titlu }}</h3>
-            <p class="text-gray-500 text-xs sm:text-sm mb-1">{{ book.autor }}</p>
-            <p class="text-gray-600 text-xs">ISBN: {{ book.ISBN }}</p>
+            <div class="flex-1 flex flex-col justify-end">
+                <p class="font-mono text-[9px] uppercase tracking-wider mb-1 text-[#7a5a55] truncate">ISBN: {{ book.ISBN }}</p>
+                <h3 class="text-xs font-semibold text-[#2a1410] mb-1 leading-tight line-clamp-2">{{ book.titlu }}</h3>
+                <p class="text-[10px] text-[#7a5a55] truncate">{{ book.autor }}</p>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- AI Recommendations (regular users only) -->
-      <div v-if="!isBibliotecar" class="mt-4">
-        <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-5 sm:p-6">
-          <div class="flex items-center justify-between gap-3 mb-4">
-            <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
-              <i class="pi pi-sparkles text-secondary"></i> Recomandări AI
+      <div v-if="!isBibliotecar" class="mt-10">
+        <div class="bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 p-5 sm:p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+            <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] flex items-center gap-2">
+              <i class="pi pi-sparkles text-[#c9a84c]"></i> Recomandări AI
             </h2>
             <button
               @click="loadAiRecommendations"
               :disabled="loadingAi"
-              class="px-4 py-2 bg-secondary hover:bg-secondary/90 text-white text-xs font-semibold rounded-lg transition-all disabled:opacity-50 flex items-center gap-2"
+              class="px-5 py-2.5 bg-[#c9a84c] hover:opacity-90 text-dark text-[10px] font-mono tracking-widest uppercase font-bold rounded-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              <i :class="loadingAi ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'" class="text-xs"></i>
-              {{ aiRecommendations ? 'Reîmprospătează' : 'Generează recomandări' }}
+              <i :class="loadingAi ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"></i>
+              {{ aiRecommendations ? 'Reîmprospătează' : 'Generează' }}
             </button>
           </div>
 
-          <div v-if="!aiRecommendations && !loadingAi && !aiError" class="py-6 text-center">
-            <i class="pi pi-sparkles text-4xl text-gray-300 mb-3"></i>
-            <p class="text-gray-500 text-sm">Apasă butonul pentru a primi recomandări personalizate bazate pe cărțile tale.</p>
+          <div v-if="!aiRecommendations && !loadingAi && !aiError" class="py-10 text-center border border-dashed border-[#2a1410]/10 rounded-sm bg-cream-dark">
+            <i class="pi pi-sparkles text-3xl text-[#c9a84c]/50 mb-3 block"></i>
+            <p class="text-[#7a5a55] text-sm font-serif italic">Apasă butonul pentru a primi recomandări personalizate bazate pe cărțile tale.</p>
           </div>
 
-          <div v-if="loadingAi" class="py-6 text-center">
-            <i class="pi pi-spin pi-spinner text-2xl text-secondary mb-2"></i>
-            <p class="text-gray-500 text-sm">Gemini analizează istoricul tău...</p>
+          <div v-if="loadingAi" class="py-10 text-center border border-dashed border-[#2a1410]/10 rounded-sm bg-cream-dark">
+            <i class="pi pi-spin pi-spinner text-2xl text-[#c9a84c] mb-3 block"></i>
+            <p class="text-[#7a5a55] font-mono text-[10px] tracking-widest uppercase">Gemini analizează istoricul tău...</p>
           </div>
 
-          <div v-if="aiError" class="py-4 text-center text-red-500 text-sm">
+          <div v-if="aiError" class="py-4 text-center text-[#ff3d5a] text-xs font-mono bg-[#ff3d5a]/5 rounded-sm">
             <i class="pi pi-exclamation-triangle mr-2"></i>{{ aiError }}
           </div>
 
-          <div v-if="aiRecommendations && !loadingAi" class="bg-cream rounded-xl p-4">
-            <p class="text-dark text-sm leading-relaxed whitespace-pre-line">{{ aiRecommendations }}</p>
+          <div v-if="aiRecommendations && !loadingAi" class="bg-cream rounded-sm p-6 border border-[#2a1410]/10">
+            <p class="text-[#2a1410] text-sm leading-relaxed whitespace-pre-line font-serif">{{ aiRecommendations }}</p>
           </div>
         </div>
       </div>
@@ -182,10 +195,10 @@
       <!-- ═══════════════════════════════════════════════════════════ -->
       <!-- LIBRARIAN PANEL -->
       <!-- ═══════════════════════════════════════════════════════════ -->
-      <div v-if="isBibliotecar" class="mt-2">
+      <div v-if="isBibliotecar" class="mt-8">
 
         <!-- Tab Bar -->
-        <div class="flex gap-1 bg-white rounded-2xl shadow-card border border-gray-100 p-1.5 mb-6 overflow-x-auto">
+        <div class="flex gap-1 bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 p-1 mb-8 overflow-x-auto custom-scrollbar">
           <button
             v-for="tab in [
               { key: 'cereri',   label: 'Cereri',   icon: 'pi pi-inbox' },
@@ -197,36 +210,36 @@
             :key="tab.key"
             @click="changeTab(tab.key)"
             :class="[
-              'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 whitespace-nowrap flex-shrink-0',
+              'flex items-center gap-2 px-5 py-2.5 rounded-sm font-mono text-[10px] tracking-widest uppercase transition-all duration-150 whitespace-nowrap flex-shrink-0',
               activeTab === tab.key
-                ? 'bg-secondary text-white shadow-soft'
-                : 'text-gray-500 hover:text-dark hover:bg-gray-50'
+                ? 'bg-[#c9a84c] text-dark font-bold'
+                : 'text-[#7a5a55] hover:text-[#2a1410] hover:bg-cream-dark font-medium'
             ]"
           >
             <i :class="tab.icon" class="text-xs"></i>
             {{ tab.label }}
-            <span v-if="tab.key === 'cereri' && pendingRequestsCount > 0" class="bg-white/30 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{{ pendingRequestsCount }}</span>
-            <span v-if="tab.key === 'elevi' && approvedWaitingCount > 0" class="bg-amber-400 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{{ approvedWaitingCount }}</span>
+            <span v-if="tab.key === 'cereri' && pendingRequestsCount > 0" class="ml-1 bg-white/50 text-[#2a1410] text-[9px] font-bold px-1.5 py-0.5 rounded-sm">{{ pendingRequestsCount }}</span>
+            <span v-if="tab.key === 'elevi' && approvedWaitingCount > 0" class="ml-1 bg-[#ff3d5a]/20 text-[#ff3d5a] text-[9px] font-bold px-1.5 py-0.5 rounded-sm border border-[#ff3d5a]/30">{{ approvedWaitingCount }}</span>
           </button>
         </div>
 
         <!-- tab: cereri -->
         <div v-if="activeTab === 'cereri'" class="mb-8">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-            <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
-              <i class="pi pi-inbox text-secondary"></i> Cereri Împrumut
-              <span v-if="pendingRequestsCount > 0" class="ml-1 bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ pendingRequestsCount }}</span>
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] flex items-center gap-2">
+              <i class="pi pi-inbox text-[#c9a84c]"></i> Cereri Împrumut
+              <span v-if="pendingRequestsCount > 0" class="ml-2 bg-[#ff3d5a] text-white font-mono text-[9px] px-2 py-0.5 rounded-sm shadow-sm">{{ pendingRequestsCount }}</span>
             </h2>
-            <div class="flex gap-1.5">
+            <div class="flex gap-2 overflow-x-auto pb-2 sm:pb-0 custom-scrollbar">
               <button
                 v-for="f in [{ key: 'all', label: 'Toate' }, { key: 'pending', label: 'În așteptare' }, { key: 'approved', label: 'Aprobate' }, { key: 'ridicat', label: 'Ridicate' }, { key: 'rejected', label: 'Respinse' }]"
                 :key="f.key"
                 @click="requestFilter = f.key; fetchBookRequests()"
                 :class="[
-                  'px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150',
+                  'px-4 py-2 rounded-sm font-mono text-[9px] tracking-widest uppercase transition-all whitespace-nowrap',
                   requestFilter === f.key
-                    ? 'bg-secondary text-white'
-                    : 'bg-white text-gray-500 border border-gray-200 hover:border-secondary/30 hover:text-secondary'
+                    ? 'bg-[#2a1410] text-cream font-bold'
+                    : 'bg-white text-[#7a5a55] border border-[#2a1410]/10 hover:border-[#2a1410]/30 hover:text-[#2a1410]'
                 ]"
               >
                 {{ f.label }}
@@ -235,14 +248,14 @@
           </div>
 
           <!-- Loading -->
-          <div v-if="loadingRequests" class="bg-white rounded-2xl shadow-card border border-gray-100 p-8 text-center">
-            <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
+          <div v-if="loadingRequests" class="bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 p-8 text-center">
+            <i class="pi pi-spin pi-spinner text-2xl text-[#c9a84c]"></i>
           </div>
 
           <!-- Empty -->
-          <div v-else-if="bookRequests.length === 0" class="bg-white rounded-2xl shadow-card border border-gray-100 p-8 text-center">
-            <i class="pi pi-inbox text-3xl text-gray-300 mb-2"></i>
-            <p class="text-gray-500 text-sm">Nicio cerere {{ requestFilter !== 'all' ? 'cu acest status' : '' }}</p>
+          <div v-else-if="bookRequests.length === 0" class="bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 p-8 text-center">
+            <i class="pi pi-inbox text-3xl text-[#2a1410]/20 mb-3 block"></i>
+            <p class="text-[#7a5a55] text-sm font-serif italic">Nicio cerere {{ requestFilter !== 'all' ? 'cu acest status' : '' }}</p>
           </div>
 
           <!-- Requests List -->
@@ -251,213 +264,217 @@
               v-for="req in bookRequests"
               :key="req.cerere_id"
               :class="[
-                'bg-white rounded-xl shadow-card border overflow-hidden transition-all duration-150',
-                req.status === 'pending' ? 'border-amber-200' : req.status === 'approved' ? 'border-green-200' : 'border-red-200'
+                'bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border overflow-hidden transition-all',
+                req.status === 'pending' ? 'border-[#c9a84c]/50' : req.status === 'approved' ? 'border-[#2a5c3a]/30' : 'border-[#2a1410]/10'
               ]"
             >
-              <div class="flex flex-col sm:flex-row sm:items-center gap-3 p-4">
+              <div class="flex flex-col sm:flex-row sm:items-center gap-4 p-5">
                 <!-- Info -->
                 <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
+                  <div class="flex items-center gap-3 mb-2">
                     <span :class="[
-                      'text-xs px-2 py-0.5 rounded-full font-medium',
-                      req.status === 'pending'   ? 'bg-amber-50 text-amber-700' :
-                      req.status === 'approved'  ? 'bg-blue-50 text-blue-700' :
-                      req.status === 'ridicat' ? 'bg-green-50 text-green-700' :
-                      'bg-red-50 text-red-700'
+                      'font-mono text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-sm font-bold border',
+                      req.status === 'pending'   ? 'bg-[#c9a84c]/10 text-[#c9a84c] border-[#c9a84c]/20' :
+                      req.status === 'approved'  ? 'bg-[#2a5c3a]/10 text-[#2a5c3a] border-[#2a5c3a]/20' :
+                      req.status === 'ridicat' ? 'bg-gray-100 text-gray-600 border-gray-200' :
+                      'bg-[#ff3d5a]/10 text-[#ff3d5a] border-[#ff3d5a]/20'
                     ]">
                       {{ { pending: 'În așteptare', approved: 'Aprobat', ridicat: 'Ridicat', rejected: 'Respins' }[req.status] || req.status }}
                     </span>
-                    <span class="text-gray-400 text-xs">{{ formatDate(req.created_at) }}</span>
+                    <span class="text-[#7a5a55] font-mono text-[9px] uppercase">{{ formatDate(req.created_at) }}</span>
                   </div>
-                  <p class="text-sm font-bold text-dark truncate">{{ req.titlu }}</p>
-                  <p class="text-xs text-gray-500">de {{ req.autor }}</p>
-                  <p class="text-xs text-gray-500 mt-1">
-                    <i class="pi pi-user mr-1"></i>{{ req.username }}
-                    <span class="ml-2 text-gray-400">({{ req.email }})</span>
-                  </p>
+                  <p class="text-sm font-bold text-[#2a1410] truncate">{{ req.titlu }}</p>
+                  <p class="font-mono text-[10px] tracking-widest uppercase text-[#7a5a55] mt-1">de {{ req.autor }}</p>
+                  <div class="mt-3 flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-sm bg-cream-dark flex items-center justify-center shrink-0 border border-[#2a1410]/10">
+                       <i class="pi pi-user text-[#7a5a55] text-[10px]"></i>
+                    </div>
+                    <p class="text-xs text-[#2a1410] font-medium">
+                      {{ req.username }}
+                      <span class="ml-1 text-[#7a5a55] font-normal font-serif italic">({{ req.email }})</span>
+                    </p>
+                  </div>
                 </div>
 
                 <!-- Actions (only for pending) -->
-                <div v-if="req.status === 'pending'" class="flex gap-2 flex-shrink-0">
+                <div v-if="req.status === 'pending'" class="flex gap-2 flex-shrink-0 mt-3 sm:mt-0">
                   <button
                     @click="openPickupModal(req)"
-                    class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    class="px-4 py-2.5 bg-[#2a5c3a] hover:bg-[#2a5c3a]/90 text-white font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-colors flex items-center gap-1.5"
                   >
-                    <i class="pi pi-check text-xs"></i> Aprobă
+                    <i class="pi pi-check text-[10px]"></i> Aprobă
                   </button>
                   <button
                     @click="handleRequest(req.cerere_id, 'rejected')"
-                    class="px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    class="px-4 py-2.5 bg-white border border-[#ff3d5a]/30 text-[#ff3d5a] hover:bg-[#ff3d5a]/5 font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-colors flex items-center gap-1.5"
                   >
-                    <i class="pi pi-times text-xs"></i> Respinge
+                    <i class="pi pi-times text-[10px]"></i> Respinge
                   </button>
                 </div>
               </div>
             </div>
           </div>
-
         </div><!-- end cereri tab -->
 
         <!-- tab: cărți -->
         <div v-if="activeTab === 'carti'">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-          <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
-            <i class="pi pi-cog text-secondary"></i> Gestionare Cărți
-          </h2>
-          <div class="flex gap-2">
-            <button
-              @click="downloadReport"
-              :disabled="downloadingReport"
-              class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold rounded-lg text-xs sm:text-sm transition-all flex items-center gap-1"
-              title="Descarcă raport Word cu toți elevii și împrumuturile lor"
-            >
-              <i :class="downloadingReport ? 'pi pi-spin pi-spinner' : 'pi pi-file-word'" class="mr-1"></i>
-              Raport Word
-            </button>
-            <button @click="openAddBookModal" class="px-4 py-2 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-lg text-xs sm:text-sm transition-all">
-              <i class="pi pi-plus mr-1"></i> Adaugă Carte
-            </button>
-          </div>
-        </div>
-
-        <!-- Search / Filter Bar -->
-        <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-4 mb-6">
-          <div class="flex flex-col sm:flex-row gap-3">
-            <div class="flex-1">
-              <input
-                v-model="libSearch"
-                @input="filterLibBooks"
-                type="text"
-                placeholder="Caută carte după titlu, autor, ISBN..."
-                class="input-field"
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] flex items-center gap-2">
+              <i class="pi pi-cog text-[#c9a84c]"></i> Gestionare Cărți
+            </h2>
+            <div class="flex gap-3">
+              <button
+                @click="downloadReport"
+                :disabled="downloadingReport"
+                class="px-5 py-2.5 bg-white border border-[#2a1410]/20 hover:bg-cream-dark disabled:opacity-60 text-[#2a1410] font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-all flex items-center gap-1.5"
+                title="Descarcă raport Word cu toți elevii și împrumuturile lor"
               >
-            </div>
-            <div class="text-sm text-gray-600 flex items-center">
-              {{ filteredLibBooks.length }} cărți
+                <i :class="downloadingReport ? 'pi pi-spin pi-spinner' : 'pi pi-file-word'"></i>
+                Raport Word
+              </button>
+              <button @click="openAddBookModal" class="px-5 py-2.5 bg-[#c9a84c] hover:opacity-90 text-dark font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-all flex items-center gap-1.5 shadow-sm">
+                <i class="pi pi-plus"></i> Adaugă Carte
+              </button>
             </div>
           </div>
-        </div>
 
-        <!-- Books Table -->
-        <div class="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
-          <!-- Loading -->
-          <div v-if="loadingBooks" class="flex items-center justify-center py-12">
-            <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
-          </div>
-
-          <!-- Table -->
-          <div v-else class="overflow-x-auto">
-            <table class="w-full text-left">
-              <thead>
-                <tr class="bg-dark text-cream text-xs sm:text-sm">
-                  <th class="px-3 sm:px-4 py-3 font-semibold">Imagine</th>
-                  <th class="px-3 sm:px-4 py-3 font-semibold">Titlu</th>
-                  <th class="px-3 sm:px-4 py-3 font-semibold hidden sm:table-cell">Autor</th>
-                  <th class="px-3 sm:px-4 py-3 font-semibold hidden md:table-cell">Gen</th>
-                  <th class="px-3 sm:px-4 py-3 font-semibold hidden lg:table-cell">Poziție</th>
-                  <th class="px-3 sm:px-4 py-3 font-semibold text-center">Stoc</th>
-                  <th class="px-3 sm:px-4 py-3 font-semibold text-center">Disponibil</th>
-                  <th class="px-3 sm:px-4 py-3 font-semibold text-center">PDF</th>
-                  <th class="px-3 sm:px-4 py-3 font-semibold text-center">Acțiuni</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr 
-                  v-for="book in filteredLibBooks" 
-                  :key="book.carte_id"
-                  class="border-t border-gray-100 hover:bg-cream/50 transition-colors text-xs sm:text-sm"
+          <!-- Search / Filter Bar -->
+          <div class="bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 p-5 mb-6">
+            <div class="flex flex-col sm:flex-row gap-4">
+              <div class="flex-1 flex items-center gap-3 bg-cream-dark rounded-sm px-4 py-3 border border-[#2a1410]/10 focus-within:border-[#c9a84c] transition-colors">
+                 <i class="pi pi-search text-[#7a5a55]"></i>
+                <input
+                  v-model="libSearch"
+                  @input="filterLibBooks"
+                  type="text"
+                  placeholder="Caută carte după titlu, autor, ISBN..."
+                  class="bg-transparent border-none focus:outline-none w-full text-sm text-[#2a1410] placeholder-[#7a5a55]/50 font-medium"
                 >
-                  <!-- Image -->
-                  <td class="px-3 sm:px-4 py-3">
-                    <div class="w-12 h-16 rounded bg-cream border border-gray-100 overflow-hidden flex items-center justify-center relative group cursor-pointer" @click="triggerBookImageInput(book.carte_id)">
-                      <img 
-                        :src="'/api/books/image/' + book.carte_id + '?t=' + imageCacheBust" 
-                        class="w-full h-full object-cover"
-                        @error="$event.target.style.display='none'"
-                      >
-                      <i class="pi pi-image text-secondary/30 text-lg absolute" style="z-index: 0;"></i>
-                      <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <i class="pi pi-camera text-white text-xs"></i>
-                      </div>
-                    </div>
-                  </td>
-                  <!-- Title -->
-                  <td class="px-3 sm:px-4 py-3">
-                    <p class="font-bold text-dark">{{ book.titlu }}</p>
-                    <p class="text-gray-400 text-xs sm:hidden">{{ book.autor }}</p>
-                    <p class="text-gray-400 text-xs">ISBN: {{ book.ISBN }}</p>
-                  </td>
-                  <!-- Author -->
-                  <td class="px-3 sm:px-4 py-3 hidden sm:table-cell text-gray-700">{{ book.autor }}</td>
-                  <!-- Genre -->
-                  <td class="px-3 sm:px-4 py-3 hidden md:table-cell">
-                    <span class="bg-cream text-secondary px-2 py-1 rounded-md text-xs font-medium">{{ book.gen }}</span>
-                  </td>
-                  <!-- Position -->
-                  <td class="px-3 sm:px-4 py-3 hidden lg:table-cell text-gray-600 text-xs">{{ book.pozitie || '—' }}</td>
-                  <!-- Stock Total -->
-                  <td class="px-3 sm:px-4 py-3 text-center font-bold text-secondary">{{ book.stoc_total }}</td>
-                  <!-- Stock Available -->
-                  <td class="px-3 sm:px-4 py-3 text-center">
-                    <span :class="book.stoc_disponibil > 0 ? 'text-green-600' : 'text-accent'" class="font-bold">{{ book.stoc_disponibil }}</span>
-                  </td>
-                  <!-- PDF -->
-                  <td class="px-3 sm:px-4 py-3 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                      <button v-if="book.has_pdf" @click="openPdfInTab(book.carte_id)" class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Vizualizează PDF">
-                        <i class="pi pi-file-pdf text-sm"></i>
-                      </button>
-                      <button @click="triggerBookPdfInput(book.carte_id)" class="p-2 text-secondary hover:bg-secondary/10 rounded-lg transition-colors" :title="book.has_pdf ? 'Înlocuiește PDF' : 'Încarcă PDF'">
-                        <i :class="book.has_pdf ? 'pi pi-refresh' : 'pi pi-upload'" class="text-sm"></i>
-                      </button>
-                      <button v-if="book.has_pdf" @click="deleteBookPdf(book)" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Șterge PDF">
-                        <i class="pi pi-times text-sm"></i>
-                      </button>
-                    </div>
-                  </td>
-                  <!-- Actions -->
-                  <td class="px-3 sm:px-4 py-3">
-                    <div class="flex items-center justify-center gap-1">
-                      <button @click="openEditBookModal(book)" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editează">
-                        <i class="pi pi-pencil text-sm"></i>
-                      </button>
-                      <button @click="openStockModal(book)" class="p-2 text-secondary hover:bg-secondary/10 rounded-lg transition-colors" title="Stoc">
-                        <i class="pi pi-sort-alt text-sm"></i>
-                      </button>
-                      <button @click="confirmDeleteBook(book)" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Șterge">
-                        <i class="pi pi-trash text-sm"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-
-            <!-- Empty -->
-            <div v-if="filteredLibBooks.length === 0 && !loadingBooks" class="text-center py-12">
-              <i class="pi pi-book text-3xl text-gray-300 mb-2"></i>
-              <p class="text-gray-500 text-sm">Nicio carte găsită</p>
+              </div>
+              <div class="font-mono text-[10px] uppercase tracking-widest text-[#7a5a55] flex items-center shrink-0">
+                Total: <span class="text-[#2a1410] font-bold ml-1">{{ filteredLibBooks.length }}</span> cărți
+              </div>
             </div>
           </div>
-        </div>
 
+          <!-- Books Table -->
+          <div class="bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 overflow-hidden">
+            <!-- Loading -->
+            <div v-if="loadingBooks" class="flex items-center justify-center py-16">
+              <i class="pi pi-spin pi-spinner text-3xl text-[#c9a84c]"></i>
+            </div>
+
+            <!-- Table -->
+            <div v-else class="overflow-x-auto custom-scrollbar">
+              <table class="w-full text-left">
+                <thead>
+                  <tr class="bg-dark text-cream border-b border-[#2a1410]/10">
+                    <th class="px-5 py-4 font-mono text-[10px] tracking-widest uppercase font-bold">Imagine</th>
+                    <th class="px-5 py-4 font-mono text-[10px] tracking-widest uppercase font-bold">Titlu / ISBN</th>
+                    <th class="px-5 py-4 font-mono text-[10px] tracking-widest uppercase font-bold hidden sm:table-cell">Autor</th>
+                    <th class="px-5 py-4 font-mono text-[10px] tracking-widest uppercase font-bold hidden md:table-cell">Gen</th>
+                    <th class="px-5 py-4 font-mono text-[10px] tracking-widest uppercase font-bold hidden lg:table-cell">Poziție</th>
+                    <th class="px-5 py-4 font-mono text-[10px] tracking-widest uppercase font-bold text-center">Stoc Total</th>
+                    <th class="px-5 py-4 font-mono text-[10px] tracking-widest uppercase font-bold text-center">Disponibil</th>
+                    <th class="px-5 py-4 font-mono text-[10px] tracking-widest uppercase font-bold text-center">PDF</th>
+                    <th class="px-5 py-4 font-mono text-[10px] tracking-widest uppercase font-bold text-center">Acțiuni</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-[#2a1410]/5">
+                  <tr 
+                    v-for="book in filteredLibBooks" 
+                    :key="book.carte_id"
+                    class="hover:bg-cream/50 transition-colors"
+                  >
+                    <!-- Image -->
+                    <td class="px-5 py-3">
+                      <div class="w-12 h-16 rounded-sm bg-cream border border-[#2a1410]/10 overflow-hidden flex items-center justify-center relative group cursor-pointer" @click="triggerBookImageInput(book.carte_id)">
+                        <img 
+                          :src="'/api/books/image/' + book.carte_id + '?t=' + imageCacheBust" 
+                          class="w-full h-full object-cover"
+                          @error="$event.target.style.display='none'"
+                        >
+                        <i class="pi pi-image text-[#2a1410]/10 text-lg absolute" style="z-index: 0;"></i>
+                        <div class="absolute inset-0 bg-dark/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[1px]">
+                          <i class="pi pi-camera text-white text-xs"></i>
+                        </div>
+                      </div>
+                    </td>
+                    <!-- Title -->
+                    <td class="px-5 py-3">
+                      <p class="font-semibold text-[#2a1410] text-sm">{{ book.titlu }}</p>
+                      <p class="text-[#7a5a55] text-xs sm:hidden font-serif italic mt-0.5">{{ book.autor }}</p>
+                      <p class="font-mono text-[9px] uppercase tracking-wider text-[#7a5a55] mt-1">ISBN: {{ book.ISBN }}</p>
+                    </td>
+                    <!-- Author -->
+                    <td class="px-5 py-3 hidden sm:table-cell text-[#3b2b18] text-sm font-serif italic">{{ book.autor }}</td>
+                    <!-- Genre -->
+                    <td class="px-5 py-3 hidden md:table-cell">
+                      <span class="bg-cream-dark text-[#7a5a55] border border-[#2a1410]/10 px-2 py-1 rounded-sm font-mono text-[9px] uppercase tracking-widest font-bold">{{ book.gen }}</span>
+                    </td>
+                    <!-- Position -->
+                    <td class="px-5 py-3 hidden lg:table-cell text-[#7a5a55] text-xs">{{ book.pozitie || '—' }}</td>
+                    <!-- Stock Total -->
+                    <td class="px-5 py-3 text-center font-bold text-[#2a1410]">{{ book.stoc_total }}</td>
+                    <!-- Stock Available -->
+                    <td class="px-5 py-3 text-center">
+                      <span :class="book.stoc_disponibil > 0 ? 'text-[#2a5c3a] bg-[#2a5c3a]/10 border border-[#2a5c3a]/20' : 'text-[#ff3d5a] bg-[#ff3d5a]/10 border border-[#ff3d5a]/20'" class="font-mono text-[10px] px-2 py-0.5 rounded-sm">{{ book.stoc_disponibil }}</span>
+                    </td>
+                    <!-- PDF -->
+                    <td class="px-5 py-3 text-center">
+                      <div class="flex items-center justify-center gap-2">
+                        <button v-if="book.has_pdf" @click="openPdfInTab(book.carte_id)" class="p-2 text-[#2a5c3a] hover:bg-[#2a5c3a]/10 rounded-sm transition-colors border border-transparent hover:border-[#2a5c3a]/20" title="Vizualizează PDF">
+                          <i class="pi pi-file-pdf text-sm"></i>
+                        </button>
+                        <button @click="triggerBookPdfInput(book.carte_id)" class="p-2 text-secondary hover:bg-secondary/10 rounded-sm transition-colors border border-transparent hover:border-secondary/20" :title="book.has_pdf ? 'Înlocuiește PDF' : 'Încarcă PDF'">
+                          <i :class="book.has_pdf ? 'pi pi-refresh' : 'pi pi-upload'" class="text-sm"></i>
+                        </button>
+                        <button v-if="book.has_pdf" @click="deleteBookPdf(book)" class="p-2 text-[#ff3d5a] hover:bg-[#ff3d5a]/10 rounded-sm transition-colors border border-transparent hover:border-[#ff3d5a]/20" title="Șterge PDF">
+                          <i class="pi pi-times text-sm"></i>
+                        </button>
+                      </div>
+                    </td>
+                    <!-- Actions -->
+                    <td class="px-5 py-3">
+                      <div class="flex items-center justify-center gap-2">
+                        <button @click="openEditBookModal(book)" class="p-2 text-[#c9a84c] hover:bg-[#c9a84c]/10 rounded-sm transition-colors border border-transparent hover:border-[#c9a84c]/30" title="Editează">
+                          <i class="pi pi-pencil text-sm"></i>
+                        </button>
+                        <button @click="openStockModal(book)" class="p-2 text-[#2a1410] hover:bg-[#2a1410]/5 rounded-sm transition-colors border border-transparent hover:border-[#2a1410]/10" title="Stoc">
+                          <i class="pi pi-sort-alt text-sm"></i>
+                        </button>
+                        <button @click="confirmDeleteBook(book)" class="p-2 text-[#ff3d5a] hover:bg-[#ff3d5a]/10 rounded-sm transition-colors border border-transparent hover:border-[#ff3d5a]/20" title="Șterge">
+                          <i class="pi pi-trash text-sm"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Empty -->
+              <div v-if="filteredLibBooks.length === 0 && !loadingBooks" class="text-center py-16 border-t border-[#2a1410]/5">
+                <i class="pi pi-book text-4xl text-[#2a1410]/20 mb-3 block"></i>
+                <p class="text-[#7a5a55] font-serif italic text-sm">Nicio carte găsită</p>
+              </div>
+            </div>
+          </div>
         </div><!-- end carti tab -->
 
         <!-- tab: anunțuri -->
         <div v-if="activeTab === 'anunturi'">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-            <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
-              <i class="pi pi-megaphone text-secondary"></i> Gestionare Anunțuri
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] flex items-center gap-2">
+              <i class="pi pi-megaphone text-[#c9a84c]"></i> Gestionare Anunțuri
             </h2>
-            <button @click="openAddAnuntModal" class="px-4 py-2 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-lg text-xs sm:text-sm transition-all">
-              <i class="pi pi-plus mr-1"></i> Anunț Nou
+            <button @click="openAddAnuntModal" class="px-5 py-2.5 bg-[#c9a84c] hover:opacity-90 text-dark font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-all flex items-center gap-1.5 shadow-sm">
+              <i class="pi pi-plus"></i> Anunț Nou
             </button>
           </div>
 
           <!-- Loading -->
-          <div v-if="loadingAnunturi" class="bg-white rounded-2xl shadow-card border border-gray-100 p-8 text-center">
-            <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
+          <div v-if="loadingAnunturi" class="bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 p-8 text-center">
+            <i class="pi pi-spin pi-spinner text-2xl text-[#c9a84c]"></i>
           </div>
 
           <!-- Announcements list -->
@@ -465,60 +482,63 @@
             <div 
               v-for="a in allAnunturi" 
               :key="a.anunt_id"
-              class="bg-white rounded-xl shadow-card border border-gray-100 p-4 sm:p-6"
+              class="bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 p-5 sm:p-6"
             >
-              <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+              <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4 border-b border-[#2a1410]/10 pb-4">
                 <div class="min-w-0 flex-1">
-                  <h3 class="text-sm sm:text-lg font-bold text-dark">{{ a.titlu }}</h3>
-                  <p class="text-gray-500 text-xs mt-1">
-                    <i class="pi pi-calendar mr-1"></i>{{ a.data_publicare }}
-                    <span class="ml-3"><i class="pi pi-thumbs-up mr-1"></i>{{ a.aprecieri }} aprecieri</span>
+                  <h3 class="text-lg font-bold text-[#2a1410]">{{ a.titlu }}</h3>
+                  <p class="font-mono text-[10px] uppercase tracking-widest text-[#7a5a55] mt-2 flex items-center gap-4">
+                    <span><i class="pi pi-calendar mr-1.5"></i>{{ a.data_publicare }}</span>
+                    <span><i class="pi pi-thumbs-up mr-1.5"></i>{{ a.aprecieri }} aprecieri</span>
                   </p>
                 </div>
-                <div class="flex gap-1 flex-shrink-0">
-                  <button @click="openEditAnuntModal(a)" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editează">
+                <div class="flex gap-2 flex-shrink-0">
+                  <button @click="openEditAnuntModal(a)" class="p-2 text-[#c9a84c] hover:bg-[#c9a84c]/10 rounded-sm transition-colors border border-transparent hover:border-[#c9a84c]/30" title="Editează">
                     <i class="pi pi-pencil text-sm"></i>
                   </button>
-                  <button @click="confirmDeleteAnunt(a)" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Șterge">
+                  <button @click="confirmDeleteAnunt(a)" class="p-2 text-[#ff3d5a] hover:bg-[#ff3d5a]/10 rounded-sm transition-colors border border-transparent hover:border-[#ff3d5a]/20" title="Șterge">
                     <i class="pi pi-trash text-sm"></i>
                   </button>
                 </div>
               </div>
-              <p class="text-gray-700 text-xs sm:text-sm leading-relaxed whitespace-pre-line">{{ a.anunt }}</p>
+              <p class="text-[#3b2b18] text-sm font-serif italic leading-relaxed whitespace-pre-line">{{ a.anunt }}</p>
             </div>
 
             <!-- Empty -->
-            <div v-if="allAnunturi.length === 0" class="bg-white rounded-2xl shadow-card border border-gray-100 p-8 text-center">
-              <i class="pi pi-megaphone text-3xl text-gray-300 mb-2"></i>
-              <p class="text-gray-500 text-sm">Niciun anunț încă</p>
+            <div v-if="allAnunturi.length === 0" class="bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 p-12 text-center">
+              <i class="pi pi-megaphone text-4xl text-[#2a1410]/20 mb-3 block"></i>
+              <p class="text-[#7a5a55] font-serif italic text-sm">Niciun anunț încă</p>
             </div>
           </div>
         </div><!-- end anunturi tab -->
 
         <!-- tab: elevi -->
         <div v-if="activeTab === 'elevi'">
-          <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2 mb-6">
-            <i class="pi pi-users text-secondary"></i> Gestionare Elevi
+          <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] flex items-center gap-2 mb-6">
+            <i class="pi pi-users text-[#c9a84c]"></i> Gestionare Elevi
           </h2>
 
           <!-- Two-column layout -->
-          <div class="flex gap-4 min-h-[520px]">
+          <div class="flex flex-col md:flex-row gap-5 min-h-[520px]">
 
             <!-- LEFT: user list -->
-            <div class="w-60 flex-shrink-0 bg-white rounded-2xl shadow-card border border-gray-100 flex flex-col overflow-hidden">
-              <div class="p-3 border-b border-gray-100">
-                <input
-                  v-model="eleviSearch"
-                  type="text"
-                  placeholder="Caută elev..."
-                  class="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-secondary/40"
-                />
+            <div class="w-full md:w-64 flex-shrink-0 bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 flex flex-col overflow-hidden max-h-[600px]">
+              <div class="p-3 border-b border-[#2a1410]/10 bg-cream/30">
+                <div class="flex items-center gap-2 bg-white rounded-sm px-3 py-2 border border-[#2a1410]/10 focus-within:border-[#c9a84c] transition-colors">
+                  <i class="pi pi-search text-[#7a5a55] text-xs"></i>
+                  <input
+                    v-model="eleviSearch"
+                    type="text"
+                    placeholder="Caută elev..."
+                    class="bg-transparent border-none focus:outline-none w-full text-xs text-[#2a1410] placeholder-[#7a5a55]/50 font-medium"
+                  />
+                </div>
               </div>
-              <div class="flex-1 overflow-y-auto">
-                <div v-if="loadingElevi" class="flex items-center justify-center py-8 text-gray-400">
+              <div class="flex-1 overflow-y-auto custom-scrollbar">
+                <div v-if="loadingElevi" class="flex items-center justify-center py-8 text-[#c9a84c]">
                   <i class="pi pi-spin pi-spinner"></i>
                 </div>
-                <div v-else-if="eleviFiltrati.length === 0" class="text-center py-8 text-gray-400 text-xs px-3">
+                <div v-else-if="eleviFiltrati.length === 0" class="text-center py-8 text-[#7a5a55] font-serif italic text-xs px-3">
                   Niciun utilizator găsit.
                 </div>
                 <div
@@ -526,79 +546,81 @@
                   :key="u.user_id"
                   @click="selecteazaElev(u)"
                   :class="elevSelectat && elevSelectat.user_id === u.user_id
-                    ? 'bg-secondary/10 border-l-4 border-secondary'
-                    : 'hover:bg-gray-50 border-l-4 border-transparent'"
-                  class="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all"
+                    ? 'bg-[#c9a84c]/10 border-l-2 border-[#c9a84c]'
+                    : 'hover:bg-cream border-l-2 border-transparent'"
+                  class="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all border-b border-[#2a1410]/5"
                 >
-                  <div class="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0 text-secondary text-xs font-bold uppercase">
+                  <div class="w-8 h-8 rounded-sm bg-cream-dark flex items-center justify-center flex-shrink-0 text-[#2a1410] border border-[#2a1410]/10 font-display font-bold uppercase text-xs">
                     {{ u.username.charAt(0) }}
                   </div>
                   <div class="flex-1 min-w-0">
-                    <p class="text-sm font-semibold text-dark truncate">{{ u.username }}</p>
-                    <p class="text-[11px] text-gray-400 truncate">{{ u.email }}</p>
+                    <p class="text-sm font-semibold text-[#2a1410] truncate">{{ u.username }}</p>
+                    <p class="font-mono text-[9px] uppercase tracking-widest text-[#7a5a55] truncate mt-0.5">{{ u.email }}</p>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- RIGHT: selected user detail -->
-            <div class="flex-1 bg-white rounded-2xl shadow-card border border-gray-100 overflow-y-auto">
+            <div class="flex-1 bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 overflow-y-auto max-h-[600px] custom-scrollbar">
 
               <!-- Nothing selected -->
-              <div v-if="!elevSelectat" class="flex flex-col items-center justify-center h-full text-gray-400 text-sm py-16">
-                <i class="pi pi-arrow-left text-3xl mb-3 text-gray-200"></i>
+              <div v-if="!elevSelectat" class="flex flex-col items-center justify-center h-full text-[#7a5a55] font-serif italic text-sm py-16">
+                <i class="pi pi-arrow-left text-3xl mb-3 text-[#2a1410]/20"></i>
                 Selectează un elev din lista din stânga.
               </div>
 
               <!-- Loading detail -->
-              <div v-else-if="loadingElevDetalii" class="flex items-center justify-center h-full py-16 text-gray-400">
-                <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
+              <div v-else-if="loadingElevDetalii" class="flex items-center justify-center h-full py-16">
+                <i class="pi pi-spin pi-spinner text-2xl text-[#c9a84c]"></i>
               </div>
 
               <!-- Detail content -->
-              <div v-else-if="elevDetalii" class="p-6 space-y-6">
+              <div v-else-if="elevDetalii" class="p-6 space-y-8">
 
                 <!-- Header user -->
-                <div class="flex items-center gap-4 p-4 bg-cream rounded-xl">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-5 bg-cream rounded-sm border border-[#2a1410]/5">
                   <img
                     :src="`/api/auth/profile-picture/${encodeURIComponent(elevDetalii.user.username)}?t=${imageCacheBust}`"
-                    class="w-14 h-14 rounded-full object-cover border-2 border-white shadow flex-shrink-0"
+                    class="w-16 h-16 rounded-sm object-cover border border-[#2a1410]/10 shadow-[0_1px_4px_rgba(42,20,16,0.04)] flex-shrink-0 bg-white"
                     @error="$event.target.src='/api/auth/profile-picture/default'"
                   >
-                  <div class="flex-1 min-w-0">
-                    <p class="font-bold text-dark text-base">{{ elevDetalii.user.username }}</p>
-                    <p class="text-gray-500 text-sm">{{ elevDetalii.user.email }}</p>
-                    <p v-if="elevDetalii.user.telefon" class="text-gray-400 text-xs mt-0.5"><i class="pi pi-phone mr-1"></i>{{ elevDetalii.user.telefon }}</p>
+                  <div class="flex-1 min-w-0 text-center sm:text-left">
+                    <p class="font-display font-bold text-lg text-[#2a1410] uppercase tracking-tight">{{ elevDetalii.user.username }}</p>
+                    <p class="font-mono text-[10px] uppercase tracking-widest text-[#7a5a55] mt-1">{{ elevDetalii.user.email }}</p>
+                    <p v-if="elevDetalii.user.telefon" class="text-[#3b2b18] text-xs font-serif italic mt-1.5"><i class="pi pi-phone mr-1"></i>{{ elevDetalii.user.telefon }}</p>
                   </div>
-                  <div class="flex-shrink-0 text-right">
-                    <p class="text-xs text-gray-400">Ridicat: <span class="font-bold text-dark">{{ elevDetalii.books_borrowed.length }}</span></p>
-                    <p class="text-xs text-gray-400">Citite: <span class="font-bold text-dark">{{ elevDetalii.books_read.length }}</span></p>
+                  <div class="flex-shrink-0 text-center sm:text-right flex sm:block gap-4">
+                    <p class="font-mono text-[9px] uppercase tracking-widest text-[#7a5a55]">Ridicat: <span class="font-bold text-[#2a1410] text-xs ml-1">{{ elevDetalii.books_borrowed.length }}</span></p>
+                    <p class="font-mono text-[9px] uppercase tracking-widest text-[#7a5a55] sm:mt-1">Citite: <span class="font-bold text-[#2a1410] text-xs ml-1">{{ elevDetalii.books_read.length }}</span></p>
                   </div>
                 </div>
 
                 <!-- APROBATE — în așteptarea ridicării fizice -->
                 <div>
-                  <h3 class="text-sm font-bold text-dark mb-3 flex items-center gap-2">
-                    <i class="pi pi-clock text-amber-500"></i> Aprobate — Așteptare ridicare fizică
-                    <span v-if="aprovateAsteptare.length" class="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ aprovateAsteptare.length }}</span>
+                  <h3 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] mb-4 flex items-center gap-2 border-b border-[#2a1410]/10 pb-2">
+                    <i class="pi pi-clock text-[#c9a84c]"></i> Aprobate — Așteptare ridicare
+                    <span v-if="aprovateAsteptare.length" class="ml-2 bg-[#c9a84c]/20 text-[#c9a84c] border border-[#c9a84c]/30 text-[10px] font-bold px-2 py-0.5 rounded-sm">{{ aprovateAsteptare.length }}</span>
                   </h3>
-                  <div v-if="aprovateAsteptare.length === 0" class="text-gray-400 text-xs italic">Nicio carte aprobată în așteptare.</div>
-                  <div v-else class="space-y-2">
-                    <div v-for="r in aprovateAsteptare" :key="r.cerere_id" class="flex items-center gap-3 p-3 border border-amber-200 bg-amber-50 rounded-xl">
-                      <i class="pi pi-hourglass text-amber-500 flex-shrink-0"></i>
+                  <div v-if="aprovateAsteptare.length === 0" class="text-[#7a5a55] font-serif italic text-xs">Nicio carte aprobată în așteptare.</div>
+                  <div v-else class="space-y-3">
+                    <div v-for="r in aprovateAsteptare" :key="r.cerere_id" class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-[#c9a84c]/30 bg-[#c9a84c]/5 rounded-sm">
+                      <div class="w-8 h-8 rounded-sm bg-white border border-[#c9a84c]/20 flex items-center justify-center shrink-0 hidden sm:flex">
+                         <i class="pi pi-hourglass text-[#c9a84c]"></i>
+                      </div>
                       <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-dark truncate">{{ r.titlu }}</p>
-                        <p class="text-xs text-gray-500">{{ r.autor }}</p>
-                        <p v-if="r.ridicare_de_la" class="text-xs text-amber-700 mt-0.5">
+                        <p class="text-sm font-semibold text-[#2a1410] truncate">{{ r.titlu }}</p>
+                        <p class="font-mono text-[9px] uppercase tracking-widest text-[#7a5a55] mt-1">{{ r.autor }}</p>
+                        <p v-if="r.ridicare_de_la" class="text-xs text-[#c9a84c] font-bold mt-2">
                           <i class="pi pi-calendar mr-1"></i>{{ r.ridicare_de_la }} — {{ r.ridicare_pana_la }}
                         </p>
                       </div>
                       <button
                         @click="confirmaRidicare(r.cerere_id)"
                         :disabled="confirmandRidicare === r.cerere_id"
-                        class="px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold rounded-lg text-xs transition-all flex items-center gap-1 flex-shrink-0"
+                        class="px-4 py-2.5 bg-[#2a5c3a] hover:bg-[#2a5c3a]/90 disabled:opacity-50 text-white font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-all flex items-center justify-center gap-2 flex-shrink-0"
                       >
-                        <i :class="confirmandRidicare === r.cerere_id ? 'pi pi-spin pi-spinner' : 'pi pi-check'" class="text-[10px]"></i>
+                        <i :class="confirmandRidicare === r.cerere_id ? 'pi pi-spin pi-spinner' : 'pi pi-check'"></i>
                         Confirmă ridicarea
                       </button>
                     </div>
@@ -607,25 +629,29 @@
 
                 <!-- Împrumutate activ (ridicate fizic) -->
                 <div>
-                  <h3 class="text-sm font-bold text-dark mb-3 flex items-center gap-2">
-                    <i class="pi pi-book text-secondary"></i> Împrumutate curent (ridicate)
+                  <h3 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] mb-4 flex items-center gap-2 border-b border-[#2a1410]/10 pb-2">
+                    <i class="pi pi-book text-[#2a5c3a]"></i> Împrumutate curent
                   </h3>
-                  <div v-if="elevDetalii.books_borrowed.length === 0" class="text-gray-400 text-xs italic">Nicio carte ridicată momentan.</div>
-                  <div v-else class="space-y-2">
-                    <div v-for="b in elevDetalii.books_borrowed" :key="b.imprumut_id" class="flex items-center gap-3 p-3 border border-green-100 bg-green-50 rounded-xl">
-                      <i class="pi pi-book text-green-600 flex-shrink-0"></i>
+                  <div v-if="elevDetalii.books_borrowed.length === 0" class="text-[#7a5a55] font-serif italic text-xs">Nicio carte ridicată momentan.</div>
+                  <div v-else class="space-y-3">
+                    <div v-for="b in elevDetalii.books_borrowed" :key="b.imprumut_id" class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-[#2a5c3a]/20 bg-[#2a5c3a]/5 rounded-sm">
+                      <div class="w-8 h-8 rounded-sm bg-white border border-[#2a5c3a]/20 flex items-center justify-center shrink-0 hidden sm:flex">
+                        <i class="pi pi-book text-[#2a5c3a]"></i>
+                      </div>
                       <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-dark truncate">{{ b.titlu }}</p>
-                        <p class="text-xs text-gray-500">{{ b.autor }}</p>
-                        <p class="text-xs text-gray-400 mt-0.5">Ridicat: {{ formatDate(b.borrowed_at) }}</p>
-                        <p class="text-xs text-red-400">Scadent: {{ formatDate(b.due_at) }}</p>
+                        <p class="text-sm font-semibold text-[#2a1410] truncate">{{ b.titlu }}</p>
+                        <p class="font-mono text-[9px] uppercase tracking-widest text-[#7a5a55] mt-1">{{ b.autor }}</p>
+                        <div class="mt-2 flex items-center gap-4">
+                           <p class="font-mono text-[9px] uppercase tracking-widest text-[#7a5a55]">Ridicat: <span class="text-[#2a1410] font-bold">{{ formatDate(b.borrowed_at) }}</span></p>
+                           <p class="font-mono text-[9px] uppercase tracking-widest text-[#ff3d5a]">Scadent: <span class="font-bold">{{ formatDate(b.due_at) }}</span></p>
+                        </div>
                       </div>
                       <button
                         @click="deschideReturnareModal(b)"
-                        :class="isOverdue(b.due_at) ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
-                        class="px-3 py-1.5 text-white font-semibold rounded-lg text-xs transition-all flex items-center gap-1 flex-shrink-0"
+                        :class="isOverdue(b.due_at) ? 'bg-[#ff3d5a] hover:bg-[#ff3d5a]/90' : 'bg-white border border-[#2a5c3a]/30 text-[#2a5c3a] hover:bg-[#2a5c3a]/5'"
+                        class="px-4 py-2.5 font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-all flex items-center justify-center gap-2 flex-shrink-0"
                       >
-                        <i class="pi pi-undo text-[10px]"></i>
+                        <i class="pi pi-undo"></i>
                         Returnează
                       </button>
                     </div>
@@ -634,16 +660,18 @@
 
                 <!-- Returnate / citite -->
                 <div>
-                  <h3 class="text-sm font-bold text-dark mb-3 flex items-center gap-2">
-                    <i class="pi pi-check-circle text-secondary"></i> Returnate / citite
+                  <h3 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] mb-4 flex items-center gap-2 border-b border-[#2a1410]/10 pb-2">
+                    <i class="pi pi-check-circle text-gray-400"></i> Returnate / citite
                   </h3>
-                  <div v-if="elevDetalii.books_read.length === 0" class="text-gray-400 text-xs italic">Nicio carte returnată.</div>
-                  <div v-else class="space-y-2">
-                    <div v-for="b in elevDetalii.books_read" :key="b.carte_id" class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl">
-                      <i class="pi pi-check text-secondary flex-shrink-0"></i>
+                  <div v-if="elevDetalii.books_read.length === 0" class="text-[#7a5a55] font-serif italic text-xs">Nicio carte returnată.</div>
+                  <div v-else class="space-y-3">
+                    <div v-for="b in elevDetalii.books_read" :key="b.carte_id" class="flex items-center gap-4 p-4 border border-[#2a1410]/10 bg-cream/30 rounded-sm opacity-80">
+                      <div class="w-8 h-8 rounded-sm bg-white border border-[#2a1410]/10 flex items-center justify-center shrink-0">
+                         <i class="pi pi-check text-[#7a5a55]"></i>
+                      </div>
                       <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-dark truncate">{{ b.titlu }}</p>
-                        <p class="text-xs text-gray-500">{{ b.autor }}</p>
+                        <p class="text-sm font-semibold text-[#2a1410] truncate">{{ b.titlu }}</p>
+                        <p class="font-mono text-[9px] uppercase tracking-widest text-[#7a5a55] mt-1">{{ b.autor }}</p>
                       </div>
                     </div>
                   </div>
@@ -651,25 +679,25 @@
 
                 <!-- Istoricul complet cereri -->
                 <div>
-                  <h3 class="text-sm font-bold text-dark mb-3 flex items-center gap-2">
-                    <i class="pi pi-history text-secondary"></i> Toate cererile
+                  <h3 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] mb-4 flex items-center gap-2 border-b border-[#2a1410]/10 pb-2">
+                    <i class="pi pi-history text-[#7a5a55]"></i> Toate cererile
                   </h3>
-                  <div v-if="elevDetalii.borrow_history.length === 0" class="text-gray-400 text-xs italic">Nicio cerere.</div>
-                  <div v-else class="space-y-1.5">
-                    <div v-for="r in elevDetalii.borrow_history" :key="r.cerere_id" class="flex items-center gap-3 p-2.5 border border-gray-100 rounded-xl">
+                  <div v-if="elevDetalii.borrow_history.length === 0" class="text-[#7a5a55] font-serif italic text-xs">Nicio cerere.</div>
+                  <div v-else class="space-y-2">
+                    <div v-for="r in elevDetalii.borrow_history" :key="r.cerere_id" class="flex items-center gap-3 p-3 border border-[#2a1410]/5 rounded-sm hover:bg-cream-dark transition-colors">
                       <span :class="{
-                        'bg-amber-50 text-amber-700': r.status === 'pending',
-                        'bg-blue-50 text-blue-700':   r.status === 'approved',
-                        'bg-green-50 text-green-700': r.status === 'ridicat',
-                        'bg-red-50 text-red-700':     r.status === 'rejected'
-                      }" class="text-[10px] px-2 py-0.5 rounded-full font-semibold flex-shrink-0">
+                        'bg-[#c9a84c]/10 text-[#c9a84c] border border-[#c9a84c]/20': r.status === 'pending',
+                        'bg-[#2a5c3a]/10 text-[#2a5c3a] border border-[#2a5c3a]/20':   r.status === 'approved',
+                        'bg-gray-100 text-gray-500 border border-gray-200': r.status === 'ridicat',
+                        'bg-[#ff3d5a]/10 text-[#ff3d5a] border border-[#ff3d5a]/20':     r.status === 'rejected'
+                      }" class="font-mono text-[8px] uppercase tracking-widest px-2 py-0.5 rounded-sm font-bold flex-shrink-0">
                         {{ { pending: 'Așteptare', approved: 'Aprobat', ridicat: 'Ridicat', rejected: 'Respins' }[r.status] }}
                       </span>
                       <div class="flex-1 min-w-0">
-                        <p class="text-xs font-semibold text-dark truncate">{{ r.titlu }}</p>
-                        <p class="text-[10px] text-gray-400">{{ r.autor }}</p>
+                        <p class="text-xs font-semibold text-[#2a1410] truncate">{{ r.titlu }}</p>
+                        <p class="font-mono text-[8px] uppercase tracking-widest text-[#7a5a55] mt-0.5">{{ r.autor }}</p>
                       </div>
-                      <span class="text-[10px] text-gray-400 flex-shrink-0">{{ formatDate(r.created_at) }}</span>
+                      <span class="font-mono text-[9px] uppercase tracking-widest text-[#7a5a55] flex-shrink-0">{{ formatDate(r.created_at) }}</span>
                     </div>
                   </div>
                 </div>
@@ -682,84 +710,86 @@
 
         <!-- tab: club -->
         <div v-if="activeTab === 'club'">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-            <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2">
-              <i class="pi pi-bookmark text-secondary"></i> Invitații Club de Literatură
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] flex items-center gap-2">
+              <i class="pi pi-bookmark text-[#c9a84c]"></i> Invitații Club
             </h2>
             <button
               @click="$router.push('/club/threads')"
-              class="px-5 py-2.5 bg-secondary hover:bg-secondary/90 text-white font-semibold rounded-lg text-sm transition-all flex items-center gap-2 shadow-sm"
+              class="px-5 py-2.5 bg-white border border-[#2a1410]/20 hover:bg-cream-dark text-[#2a1410] font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-all flex items-center gap-2"
             >
               <i class="pi pi-comments text-xs"></i> Mergi la discuții
             </button>
           </div>
-          <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-6">
-            <p class="text-sm text-gray-500 mb-4">Generează un link de invitație pe care îl poți trimite elevilor. Link-ul îi va adăuga automat în clubul de literatură.</p>
-            <div class="flex flex-wrap gap-3 mb-5">
-              <label class="text-xs font-semibold text-gray-600 self-center">Valabilitate:</label>
-              <button
-                v-for="opt in inviteOptions"
-                :key="opt.value"
-                @click="inviteExpiry = opt.value"
-                :class="inviteExpiry === opt.value
-                  ? 'bg-secondary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-                class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-              >
-                {{ opt.label }}
-              </button>
+          <div class="bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 p-6 sm:p-8">
+            <p class="text-sm font-serif italic text-[#3b2b18] mb-6">Generează un link de invitație pe care îl poți trimite elevilor. Link-ul îi va adăuga automat în clubul de literatură.</p>
+            <div class="flex flex-col sm:flex-row gap-4 sm:items-center mb-6">
+              <label class="font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] shrink-0">Valabilitate:</label>
+              <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="opt in inviteOptions"
+                    :key="opt.value"
+                    @click="inviteExpiry = opt.value"
+                    :class="inviteExpiry === opt.value
+                      ? 'bg-[#2a1410] text-white border-[#2a1410]'
+                      : 'bg-white text-[#7a5a55] border-[#2a1410]/20 hover:border-[#2a1410]/40 hover:text-[#2a1410]'"
+                    class="px-4 py-2 border rounded-sm font-mono text-[9px] uppercase tracking-widest font-bold transition-colors"
+                  >
+                    {{ opt.label }}
+                  </button>
+              </div>
             </div>
             <button
               @click="generateInviteLink"
               :disabled="inviteLoading"
-              class="px-5 py-2.5 bg-secondary hover:bg-secondary/90 disabled:opacity-60 text-white font-semibold rounded-lg text-sm transition-all flex items-center gap-2"
+              class="px-5 py-3 w-full sm:w-auto bg-[#c9a84c] hover:opacity-90 disabled:opacity-60 text-dark font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-all flex items-center justify-center gap-2"
             >
-              <i :class="inviteLoading ? 'pi pi-spin pi-spinner' : 'pi pi-link'" class="text-xs"></i>
+              <i :class="inviteLoading ? 'pi pi-spin pi-spinner' : 'pi pi-link'"></i>
               Generează link
             </button>
-            <div v-if="generatedInviteLink" class="mt-5">
-              <label class="block text-xs font-semibold text-gray-600 mb-2">Link generat (expiră {{ inviteExpiresAt }}):</label>
-              <div class="flex gap-2">
+            <div v-if="generatedInviteLink" class="mt-6 p-5 border border-[#c9a84c]/30 bg-[#c9a84c]/5 rounded-sm">
+              <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-3">Link generat (expiră {{ inviteExpiresAt }}):</label>
+              <div class="flex flex-col sm:flex-row gap-3">
                 <input
                   :value="generatedInviteLink"
                   readonly
-                  class="input-field flex-1 text-xs font-mono bg-gray-50 cursor-text"
+                  class="flex-1 px-4 py-2.5 bg-white border border-[#2a1410]/20 rounded-sm font-mono text-xs text-[#2a1410] focus:outline-none"
                 />
                 <button
                   @click="copyInviteLink"
-                  class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-dark font-semibold rounded-xl text-xs transition-colors flex items-center gap-1"
+                  class="px-5 py-2.5 bg-white border border-[#2a1410]/20 hover:bg-cream-dark text-[#2a1410] font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-colors flex items-center justify-center gap-2"
                 >
-                  <i :class="inviteCopied ? 'pi pi-check text-green-600' : 'pi pi-copy'"></i>
+                  <i :class="inviteCopied ? 'pi pi-check text-[#2a5c3a]' : 'pi pi-copy'"></i>
                   {{ inviteCopied ? 'Copiat!' : 'Copiază' }}
                 </button>
               </div>
             </div>
-            <div v-if="inviteError" class="mt-4 bg-accent/10 border-l-4 border-accent rounded-lg p-3">
-              <p class="text-accent text-xs">{{ inviteError }}</p>
+            <div v-if="inviteError" class="mt-4 p-3 bg-[#ff3d5a]/5 border border-[#ff3d5a]/20 rounded-sm">
+              <p class="text-[#ff3d5a] font-mono text-[10px] uppercase tracking-widest">{{ inviteError }}</p>
             </div>
           </div>
           
-          <h2 class="text-lg sm:text-xl font-bold text-dark flex items-center gap-2 mt-8 mb-4">
-            <i class="pi pi-comments text-secondary"></i> Discuții în așteptare
+          <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] flex items-center gap-2 mt-10 mb-5">
+            <i class="pi pi-comments text-[#c9a84c]"></i> Discuții în așteptare
           </h2>
-          <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-6">
-            <div v-if="pendingThreadsLoading" class="text-center py-6">
-              <i class="pi pi-spin pi-spinner text-gray-400 text-2xl"></i>
+          <div class="bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 p-6 sm:p-8">
+            <div v-if="pendingThreadsLoading" class="text-center py-8">
+              <i class="pi pi-spin pi-spinner text-[#c9a84c] text-2xl"></i>
             </div>
-            <div v-else-if="pendingThreads.length === 0" class="text-center py-6 text-gray-500 text-sm">
+            <div v-else-if="pendingThreads.length === 0" class="text-center py-8 text-[#7a5a55] font-serif italic text-sm">
               Nicio discuție în așteptare.
             </div>
             <div v-else class="space-y-4">
-              <div v-for="thread in pendingThreads" :key="thread.thread_id" class="border border-gray-100 rounded-xl p-4 bg-gray-50">
-                <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+              <div v-for="thread in pendingThreads" :key="thread.thread_id" class="border border-[#2a1410]/10 rounded-sm p-5 bg-cream">
+                <div class="flex flex-col sm:flex-row justify-between items-start gap-5">
                   <div class="flex-1">
-                    <h3 class="font-bold text-dark">{{ thread.titlu }}</h3>
-                    <p class="text-xs text-gray-500 mb-2">Propus de <b>{{ thread.autor }}</b> • {{ formatDate(thread.creat_la) }}</p>
-                    <p class="text-sm text-gray-700 whitespace-pre-line">{{ thread.continut }}</p>
+                    <h3 class="font-bold text-[#2a1410]">{{ thread.titlu }}</h3>
+                    <p class="font-mono text-[9px] uppercase tracking-widest text-[#7a5a55] mt-1 mb-3">Propus de <b class="text-[#2a1410]">{{ thread.autor }}</b> • {{ formatDate(thread.creat_la) }}</p>
+                    <p class="text-sm font-serif italic text-[#3b2b18] whitespace-pre-line">{{ thread.continut }}</p>
                   </div>
-                  <div class="flex flex-row sm:flex-col gap-2 flex-shrink-0">
-                    <button @click="approveThread(thread.thread_id)" class="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 justify-center"><i class="pi pi-check text-[10px]"></i> Aprobă</button>
-                    <button @click="rejectThread(thread.thread_id)" class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 justify-center"><i class="pi pi-times text-[10px]"></i> Respinge</button>
+                  <div class="flex flex-row sm:flex-col gap-2 flex-shrink-0 w-full sm:w-auto mt-4 sm:mt-0">
+                    <button @click="approveThread(thread.thread_id)" class="flex-1 sm:flex-none px-4 py-2 bg-[#2a5c3a] hover:bg-[#2a5c3a]/90 text-white rounded-sm font-mono text-[9px] uppercase tracking-widest font-bold transition-colors flex items-center justify-center gap-1.5"><i class="pi pi-check"></i> Aprobă</button>
+                    <button @click="rejectThread(thread.thread_id)" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-[#ff3d5a]/30 text-[#ff3d5a] hover:bg-[#ff3d5a]/5 rounded-sm font-mono text-[9px] uppercase tracking-widest font-bold transition-colors flex items-center justify-center gap-1.5"><i class="pi pi-times"></i> Respinge</button>
                   </div>
                 </div>
               </div>
@@ -778,105 +808,112 @@
     <!-- MODALS -->
 
     <!-- Pickup Interval Modal (approve book request) -->
-    <div v-if="pickupModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="pickupModalOpen = false">
-      <div class="w-full max-w-md bg-white rounded-2xl shadow-modal p-6">
-        <div class="flex items-center justify-between mb-5">
-          <h2 class="text-lg font-bold text-dark flex items-center gap-2">
-            <i class="pi pi-calendar-plus text-green-600"></i> Aprobă cerere
+    <div v-if="pickupModalOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="pickupModalOpen = false">
+      <div class="absolute inset-0 bg-dark/60 backdrop-blur-sm" @click="pickupModalOpen = false"></div>
+      <div class="relative w-full max-w-md bg-white rounded-sm shadow-[0_4px_24px_rgba(42,20,16,0.1)] border border-[#2a1410]/10 p-6 sm:p-8 z-10">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] flex items-center gap-2">
+            <i class="pi pi-calendar-plus text-[#2a5c3a]"></i> Aprobă cerere
           </h2>
-          <button @click="pickupModalOpen = false" class="text-gray-400 hover:text-secondary text-2xl font-bold leading-none">&times;</button>
+          <button @click="pickupModalOpen = false" class="text-[#7a5a55] hover:text-[#2a1410] text-2xl font-bold leading-none transition-colors">&times;</button>
         </div>
 
-        <div class="bg-cream rounded-xl p-4 mb-5 border border-gray-100">
-          <p class="text-sm font-bold text-dark truncate">{{ pickupReq.titlu }}</p>
-          <p class="text-xs text-gray-500">de {{ pickupReq.autor }}</p>
-          <p class="text-xs text-gray-500 mt-1">
-            <i class="pi pi-user mr-1"></i>{{ pickupReq.username }}
-            <span class="ml-2 text-gray-400">({{ pickupReq.email }})</span>
-          </p>
+        <div class="bg-cream rounded-sm p-4 mb-6 border border-[#2a1410]/10">
+          <p class="text-sm font-bold text-[#2a1410] truncate">{{ pickupReq.titlu }}</p>
+          <p class="font-mono text-[10px] uppercase tracking-widest text-[#7a5a55] mt-1">de {{ pickupReq.autor }}</p>
+          <div class="mt-3 flex items-center gap-2">
+            <div class="w-6 h-6 rounded-sm bg-cream-dark flex items-center justify-center shrink-0 border border-[#2a1410]/10">
+               <i class="pi pi-user text-[#7a5a55] text-[10px]"></i>
+            </div>
+            <p class="text-xs text-[#2a1410] font-medium">
+              {{ pickupReq.username }}
+              <span class="ml-1 text-[#7a5a55] font-normal font-serif italic">({{ pickupReq.email }})</span>
+            </p>
+          </div>
         </div>
 
-        <p class="text-sm text-gray-600 mb-4">Alege intervalul în care elevul poate ridica cartea. Un email de confirmare va fi trimis automat.</p>
+        <p class="text-sm font-serif italic text-[#3b2b18] mb-5">Alege intervalul în care elevul poate ridica cartea. Un email de confirmare va fi trimis automat.</p>
 
         <div class="space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">De la</label>
-            <div class="flex gap-2">
-              <input v-model="pickupFromDate" type="date" class="input-field flex-1">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">De la</label>
+            <div class="flex gap-3">
+              <input v-model="pickupFromDate" type="date" class="flex-1 px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-mono text-xs text-[#2a1410] focus:outline-none transition-colors">
               <input
                 v-model="pickupFromTime"
                 type="text"
                 placeholder="HH:MM"
                 maxlength="5"
                 @input="formatTimeInput('pickupFromTime', $event)"
-                class="input-field w-28 font-mono"
+                class="w-24 px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-mono text-xs text-[#2a1410] text-center focus:outline-none transition-colors"
               >
             </div>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Până la</label>
-            <div class="flex gap-2">
-              <input v-model="pickupUntilDate" type="date" class="input-field flex-1">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Până la</label>
+            <div class="flex gap-3">
+              <input v-model="pickupUntilDate" type="date" class="flex-1 px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-mono text-xs text-[#2a1410] focus:outline-none transition-colors">
               <input
                 v-model="pickupUntilTime"
                 type="text"
                 placeholder="HH:MM"
                 maxlength="5"
                 @input="formatTimeInput('pickupUntilTime', $event)"
-                class="input-field w-28 font-mono"
+                class="w-24 px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-mono text-xs text-[#2a1410] text-center focus:outline-none transition-colors"
               >
             </div>
           </div>
         </div>
 
-        <p v-if="pickupError" class="text-xs text-red-500 mt-3">{{ pickupError }}</p>
+        <p v-if="pickupError" class="text-[10px] font-mono tracking-widest uppercase text-[#ff3d5a] mt-4">{{ pickupError }}</p>
 
-        <div class="flex gap-3 mt-6">
+        <div class="flex flex-col sm:flex-row gap-3 mt-8">
           <button
             @click="pickupModalOpen = false"
-            class="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition-colors"
+            class="flex-1 px-5 py-3 bg-white border border-[#2a1410]/20 text-[#2a1410] font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm hover:bg-cream-dark transition-colors"
           >
             Anulează
           </button>
           <button
             @click="confirmApprove"
             :disabled="approvingRequest"
-            class="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+            class="flex-[2] px-5 py-3 bg-[#2a5c3a] hover:bg-[#2a5c3a]/90 disabled:opacity-60 text-white font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-colors flex items-center justify-center gap-2"
           >
-            <i :class="approvingRequest ? 'pi pi-spin pi-spinner' : 'pi pi-check'" class="text-xs"></i>
-            Aprobă și trimite email
+            <i :class="approvingRequest ? 'pi pi-spin pi-spinner' : 'pi pi-check'"></i>
+            Aprobă & Trimite Email
           </button>
         </div>
       </div>
     </div>
 
     <!-- Edit Profile Modal -->
-    <div v-if="editProfileOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="editProfileOpen = false">
-      <div class="w-full max-w-lg bg-white rounded-2xl shadow-modal p-6 sm:p-8">
+    <div v-if="editProfileOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="editProfileOpen = false">
+      <div class="absolute inset-0 bg-dark/60 backdrop-blur-sm" @click="editProfileOpen = false"></div>
+      <div class="relative w-full max-w-lg bg-white rounded-sm shadow-[0_4px_24px_rgba(42,20,16,0.1)] border border-[#2a1410]/10 p-6 sm:p-8 z-10">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-bold text-dark">Editează Profil</h2>
-          <button @click="editProfileOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold transition-colors duration-200">&times;</button>
+          <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410]">Editează Profil</h2>
+          <button @click="editProfileOpen = false" class="text-[#7a5a55] hover:text-[#2a1410] text-2xl font-bold transition-colors duration-200 leading-none">&times;</button>
         </div>
-        <label class="block text-dark font-semibold mb-2 text-sm sm:text-base">Descriere</label>
+        <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Descriere personală</label>
         <textarea
           v-model="editDescription"
           rows="5"
           maxlength="255"
           placeholder="Scrie ceva despre tine..."
-          class="input-field resize-none"
+          class="w-full px-4 py-3 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-serif text-sm text-[#2a1410] placeholder-[#7a5a55]/50 focus:outline-none transition-colors resize-none"
         ></textarea>
-        <p class="text-gray-500 text-xs mt-1 text-right">{{ editDescription.length }} / 255</p>
-        <div v-if="profileMsg.error" class="mt-3 bg-accent/10 border-l-4 border-accent rounded-lg p-3">
-          <p class="text-accent text-xs sm:text-sm">{{ profileMsg.error }}</p>
+        <p class="text-[#7a5a55] font-mono text-[9px] uppercase tracking-widest mt-2 text-right">{{ editDescription.length }} / 255</p>
+        <div v-if="profileMsg.error" class="mt-4 p-3 bg-[#ff3d5a]/5 border border-[#ff3d5a]/20 rounded-sm">
+          <p class="text-[#ff3d5a] font-mono text-[10px] uppercase tracking-widest">{{ profileMsg.error }}</p>
         </div>
-        <div v-if="profileMsg.success" class="mt-3 bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
-          <p class="text-green-700 text-xs sm:text-sm">{{ profileMsg.success }}</p>
+        <div v-if="profileMsg.success" class="mt-4 p-3 bg-[#2a5c3a]/5 border border-[#2a5c3a]/20 rounded-sm">
+          <p class="text-[#2a5c3a] font-mono text-[10px] uppercase tracking-widest">{{ profileMsg.success }}</p>
         </div>
-        <div class="mt-6 flex flex-col sm:flex-row gap-3">
-          <button @click="saveDescription" :disabled="savingDescription" class="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed">
-            {{ savingDescription ? 'Se salvează...' : 'Modifică' }}
+        <div class="mt-8 flex flex-col sm:flex-row gap-3">
+          <button @click="saveDescription" :disabled="savingDescription" class="flex-[2] px-5 py-3 bg-[#c9a84c] text-dark hover:opacity-90 font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+            {{ savingDescription ? 'Se salvează...' : 'Salvează Modificări' }}
           </button>
-          <button @click="editProfileOpen = false" class="btn-secondary flex-1">
+          <button @click="editProfileOpen = false" class="flex-1 px-5 py-3 bg-white border border-[#2a1410]/20 text-[#2a1410] font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm hover:bg-cream-dark transition-colors">
             Anulează
           </button>
         </div>
@@ -884,55 +921,55 @@
     </div>
 
     <!-- Add Book Modal -->
-    <div v-if="addBookOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="addBookOpen = false">
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="addBookOpen = false"></div>
-      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+    <div v-if="addBookOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="addBookOpen = false">
+      <div class="absolute inset-0 bg-dark/60 backdrop-blur-sm" @click="addBookOpen = false"></div>
+      <div class="relative bg-white rounded-sm shadow-[0_4px_24px_rgba(42,20,16,0.1)] border border-[#2a1410]/10 w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-bold text-dark">Adaugă Carte Nouă</h2>
-          <button @click="addBookOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold">&times;</button>
+          <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410]">Adaugă Carte Nouă</h2>
+          <button @click="addBookOpen = false" class="text-[#7a5a55] hover:text-[#2a1410] text-2xl font-bold leading-none">&times;</button>
         </div>
-        <form @submit.prevent="submitAddBook" class="space-y-4">
+        <form @submit.prevent="submitAddBook" class="space-y-5">
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">Titlu *</label>
-            <input v-model="addForm.titlu" type="text" required class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Titlu *</label>
+            <input v-model="addForm.titlu" type="text" required class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] focus:outline-none transition-colors">
           </div>
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">Autor *</label>
-            <input v-model="addForm.autor" type="text" required class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Autor *</label>
+            <input v-model="addForm.autor" type="text" required class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] focus:outline-none transition-colors">
           </div>
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">ISBN *</label>
-            <input v-model="addForm.ISBN" type="text" required maxlength="13" class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">ISBN *</label>
+            <input v-model="addForm.ISBN" type="text" required maxlength="13" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-mono text-xs text-[#2a1410] focus:outline-none transition-colors">
           </div>
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">Gen *</label>
-            <input v-model="addForm.gen" type="text" required class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Gen *</label>
+            <input v-model="addForm.gen" type="text" required class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] focus:outline-none transition-colors">
           </div>
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">Poziție în bibliotecă</label>
-            <input v-model="addForm.pozitie" type="text" placeholder="ex: Raft A3, Sala 2" class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Poziție în bibliotecă</label>
+            <input v-model="addForm.pozitie" type="text" placeholder="ex: Raft A3, Sala 2" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] placeholder-[#7a5a55]/50 focus:outline-none transition-colors">
           </div>
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">Cod</label>
-            <input v-model="addForm.cod" type="text" placeholder="ex: BIO-042" class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Cod</label>
+            <input v-model="addForm.cod" type="text" placeholder="ex: BIO-042" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-mono text-xs text-[#2a1410] placeholder-[#7a5a55]/50 focus:outline-none transition-colors">
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-dark font-semibold mb-1 text-sm">Stoc Total</label>
-              <input v-model.number="addForm.stoc_total" type="number" min="0" class="input-field text-sm">
+              <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Stoc Total</label>
+              <input v-model.number="addForm.stoc_total" type="number" min="0" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] focus:outline-none transition-colors">
             </div>
             <div>
-              <label class="block text-dark font-semibold mb-1 text-sm">Stoc Disponibil</label>
-              <input v-model.number="addForm.stoc_disponibil" type="number" min="0" class="input-field text-sm">
+              <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Stoc Disponibil</label>
+              <input v-model.number="addForm.stoc_disponibil" type="number" min="0" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] focus:outline-none transition-colors">
             </div>
           </div>
-          <div v-if="addMsg.error" class="bg-accent/10 border-l-4 border-accent rounded-lg p-3">
-            <p class="text-accent text-xs sm:text-sm">{{ addMsg.error }}</p>
+          <div v-if="addMsg.error" class="p-3 bg-[#ff3d5a]/5 border border-[#ff3d5a]/20 rounded-sm">
+            <p class="text-[#ff3d5a] font-mono text-[10px] uppercase tracking-widest">{{ addMsg.error }}</p>
           </div>
-          <div v-if="addMsg.success" class="bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
-            <p class="text-green-700 text-xs sm:text-sm">{{ addMsg.success }}</p>
+          <div v-if="addMsg.success" class="p-3 bg-[#2a5c3a]/5 border border-[#2a5c3a]/20 rounded-sm">
+            <p class="text-[#2a5c3a] font-mono text-[10px] uppercase tracking-widest">{{ addMsg.success }}</p>
           </div>
-          <button type="submit" class="w-full btn-primary">
+          <button type="submit" class="w-full px-5 py-3 mt-4 bg-[#c9a84c] text-dark hover:opacity-90 font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-all shadow-sm">
             Adaugă Carte
           </button>
         </form>
@@ -940,55 +977,55 @@
     </div>
 
     <!-- Edit Book Modal -->
-    <div v-if="editBookOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="editBookOpen = false">
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="editBookOpen = false"></div>
-      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+    <div v-if="editBookOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="editBookOpen = false">
+      <div class="absolute inset-0 bg-dark/60 backdrop-blur-sm" @click="editBookOpen = false"></div>
+      <div class="relative bg-white rounded-sm shadow-[0_4px_24px_rgba(42,20,16,0.1)] border border-[#2a1410]/10 w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-bold text-dark">Editează Carte</h2>
-          <button @click="editBookOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold">&times;</button>
+          <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410]">Editează Carte</h2>
+          <button @click="editBookOpen = false" class="text-[#7a5a55] hover:text-[#2a1410] text-2xl font-bold leading-none">&times;</button>
         </div>
-        <form @submit.prevent="submitEditBook" class="space-y-4">
+        <form @submit.prevent="submitEditBook" class="space-y-5">
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">Titlu</label>
-            <input v-model="editBookForm.titlu" type="text" class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Titlu</label>
+            <input v-model="editBookForm.titlu" type="text" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] focus:outline-none transition-colors">
           </div>
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">Autor</label>
-            <input v-model="editBookForm.autor" type="text" class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Autor</label>
+            <input v-model="editBookForm.autor" type="text" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] focus:outline-none transition-colors">
           </div>
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">ISBN</label>
-            <input v-model="editBookForm.ISBN" type="text" maxlength="13" class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">ISBN</label>
+            <input v-model="editBookForm.ISBN" type="text" maxlength="13" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-mono text-xs text-[#2a1410] focus:outline-none transition-colors">
           </div>
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">Gen</label>
-            <input v-model="editBookForm.gen" type="text" class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Gen</label>
+            <input v-model="editBookForm.gen" type="text" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] focus:outline-none transition-colors">
           </div>
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">Poziție în bibliotecă</label>
-            <input v-model="editBookForm.pozitie" type="text" placeholder="ex: Raft A3, Sala 2" class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Poziție în bibliotecă</label>
+            <input v-model="editBookForm.pozitie" type="text" placeholder="ex: Raft A3, Sala 2" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] placeholder-[#7a5a55]/50 focus:outline-none transition-colors">
           </div>
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">Cod</label>
-            <input v-model="editBookForm.cod" type="text" placeholder="ex: BIO-042" class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Cod</label>
+            <input v-model="editBookForm.cod" type="text" placeholder="ex: BIO-042" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-mono text-xs text-[#2a1410] placeholder-[#7a5a55]/50 focus:outline-none transition-colors">
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-dark font-semibold mb-1 text-sm">Stoc Total</label>
-              <input v-model.number="editBookForm.stoc_total" type="number" min="0" class="input-field text-sm">
+              <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Stoc Total</label>
+              <input v-model.number="editBookForm.stoc_total" type="number" min="0" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] focus:outline-none transition-colors">
             </div>
             <div>
-              <label class="block text-dark font-semibold mb-1 text-sm">Stoc Disponibil</label>
-              <input v-model.number="editBookForm.stoc_disponibil" type="number" min="0" class="input-field text-sm">
+              <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Stoc Disponibil</label>
+              <input v-model.number="editBookForm.stoc_disponibil" type="number" min="0" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] focus:outline-none transition-colors">
             </div>
           </div>
-          <div v-if="editBookMsg.error" class="bg-accent/10 border-l-4 border-accent rounded-lg p-3">
-            <p class="text-accent text-xs sm:text-sm">{{ editBookMsg.error }}</p>
+          <div v-if="editBookMsg.error" class="p-3 bg-[#ff3d5a]/5 border border-[#ff3d5a]/20 rounded-sm">
+            <p class="text-[#ff3d5a] font-mono text-[10px] uppercase tracking-widest">{{ editBookMsg.error }}</p>
           </div>
-          <div v-if="editBookMsg.success" class="bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
-            <p class="text-green-700 text-xs sm:text-sm">{{ editBookMsg.success }}</p>
+          <div v-if="editBookMsg.success" class="p-3 bg-[#2a5c3a]/5 border border-[#2a5c3a]/20 rounded-sm">
+            <p class="text-[#2a5c3a] font-mono text-[10px] uppercase tracking-widest">{{ editBookMsg.success }}</p>
           </div>
-          <button type="submit" class="w-full btn-primary">
+          <button type="submit" class="w-full px-5 py-3 mt-4 bg-[#c9a84c] text-dark hover:opacity-90 font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-all shadow-sm">
             Salvează Modificări
           </button>
         </form>
@@ -996,83 +1033,85 @@
     </div>
 
     <!-- Quick Stock Modal -->
-    <div v-if="stockModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="stockModalOpen = false">
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="stockModalOpen = false"></div>
-      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-sm z-10 p-6 sm:p-8">
+    <div v-if="stockModalOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="stockModalOpen = false">
+      <div class="absolute inset-0 bg-dark/60 backdrop-blur-sm" @click="stockModalOpen = false"></div>
+      <div class="relative bg-white rounded-sm shadow-[0_4px_24px_rgba(42,20,16,0.1)] border border-[#2a1410]/10 w-full max-w-sm z-10 p-6 sm:p-8">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-lg sm:text-xl font-bold text-secondary">Actualizare Stoc</h2>
-          <button @click="stockModalOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold">&times;</button>
+          <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410]">Actualizare Stoc</h2>
+          <button @click="stockModalOpen = false" class="text-[#7a5a55] hover:text-[#2a1410] text-2xl font-bold leading-none">&times;</button>
         </div>
-        <p class="text-dark font-semibold text-sm mb-4">{{ stockForm.titlu }}</p>
-        <div class="grid grid-cols-2 gap-4 mb-4">
+        <p class="text-[#2a1410] font-bold text-sm mb-5 truncate">{{ stockForm.titlu }}</p>
+        <div class="grid grid-cols-2 gap-4 mb-6">
           <div>
-            <label class="block text-dark font-semibold mb-1 text-xs">Stoc Total</label>
-            <input v-model.number="stockForm.stoc_total" type="number" min="0" class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Stoc Total</label>
+            <input v-model.number="stockForm.stoc_total" type="number" min="0" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] focus:outline-none transition-colors">
           </div>
           <div>
-            <label class="block text-dark font-semibold mb-1 text-xs">Disponibil</label>
-            <input v-model.number="stockForm.stoc_disponibil" type="number" min="0" class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Disponibil</label>
+            <input v-model.number="stockForm.stoc_disponibil" type="number" min="0" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] focus:outline-none transition-colors">
           </div>
         </div>
-        <div v-if="stockMsg.error" class="mb-3 bg-accent/10 border-l-4 border-accent rounded-lg p-3">
-          <p class="text-accent text-xs">{{ stockMsg.error }}</p>
+        <div v-if="stockMsg.error" class="mb-4 p-3 bg-[#ff3d5a]/5 border border-[#ff3d5a]/20 rounded-sm">
+          <p class="text-[#ff3d5a] font-mono text-[10px] uppercase tracking-widest">{{ stockMsg.error }}</p>
         </div>
-        <div v-if="stockMsg.success" class="mb-3 bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
-          <p class="text-green-700 text-xs">{{ stockMsg.success }}</p>
+        <div v-if="stockMsg.success" class="mb-4 p-3 bg-[#2a5c3a]/5 border border-[#2a5c3a]/20 rounded-sm">
+          <p class="text-[#2a5c3a] font-mono text-[10px] uppercase tracking-widest">{{ stockMsg.success }}</p>
         </div>
-        <button @click="submitStock" class="w-full btn-primary text-sm">
+        <button @click="submitStock" class="w-full px-5 py-3 bg-[#c9a84c] text-dark hover:opacity-90 font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-all shadow-sm">
           Actualizează
         </button>
       </div>
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div v-if="deleteBookOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="deleteBookOpen = false">
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="deleteBookOpen = false"></div>
-      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-md z-10 p-6 sm:p-8 text-center">
-        <i class="pi pi-exclamation-triangle text-4xl text-accent mb-4"></i>
-        <h2 class="text-xl font-bold text-dark mb-2">Șterge Cartea?</h2>
-        <p class="text-gray-600 text-sm mb-6">
+    <div v-if="deleteBookOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="deleteBookOpen = false">
+      <div class="absolute inset-0 bg-dark/60 backdrop-blur-sm" @click="deleteBookOpen = false"></div>
+      <div class="relative bg-white rounded-sm shadow-[0_4px_24px_rgba(42,20,16,0.1)] border border-[#2a1410]/10 w-full max-w-md z-10 p-6 sm:p-8 text-center">
+        <div class="w-16 h-16 rounded-sm bg-[#ff3d5a]/10 border border-[#ff3d5a]/20 flex items-center justify-center mx-auto mb-5">
+           <i class="pi pi-exclamation-triangle text-2xl text-[#ff3d5a]"></i>
+        </div>
+        <h2 class="text-lg font-bold font-display uppercase tracking-tight text-[#2a1410] mb-3">Șterge Cartea?</h2>
+        <p class="text-[#7a5a55] font-serif italic text-sm mb-8">
           Ești sigur că vrei să ștergi <strong>{{ deleteTarget?.titlu }}</strong>? Această acțiune nu poate fi anulată.
         </p>
-        <div v-if="deleteMsg.error" class="mb-4 bg-accent/10 border-l-4 border-accent rounded-lg p-3">
-          <p class="text-accent text-xs sm:text-sm">{{ deleteMsg.error }}</p>
+        <div v-if="deleteMsg.error" class="mb-5 p-3 bg-[#ff3d5a]/5 border border-[#ff3d5a]/20 rounded-sm">
+          <p class="text-[#ff3d5a] font-mono text-[10px] uppercase tracking-widest">{{ deleteMsg.error }}</p>
         </div>
-        <div class="flex gap-3">
-          <button @click="deleteBookOpen = false" class="flex-1 btn-secondary">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button @click="deleteBookOpen = false" class="flex-1 px-5 py-3 bg-white border border-[#2a1410]/20 text-[#2a1410] font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm hover:bg-cream-dark transition-colors">
             Anulează
           </button>
-          <button @click="submitDeleteBook" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300">
-            Șterge
+          <button @click="submitDeleteBook" class="flex-1 px-5 py-3 bg-[#ff3d5a] hover:bg-[#ff3d5a]/90 text-white font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-colors">
+            Șterge Definitiv
           </button>
         </div>
       </div>
     </div>
 
     <!-- Add Announcement Modal -->
-    <div v-if="addAnuntOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="addAnuntOpen = false">
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="addAnuntOpen = false"></div>
-      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+    <div v-if="addAnuntOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="addAnuntOpen = false">
+      <div class="absolute inset-0 bg-dark/60 backdrop-blur-sm" @click="addAnuntOpen = false"></div>
+      <div class="relative bg-white rounded-sm shadow-[0_4px_24px_rgba(42,20,16,0.1)] border border-[#2a1410]/10 w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-bold text-dark">Anunț Nou</h2>
-          <button @click="addAnuntOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold">&times;</button>
+          <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410]">Anunț Nou</h2>
+          <button @click="addAnuntOpen = false" class="text-[#7a5a55] hover:text-[#2a1410] text-2xl font-bold leading-none">&times;</button>
         </div>
-        <form @submit.prevent="submitAddAnunt" class="space-y-4">
+        <form @submit.prevent="submitAddAnunt" class="space-y-5">
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">Titlu *</label>
-            <input v-model="addAnuntForm.titlu" type="text" required maxlength="255" class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Titlu *</label>
+            <input v-model="addAnuntForm.titlu" type="text" required maxlength="255" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] focus:outline-none transition-colors">
           </div>
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">Conținut *</label>
-            <textarea v-model="addAnuntForm.anunt" required rows="6" class="input-field text-sm resize-none"></textarea>
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Conținut *</label>
+            <textarea v-model="addAnuntForm.anunt" required rows="6" class="w-full px-4 py-3 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-serif text-sm text-[#2a1410] focus:outline-none transition-colors resize-none"></textarea>
           </div>
-          <div v-if="addAnuntMsg.error" class="bg-accent/10 border-l-4 border-accent rounded-lg p-3">
-            <p class="text-accent text-xs sm:text-sm">{{ addAnuntMsg.error }}</p>
+          <div v-if="addAnuntMsg.error" class="p-3 bg-[#ff3d5a]/5 border border-[#ff3d5a]/20 rounded-sm">
+            <p class="text-[#ff3d5a] font-mono text-[10px] uppercase tracking-widest">{{ addAnuntMsg.error }}</p>
           </div>
-          <div v-if="addAnuntMsg.success" class="bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
-            <p class="text-green-700 text-xs sm:text-sm">{{ addAnuntMsg.success }}</p>
+          <div v-if="addAnuntMsg.success" class="p-3 bg-[#2a5c3a]/5 border border-[#2a5c3a]/20 rounded-sm">
+            <p class="text-[#2a5c3a] font-mono text-[10px] uppercase tracking-widest">{{ addAnuntMsg.success }}</p>
           </div>
-          <button type="submit" class="w-full btn-primary">
+          <button type="submit" class="w-full px-5 py-3 mt-4 bg-[#c9a84c] text-dark hover:opacity-90 font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-all shadow-sm">
             Publică Anunț
           </button>
         </form>
@@ -1080,29 +1119,29 @@
     </div>
 
     <!-- Edit Announcement Modal -->
-    <div v-if="editAnuntOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="editAnuntOpen = false">
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="editAnuntOpen = false"></div>
-      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+    <div v-if="editAnuntOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="editAnuntOpen = false">
+      <div class="absolute inset-0 bg-dark/60 backdrop-blur-sm" @click="editAnuntOpen = false"></div>
+      <div class="relative bg-white rounded-sm shadow-[0_4px_24px_rgba(42,20,16,0.1)] border border-[#2a1410]/10 w-full max-w-lg z-10 p-6 sm:p-8 max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-bold text-dark">Editează Anunț</h2>
-          <button @click="editAnuntOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold">&times;</button>
+          <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410]">Editează Anunț</h2>
+          <button @click="editAnuntOpen = false" class="text-[#7a5a55] hover:text-[#2a1410] text-2xl font-bold leading-none">&times;</button>
         </div>
-        <form @submit.prevent="submitEditAnunt" class="space-y-4">
+        <form @submit.prevent="submitEditAnunt" class="space-y-5">
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">Titlu</label>
-            <input v-model="editAnuntForm.titlu" type="text" maxlength="255" class="input-field text-sm">
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Titlu</label>
+            <input v-model="editAnuntForm.titlu" type="text" maxlength="255" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] focus:outline-none transition-colors">
           </div>
           <div>
-            <label class="block text-dark font-semibold mb-1 text-sm">Conținut</label>
-            <textarea v-model="editAnuntForm.anunt" rows="6" class="input-field text-sm resize-none"></textarea>
+            <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Conținut</label>
+            <textarea v-model="editAnuntForm.anunt" rows="6" class="w-full px-4 py-3 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-serif text-sm text-[#2a1410] focus:outline-none transition-colors resize-none"></textarea>
           </div>
-          <div v-if="editAnuntMsg.error" class="bg-accent/10 border-l-4 border-accent rounded-lg p-3">
-            <p class="text-accent text-xs sm:text-sm">{{ editAnuntMsg.error }}</p>
+          <div v-if="editAnuntMsg.error" class="p-3 bg-[#ff3d5a]/5 border border-[#ff3d5a]/20 rounded-sm">
+            <p class="text-[#ff3d5a] font-mono text-[10px] uppercase tracking-widest">{{ editAnuntMsg.error }}</p>
           </div>
-          <div v-if="editAnuntMsg.success" class="bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
-            <p class="text-green-700 text-xs sm:text-sm">{{ editAnuntMsg.success }}</p>
+          <div v-if="editAnuntMsg.success" class="p-3 bg-[#2a5c3a]/5 border border-[#2a5c3a]/20 rounded-sm">
+            <p class="text-[#2a5c3a] font-mono text-[10px] uppercase tracking-widest">{{ editAnuntMsg.success }}</p>
           </div>
-          <button type="submit" class="w-full btn-primary">
+          <button type="submit" class="w-full px-5 py-3 mt-4 bg-[#c9a84c] text-dark hover:opacity-90 font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-all shadow-sm">
             Salvează Modificări
           </button>
         </form>
@@ -1110,69 +1149,71 @@
     </div>
 
     <!-- Delete Announcement Modal -->
-    <div v-if="deleteAnuntOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="deleteAnuntOpen = false">
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="deleteAnuntOpen = false"></div>
-      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-md z-10 p-6 sm:p-8 text-center">
-        <i class="pi pi-exclamation-triangle text-4xl text-accent mb-4"></i>
-        <h2 class="text-xl font-bold text-dark mb-2">Șterge Anunțul?</h2>
-        <p class="text-gray-600 text-sm mb-6">
-          Ești sigur că vrei să ștergi <strong>{{ deleteAnuntTarget?.titlu }}</strong>?
-        </p>
-        <div v-if="deleteAnuntMsg.error" class="mb-4 bg-accent/10 border-l-4 border-accent rounded-lg p-3">
-          <p class="text-accent text-xs sm:text-sm">{{ deleteAnuntMsg.error }}</p>
+    <div v-if="deleteAnuntOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="deleteAnuntOpen = false">
+      <div class="absolute inset-0 bg-dark/60 backdrop-blur-sm" @click="deleteAnuntOpen = false"></div>
+      <div class="relative bg-white rounded-sm shadow-[0_4px_24px_rgba(42,20,16,0.1)] border border-[#2a1410]/10 w-full max-w-md z-10 p-6 sm:p-8 text-center">
+        <div class="w-16 h-16 rounded-sm bg-[#ff3d5a]/10 border border-[#ff3d5a]/20 flex items-center justify-center mx-auto mb-5">
+           <i class="pi pi-exclamation-triangle text-2xl text-[#ff3d5a]"></i>
         </div>
-        <div class="flex gap-3">
-          <button @click="deleteAnuntOpen = false" class="flex-1 btn-secondary">
+        <h2 class="text-lg font-bold font-display uppercase tracking-tight text-[#2a1410] mb-3">Șterge Anunțul?</h2>
+        <p class="text-[#7a5a55] font-serif italic text-sm mb-8">
+          Ești sigur că vrei să ștergi anunțul <strong>{{ deleteAnuntTarget?.titlu }}</strong>?
+        </p>
+        <div v-if="deleteAnuntMsg.error" class="mb-5 p-3 bg-[#ff3d5a]/5 border border-[#ff3d5a]/20 rounded-sm">
+          <p class="text-[#ff3d5a] font-mono text-[10px] uppercase tracking-widest">{{ deleteAnuntMsg.error }}</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button @click="deleteAnuntOpen = false" class="flex-1 px-5 py-3 bg-white border border-[#2a1410]/20 text-[#2a1410] font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm hover:bg-cream-dark transition-colors">
             Anulează
           </button>
-          <button @click="submitDeleteAnunt" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300">
-            Șterge
+          <button @click="submitDeleteAnunt" class="flex-1 px-5 py-3 bg-[#ff3d5a] hover:bg-[#ff3d5a]/90 text-white font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm transition-colors">
+            Șterge Definitiv
           </button>
         </div>
       </div>
     </div>
 
     <!-- RETURNARE ÎMPRUMUT MODAL -->
-    <div v-if="returnareModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="returnareModalOpen = false">
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="returnareModalOpen = false"></div>
-      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-sm z-10 p-6 sm:p-8">
+    <div v-if="returnareModalOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="returnareModalOpen = false">
+      <div class="absolute inset-0 bg-dark/60 backdrop-blur-sm" @click="returnareModalOpen = false"></div>
+      <div class="relative bg-white rounded-sm shadow-[0_4px_24px_rgba(42,20,16,0.1)] border border-[#2a1410]/10 w-full max-w-sm z-10 p-6 sm:p-8">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-lg sm:text-xl font-bold text-secondary">Returnare Carte</h2>
-          <button @click="returnareModalOpen = false" class="text-gray-500 hover:text-secondary text-2xl font-bold">&times;</button>
+          <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410]">Returnare Carte</h2>
+          <button @click="returnareModalOpen = false" class="text-[#7a5a55] hover:text-[#2a1410] text-2xl font-bold leading-none">&times;</button>
         </div>
-        <p class="text-dark font-semibold text-sm mb-0.5">{{ returnareTarget?.titlu }}</p>
-        <p class="text-gray-500 text-xs mb-5">{{ returnareTarget?.autor }}</p>
+        <p class="text-[#2a1410] font-bold text-sm mb-1 truncate">{{ returnareTarget?.titlu }}</p>
+        <p class="font-mono text-[10px] uppercase tracking-widest text-[#7a5a55] mb-6">de {{ returnareTarget?.autor }}</p>
 
         <!-- Modificare dată scadentă -->
-        <div class="mb-3">
-          <label class="block text-dark font-semibold mb-1 text-xs">Modifică data scadentă</label>
-          <div class="grid grid-cols-2 gap-2">
-            <input v-model="returnareNovaDataDate" type="date" class="input-field text-sm">
-            <input v-model="returnareNovaDataTime" type="time" class="input-field text-sm">
+        <div class="mb-5">
+          <label class="block font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-2">Modifică data scadentă</label>
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <input v-model="returnareNovaDataDate" type="date" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-mono text-xs text-[#2a1410] focus:outline-none transition-colors">
+            <input v-model="returnareNovaDataTime" type="time" class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-mono text-xs text-[#2a1410] focus:outline-none transition-colors">
           </div>
+          <button
+            @click="prelungesteData"
+            :disabled="salvandData || !returnareNovaDataDate || !returnareNovaDataTime"
+            class="w-full px-5 py-3 bg-white border border-[#2a1410]/20 text-[#2a1410] hover:bg-cream-dark font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+          >
+            <i :class="salvandData ? 'pi pi-spin pi-spinner' : 'pi pi-calendar'"></i>
+            {{ salvandData ? 'Se salvează...' : 'Salvează data scadentă' }}
+          </button>
         </div>
-        <button
-          @click="prelungesteData"
-          :disabled="salvandData || !returnareNovaDataDate || !returnareNovaDataTime"
-          class="w-full btn-secondary text-sm mb-5 disabled:opacity-50 flex items-center justify-center gap-1"
-        >
-          <i :class="salvandData ? 'pi pi-spin pi-spinner' : 'pi pi-calendar'"></i>
-          {{ salvandData ? 'Se salvează...' : 'Salvează data scadentă' }}
-        </button>
 
-        <div class="border-t border-gray-100 mb-5"></div>
+        <div class="border-t border-[#2a1410]/10 mb-6"></div>
 
-        <div v-if="returnareMsg.error" class="mb-3 bg-accent/10 border-l-4 border-accent rounded-lg p-3">
-          <p class="text-accent text-xs">{{ returnareMsg.error }}</p>
+        <div v-if="returnareMsg.error" class="mb-4 p-3 bg-[#ff3d5a]/5 border border-[#ff3d5a]/20 rounded-sm">
+          <p class="text-[#ff3d5a] font-mono text-[10px] uppercase tracking-widest">{{ returnareMsg.error }}</p>
         </div>
-        <div v-if="returnareMsg.success" class="mb-3 bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
-          <p class="text-green-700 text-xs">{{ returnareMsg.success }}</p>
+        <div v-if="returnareMsg.success" class="mb-4 p-3 bg-[#2a5c3a]/5 border border-[#2a5c3a]/20 rounded-sm">
+          <p class="text-[#2a5c3a] font-mono text-[10px] uppercase tracking-widest">{{ returnareMsg.success }}</p>
         </div>
 
         <button
           @click="returneazaAcum"
           :disabled="procesandReturnare"
-          class="w-full btn-primary text-sm disabled:opacity-50 flex items-center justify-center gap-1"
+          class="w-full px-5 py-3 bg-[#c9a84c] text-dark hover:opacity-90 font-mono text-[10px] uppercase tracking-widest font-bold rounded-sm disabled:opacity-50 flex items-center justify-center gap-2 transition-all shadow-sm"
         >
           <i :class="procesandReturnare ? 'pi pi-spin pi-spinner' : 'pi pi-check-circle'"></i>
           {{ procesandReturnare ? 'Se procesează...' : 'Returnează acum' }}
@@ -1181,53 +1222,53 @@
     </div>
 
     <!-- USERS LIST MODAL -->
-    <div v-if="usersListOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="usersListOpen = false">
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="usersListOpen = false"></div>
-      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-2xl z-10 flex flex-col max-h-[90vh]">
+    <div v-if="usersListOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="usersListOpen = false">
+      <div class="absolute inset-0 bg-dark/60 backdrop-blur-sm" @click="usersListOpen = false"></div>
+      <div class="relative bg-white rounded-sm shadow-[0_4px_24px_rgba(42,20,16,0.1)] border border-[#2a1410]/10 w-full max-w-2xl z-10 flex flex-col max-h-[90vh]">
         <!-- Header -->
-        <div class="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 class="text-xl font-bold text-dark flex items-center gap-2">
-            <i class="pi pi-users text-secondary"></i> Conturi Utilizatori
-            <span class="text-sm font-normal text-gray-400 ml-1">({{ filteredUsers.length }})</span>
+        <div class="flex items-center justify-between p-6 sm:p-8 border-b border-[#2a1410]/10">
+          <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] flex items-center gap-2">
+            <i class="pi pi-users text-[#c9a84c]"></i> Conturi Utilizatori
+            <span class="font-mono text-[10px] text-[#7a5a55] ml-2">({{ filteredUsers.length }})</span>
           </h2>
-          <button @click="usersListOpen = false" class="text-gray-400 hover:text-secondary text-2xl font-bold transition-colors">&times;</button>
+          <button @click="usersListOpen = false" class="text-[#7a5a55] hover:text-[#2a1410] text-2xl font-bold leading-none transition-colors">&times;</button>
         </div>
         <!-- Search -->
-        <div class="px-6 pt-4 pb-2">
+        <div class="px-6 sm:px-8 py-5 border-b border-[#2a1410]/5 bg-cream/30">
           <input
             v-model="usersSearch"
             type="text"
             placeholder="Caută după nume sau email..."
-            class="input-field text-sm"
+            class="w-full px-4 py-2.5 bg-white border border-[#2a1410]/20 focus:border-[#c9a84c] rounded-sm font-sans text-sm text-[#2a1410] placeholder-[#7a5a55]/50 focus:outline-none transition-colors"
           >
         </div>
         <!-- List -->
-        <div class="overflow-y-auto flex-1 px-6 pb-6">
+        <div class="overflow-y-auto flex-1 p-6 sm:p-8 custom-scrollbar">
           <div v-if="loadingUsers" class="flex items-center justify-center py-12">
-            <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
+            <i class="pi pi-spin pi-spinner text-2xl text-[#c9a84c]"></i>
           </div>
-          <div v-else-if="filteredUsers.length === 0" class="text-center py-12 text-gray-400 text-sm">
-            <i class="pi pi-users text-3xl mb-2 block text-gray-200"></i>
+          <div v-else-if="filteredUsers.length === 0" class="text-center py-12 text-[#7a5a55] font-serif italic text-sm">
+            <i class="pi pi-users text-3xl mb-3 block opacity-20"></i>
             Niciun utilizator găsit.
           </div>
-          <div v-else class="space-y-2 mt-2">
+          <div v-else class="space-y-3">
             <div
               v-for="u in filteredUsers"
               :key="u.user_id"
               @click="openUserDetail(u)"
-              class="flex items-center gap-4 p-3 rounded-xl border border-gray-100 hover:border-secondary/30 hover:bg-cream/50 cursor-pointer transition-all"
+              class="flex items-center gap-4 p-4 rounded-sm border border-[#2a1410]/10 bg-white hover:border-[#c9a84c]/50 hover:bg-cream cursor-pointer transition-all group"
             >
-              <div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0">
-                <i class="pi pi-user text-secondary"></i>
+              <div class="w-10 h-10 rounded-sm bg-cream-dark flex items-center justify-center shrink-0 border border-[#2a1410]/10">
+                <i class="pi pi-user text-[#7a5a55] group-hover:text-[#c9a84c] transition-colors"></i>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="font-semibold text-dark text-sm truncate">{{ u.username }}</p>
-                <p class="text-gray-400 text-xs truncate">{{ u.email }}</p>
+                <p class="font-bold text-[#2a1410] text-sm truncate">{{ u.username }}</p>
+                <p class="text-[#7a5a55] font-serif italic text-xs truncate">{{ u.email }}</p>
               </div>
-              <span :class="u.rol === 'bibliotecar' ? 'bg-secondary text-white' : 'bg-cream text-secondary'" class="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0">
+              <span :class="u.rol === 'bibliotecar' ? 'bg-[#c9a84c] text-dark' : 'bg-cream-dark text-[#7a5a55] border border-[#2a1410]/10'" class="font-mono text-[9px] uppercase tracking-widest font-bold px-2 py-1 rounded-sm shrink-0">
                 {{ u.rol === 'bibliotecar' ? 'Bibliotecar' : 'Elev' }}
               </span>
-              <i class="pi pi-chevron-right text-gray-300 text-sm flex-shrink-0"></i>
+              <i class="pi pi-chevron-right text-[#7a5a55]/40 group-hover:text-[#c9a84c] text-sm shrink-0 transition-colors"></i>
             </div>
           </div>
         </div>
@@ -1235,95 +1276,95 @@
     </div>
 
     <!-- USER DETAIL MODAL -->
-    <div v-if="userDetailOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="userDetailOpen = false">
-      <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="userDetailOpen = false"></div>
-      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-2xl z-10 flex flex-col max-h-[90vh]">
+    <div v-if="userDetailOpen" class="fixed inset-0 z-[70] flex items-center justify-center p-4" @click.self="userDetailOpen = false">
+      <div class="absolute inset-0 bg-dark/60 backdrop-blur-sm" @click="userDetailOpen = false"></div>
+      <div class="relative bg-white rounded-sm shadow-[0_4px_24px_rgba(42,20,16,0.1)] border border-[#2a1410]/10 w-full max-w-2xl z-10 flex flex-col max-h-[90vh]">
         <!-- Header -->
-        <div class="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 class="text-xl font-bold text-dark flex items-center gap-2">
-            <i class="pi pi-user text-secondary"></i>
+        <div class="flex items-center justify-between p-6 sm:p-8 border-b border-[#2a1410]/10">
+          <h2 class="text-sm font-bold font-display uppercase tracking-tight text-[#2a1410] flex items-center gap-2">
+            <i class="pi pi-user text-[#c9a84c]"></i>
             {{ userDetail ? userDetail.user.username : 'Detalii Cont' }}
           </h2>
-          <button @click="userDetailOpen = false" class="text-gray-400 hover:text-secondary text-2xl font-bold transition-colors">&times;</button>
+          <button @click="userDetailOpen = false" class="text-[#7a5a55] hover:text-[#2a1410] text-2xl font-bold leading-none transition-colors">&times;</button>
         </div>
 
         <!-- Loading -->
         <div v-if="loadingUserDetail" class="flex items-center justify-center py-16">
-          <i class="pi pi-spin pi-spinner text-2xl text-secondary"></i>
+          <i class="pi pi-spin pi-spinner text-2xl text-[#c9a84c]"></i>
         </div>
 
         <!-- Content -->
-        <div v-else-if="userDetail" class="overflow-y-auto flex-1 p-6 space-y-6">
+        <div v-else-if="userDetail" class="overflow-y-auto flex-1 p-6 sm:p-8 space-y-8 custom-scrollbar">
 
           <!-- Profile Info -->
-          <div class="flex items-center gap-4 p-4 bg-cream rounded-xl">
+          <div class="flex items-center gap-5 p-5 bg-cream rounded-sm border border-[#2a1410]/10">
             <img
               :src="`/api/auth/profile-picture/${encodeURIComponent(userDetail.user.username)}?t=${Date.now()}`"
-              class="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
+              class="w-16 h-16 rounded-sm object-cover border border-[#2a1410]/20"
               @error="$event.target.src='/api/auth/profile-picture/default'"
             >
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <p class="font-bold text-dark text-base">{{ userDetail.user.username }}</p>
-                <span :class="userDetail.user.rol === 'bibliotecar' ? 'bg-secondary text-white' : 'bg-white text-secondary border border-secondary/20'" class="text-xs font-bold px-2 py-0.5 rounded-full">
+              <div class="flex items-center gap-3 flex-wrap mb-1">
+                <p class="font-bold text-[#2a1410] text-lg">{{ userDetail.user.username }}</p>
+                <span :class="userDetail.user.rol === 'bibliotecar' ? 'bg-[#c9a84c] text-dark' : 'bg-white text-[#7a5a55] border border-[#2a1410]/10'" class="font-mono text-[9px] uppercase tracking-widest font-bold px-2 py-1 rounded-sm">
                   {{ userDetail.user.rol === 'bibliotecar' ? 'Bibliotecar' : 'Elev' }}
                 </span>
               </div>
-              <p class="text-gray-500 text-sm">{{ userDetail.user.email }}</p>
-              <p v-if="userDetail.user.telefon" class="text-gray-400 text-xs mt-0.5"><i class="pi pi-phone mr-1"></i>{{ userDetail.user.telefon }}</p>
+              <p class="text-[#7a5a55] font-serif italic text-sm">{{ userDetail.user.email }}</p>
+              <p v-if="userDetail.user.telefon" class="text-[#7a5a55] font-mono text-[10px] uppercase tracking-widest mt-2"><i class="pi pi-phone mr-1"></i>{{ userDetail.user.telefon }}</p>
             </div>
           </div>
 
-          <p v-if="userDetail.user.description" class="text-gray-600 text-sm italic px-1">
-            "{{ userDetail.user.description }}"
+          <p v-if="userDetail.user.description" class="text-[#3b2b18] font-serif italic text-sm border-l-2 border-[#c9a84c] pl-4">
+            „{{ userDetail.user.description }}"
           </p>
 
           <!-- Stats row -->
-          <div class="grid grid-cols-3 gap-3 text-center">
-            <div class="bg-cream rounded-xl p-3">
-              <p class="text-xl font-bold text-secondary">{{ userDetail.books_borrowed.length }}</p>
-              <p class="text-gray-500 text-xs">Împrumutate</p>
+          <div class="grid grid-cols-3 gap-4 text-center">
+            <div class="bg-white border border-[#2a1410]/10 rounded-sm p-4">
+              <p class="text-2xl font-bold font-display text-[#2a1410]">{{ userDetail.books_borrowed.length }}</p>
+              <p class="font-mono text-[9px] uppercase tracking-widest text-[#7a5a55] mt-1">Împrumutate</p>
             </div>
-            <div class="bg-cream rounded-xl p-3">
-              <p class="text-xl font-bold text-secondary">{{ userDetail.books_read.length }}</p>
-              <p class="text-gray-500 text-xs">Citite</p>
+            <div class="bg-white border border-[#2a1410]/10 rounded-sm p-4">
+              <p class="text-2xl font-bold font-display text-[#2a1410]">{{ userDetail.books_read.length }}</p>
+              <p class="font-mono text-[9px] uppercase tracking-widest text-[#7a5a55] mt-1">Citite</p>
             </div>
-            <div class="bg-cream rounded-xl p-3">
-              <p class="text-xl font-bold text-secondary">{{ userDetail.reviews.length }}</p>
-              <p class="text-gray-500 text-xs">Recenzii</p>
+            <div class="bg-white border border-[#2a1410]/10 rounded-sm p-4">
+              <p class="text-2xl font-bold font-display text-[#2a1410]">{{ userDetail.reviews.length }}</p>
+              <p class="font-mono text-[9px] uppercase tracking-widest text-[#7a5a55] mt-1">Recenzii</p>
             </div>
           </div>
 
           <!-- Currently Borrowed -->
           <div>
-            <h3 class="text-sm font-bold text-dark mb-2 flex items-center gap-2">
-              <i class="pi pi-book text-secondary"></i> Cărți Împrumutate Curent
+            <h3 class="font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-4 pb-2 border-b border-[#2a1410]/10 flex items-center gap-2">
+              <i class="pi pi-book"></i> Cărți Împrumutate Curent
             </h3>
-            <div v-if="userDetail.books_borrowed.length === 0" class="text-gray-400 text-xs italic px-1">Nicio carte împrumutată momentan.</div>
-            <div v-else class="space-y-2">
-              <div v-for="b in userDetail.books_borrowed" :key="b.carte_id" class="flex items-center gap-3 p-3 border border-green-100 bg-green-50 rounded-xl">
-                <i class="pi pi-book text-green-600 flex-shrink-0"></i>
+            <div v-if="userDetail.books_borrowed.length === 0" class="text-[#7a5a55] font-serif italic text-sm py-2">Nicio carte împrumutată momentan.</div>
+            <div v-else class="space-y-3">
+              <div v-for="b in userDetail.books_borrowed" :key="b.carte_id" class="flex items-center gap-4 p-4 border border-[#2a5c3a]/20 bg-[#2a5c3a]/5 rounded-sm">
+                <i class="pi pi-book text-[#2a5c3a] shrink-0"></i>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-semibold text-dark truncate">{{ b.titlu }}</p>
-                  <p class="text-xs text-gray-500">{{ b.autor }} · ISBN: {{ b.ISBN }}</p>
+                  <p class="text-sm font-bold text-[#2a1410] truncate">{{ b.titlu }}</p>
+                  <p class="font-mono text-[10px] uppercase tracking-widest text-[#7a5a55] mt-1">{{ b.autor }} · ISBN: {{ b.ISBN }}</p>
                 </div>
-                <span class="text-xs text-gray-400 flex-shrink-0">{{ formatDate(b.borrowed_at) }}</span>
+                <span class="font-mono text-[10px] text-[#2a5c3a] font-bold shrink-0">{{ formatDate(b.borrowed_at) }}</span>
               </div>
             </div>
           </div>
 
           <!-- Books Read -->
           <div>
-            <h3 class="text-sm font-bold text-dark mb-2 flex items-center gap-2">
-              <i class="pi pi-check-circle text-secondary"></i> Cărți Citite / Returnate
+            <h3 class="font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-4 pb-2 border-b border-[#2a1410]/10 flex items-center gap-2">
+              <i class="pi pi-check-circle"></i> Cărți Citite / Returnate
             </h3>
-            <div v-if="userDetail.books_read.length === 0" class="text-gray-400 text-xs italic px-1">Nicio carte returnată înregistrată.</div>
-            <div v-else class="space-y-2">
-              <div v-for="b in userDetail.books_read" :key="b.carte_id" class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl">
-                <i class="pi pi-check text-secondary flex-shrink-0"></i>
+            <div v-if="userDetail.books_read.length === 0" class="text-[#7a5a55] font-serif italic text-sm py-2">Nicio carte returnată înregistrată.</div>
+            <div v-else class="space-y-3">
+              <div v-for="b in userDetail.books_read" :key="b.carte_id" class="flex items-center gap-4 p-4 border border-[#2a1410]/10 bg-white rounded-sm">
+                <i class="pi pi-check text-[#7a5a55] shrink-0"></i>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-semibold text-dark truncate">{{ b.titlu }}</p>
-                  <p class="text-xs text-gray-500">{{ b.autor }} · ISBN: {{ b.ISBN }}</p>
+                  <p class="text-sm font-bold text-[#2a1410] truncate">{{ b.titlu }}</p>
+                  <p class="font-mono text-[10px] uppercase tracking-widest text-[#7a5a55] mt-1">{{ b.autor }} · ISBN: {{ b.ISBN }}</p>
                 </div>
               </div>
             </div>
@@ -1331,45 +1372,47 @@
 
           <!-- Borrow History -->
           <div>
-            <h3 class="text-sm font-bold text-dark mb-2 flex items-center gap-2">
-              <i class="pi pi-history text-secondary"></i> Istoric Cereri Împrumut
+            <h3 class="font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-4 pb-2 border-b border-[#2a1410]/10 flex items-center gap-2">
+              <i class="pi pi-history"></i> Istoric Cereri Împrumut
             </h3>
-            <div v-if="userDetail.borrow_history.length === 0" class="text-gray-400 text-xs italic px-1">Nicio cerere înregistrată.</div>
-            <div v-else class="space-y-2">
-              <div v-for="r in userDetail.borrow_history" :key="r.cerere_id" class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl">
+            <div v-if="userDetail.borrow_history.length === 0" class="text-[#7a5a55] font-serif italic text-sm py-2">Nicio cerere înregistrată.</div>
+            <div v-else class="space-y-3">
+              <div v-for="r in userDetail.borrow_history" :key="r.cerere_id" class="flex items-center gap-4 p-4 border border-[#2a1410]/10 bg-white rounded-sm">
                 <span :class="[
-                  'text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0',
-                  r.status === 'pending' ? 'bg-amber-50 text-amber-700' :
-                  r.status === 'approved' ? 'bg-green-50 text-green-700' :
-                  'bg-red-50 text-red-700'
+                  'font-mono text-[9px] uppercase tracking-widest font-bold px-2 py-1 rounded-sm shrink-0 border',
+                  r.status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                  r.status === 'approved' ? 'bg-[#2a5c3a]/10 text-[#2a5c3a] border-[#2a5c3a]/20' :
+                  'bg-[#ff3d5a]/10 text-[#ff3d5a] border-[#ff3d5a]/20'
                 ]">
                   {{ r.status === 'pending' ? 'Așteptare' : r.status === 'approved' ? 'Aprobat' : 'Respins' }}
                 </span>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-semibold text-dark truncate">{{ r.titlu }}</p>
-                  <p class="text-xs text-gray-500">{{ r.autor }}</p>
+                  <p class="text-sm font-bold text-[#2a1410] truncate">{{ r.titlu }}</p>
+                  <p class="font-mono text-[10px] uppercase tracking-widest text-[#7a5a55] mt-1">{{ r.autor }}</p>
                 </div>
-                <span class="text-xs text-gray-400 flex-shrink-0">{{ formatDate(r.created_at) }}</span>
+                <span class="font-mono text-[10px] text-[#7a5a55] shrink-0">{{ formatDate(r.created_at) }}</span>
               </div>
             </div>
           </div>
 
           <!-- Reviews -->
           <div>
-            <h3 class="text-sm font-bold text-dark mb-2 flex items-center gap-2">
-              <i class="pi pi-star text-secondary"></i> Recenzii
+            <h3 class="font-mono text-[10px] uppercase tracking-widest font-bold text-[#7a5a55] mb-4 pb-2 border-b border-[#2a1410]/10 flex items-center gap-2">
+              <i class="pi pi-star"></i> Recenzii
             </h3>
-            <div v-if="userDetail.reviews.length === 0" class="text-gray-400 text-xs italic px-1">Nicio recenzie scrisă.</div>
-            <div v-else class="space-y-2">
-              <div v-for="r in userDetail.reviews" :key="r.id" class="p-3 border border-gray-100 rounded-xl">
-                <div class="flex items-center justify-between gap-2 mb-1">
-                  <p class="text-sm font-semibold text-dark truncate">{{ r.titlu }}</p>
-                  <div class="flex items-center gap-0.5 flex-shrink-0">
-                    <span v-for="star in 5" :key="star" :class="star <= r.nota ? 'text-accent' : 'text-gray-200'" class="text-sm">★</span>
+            <div v-if="userDetail.reviews.length === 0" class="text-[#7a5a55] font-serif italic text-sm py-2">Nicio recenzie scrisă.</div>
+            <div v-else class="space-y-4">
+              <div v-for="r in userDetail.reviews" :key="r.id" class="p-5 border border-[#2a1410]/10 bg-cream rounded-sm">
+                <div class="flex items-start justify-between gap-4 mb-2">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-[#2a1410] truncate">{{ r.titlu }}</p>
+                    <p class="font-mono text-[10px] uppercase tracking-widest text-[#7a5a55] mt-1">{{ r.autor }}</p>
+                  </div>
+                  <div class="flex items-center gap-0.5 shrink-0">
+                    <span v-for="star in 5" :key="star" :class="star <= r.nota ? 'text-[#c9a84c]' : 'text-[#2a1410]/20'" class="text-sm">★</span>
                   </div>
                 </div>
-                <p class="text-xs text-gray-500 mb-1">{{ r.autor }}</p>
-                <p class="text-xs text-gray-700 leading-relaxed">{{ r.comentariu }}</p>
+                <p class="text-[#3b2b18] font-serif italic text-sm leading-relaxed mt-3 border-l-2 border-[#2a1410]/10 pl-3">{{ r.comentariu }}</p>
               </div>
             </div>
           </div>

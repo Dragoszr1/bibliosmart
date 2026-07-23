@@ -307,11 +307,70 @@ def register():
     if len(parola) < 8 or len(parola) > 128:
         return jsonify({'success': False, 'message': 'Parola trebuie să aibă între 8 și 128 de caractere'}), 400
 
+    # Verificare dacă email-ul sau username-ul există deja (fără a crea contul încă)
+    existing = db.session.execute(
+        text("SELECT user_id FROM users WHERE username = :username OR email = :email"),
+        {'username': username, 'email': email}
+    ).fetchone()
+    
+    if existing:
+        return jsonify({'success': False, 'message': 'Username sau email deja existente'}), 409
+
     parola_hash = bcrypt.hashpw(parola.encode('utf-8'), bcrypt.gensalt(12)).decode('utf-8')
+    
+    # Generăm cod
+    import random, secrets, datetime
+    code = f"{random.randint(0, 999999):06d}"
+    
+    # Generăm JWT pentru temp_token pentru înregistrare (ca să nu umplem db-ul cu conturi pending)
+    from flask import current_app
+    import jwt
+    payload = {
+        'reg_username': username,
+        'reg_email': email,
+        'reg_password': parola_hash,
+        'reg_code': code,
+        'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=10)
+    }
+    temp_token = jwt.encode(payload, current_app.config['JWT_SECRET_KEY'], algorithm='HS256')
+
+    body = (
+        f'Salut, {username}!\n\n'
+        f'Codul tau de verificare pentru crearea contului in Biblioteca CNI este:\n\n'
+        f'    {code}\n\n'
+        f'Codul este valabil 10 minute. Nu il impartasi cu nimeni.\n\n'
+        f'---\n'
+        f'Biblioteca CNI Suceava\n'
+    )
+    send_email([email], 'Cod de verificare inregistrare - Biblioteca CNI', body)
+
+    return jsonify({'success': True, 'step': 'verify', 'temp_token': temp_token, 'message': 'Codul a fost trimis pe email.'}), 200
+
+def verify_register():
+    data = request.get_json(silent=True) or {}
+    temp_token = (data.get('temp_token') or '').strip()
+    code = (data.get('code') or '').strip()
+
+    if not temp_token or not code:
+        return jsonify({'success': False, 'message': 'Token și cod sunt obligatorii'}), 400
+
+    from flask import current_app
+    import jwt
+    try:
+        payload = jwt.decode(temp_token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
+    except jwt.ExpiredSignatureError:
+        return jsonify({'success': False, 'message': 'Codul a expirat. Încearcă să te înregistrezi din nou.'}), 400
+    except jwt.InvalidTokenError:
+        return jsonify({'success': False, 'message': 'Sesiune invalidă.'}), 400
+
+    if code != payload.get('reg_code'):
+        return jsonify({'success': False, 'message': 'Cod incorect.'}), 400
+
+    # Insert în baza de date
     values = {
-        'username': username,
-        'email': email,
-        'hashed_password': parola_hash,
+        'username': payload['reg_username'],
+        'email': payload['reg_email'],
+        'hashed_password': payload['reg_password'],
         'rol': 'user',
         'telefon': None,
         'club': 0
@@ -326,7 +385,7 @@ def register():
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'Username sau email deja existente'}), 409
+        return jsonify({'success': False, 'message': 'Username sau email deja existente (contul a fost creat între timp).'}), 409
     except Exception:
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Înregistrarea a eșuat'}), 500

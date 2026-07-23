@@ -48,6 +48,10 @@ def update_profile():
 def register():
     return auth_controller.register()
 
+@auth_bp.route('/verify-register', methods=['POST'])
+def verify_register():
+    return auth_controller.verify_register()
+
 @auth_bp.route('/profile-picture', methods=['POST'])
 @jwt_required
 def upload_profile_picture():
