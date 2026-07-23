@@ -1,59 +1,77 @@
 <template>
-  <div class="min-h-screen">
+  <div class="font-sans text-[#2a1410] bg-cream min-h-screen pb-20">
     <!-- Hero Section -->
-    <section class="bg-dark py-16 sm:py-24 relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-br from-secondary/20 via-transparent to-accent/10"></div>
-      <div class="max-w-3xl mx-auto px-6 text-center relative z-10">
-        <h2 class="text-3xl sm:text-5xl font-bold text-white mb-3 tracking-tight">Explorează Cărțile</h2>
-        <p class="text-white/50 text-sm sm:text-lg font-normal">Descoperă cărți din colecția noastră</p>
+    <section class="relative overflow-hidden border-b border-[#ede0cc] min-h-[300px] flex items-center">
+      <img
+        src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=1600&h=900&fit=crop&auto=format"
+        alt="Library books"
+        class="absolute inset-0 w-full h-full object-cover object-center"
+      />
+      <div
+        class="absolute inset-0"
+        style="background: linear-gradient(105deg, rgba(45,16,24,0.85) 0%, rgba(45,16,24,0.65) 45%, rgba(45,16,24,0.35) 70%, rgba(45,16,24,0.1) 100%)"
+      ></div>
+      <div
+        class="absolute inset-0 opacity-[0.03]"
+        style="background-image: repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(201,168,76,1) 39px, rgba(201,168,76,1) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(201,168,76,1) 39px, rgba(201,168,76,1) 40px)"
+      ></div>
+      
+      <div class="max-w-7xl mx-auto px-6 py-16 relative w-full text-center sm:text-left">
+        <h2 class="text-4xl sm:text-6xl font-black text-white mb-3 tracking-tight drop-shadow font-display uppercase">
+          Catalog Cărți
+        </h2>
+        <div class="flex items-center justify-center sm:justify-start gap-4 w-full opacity-90">
+             <div class="h-px flex-1 max-w-[30px] sm:hidden bg-gradient-to-l from-[#c9a84c] to-transparent"></div>
+             <p class="text-[#c9a84c] text-sm sm:text-base italic font-serif tracking-widest shrink-0">„Descoperă următoarea ta lectură"</p>
+             <div class="h-px flex-1 max-w-[80px] bg-gradient-to-r from-[#c9a84c] to-transparent"></div>
+        </div>
       </div>
     </section>
 
     <!-- Main Content -->
-    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+    <main class="max-w-7xl mx-auto px-6 py-10">
       <!-- Search Bar -->
       <div class="mb-6">
-        <div class="flex items-center gap-3 bg-white rounded-xl shadow-card border border-gray-100 px-5 py-3">
-          <i class="pi pi-search text-gray-400"></i>
+        <div class="flex items-center gap-3 bg-white rounded-sm border border-[#2a1410]/10 px-5 py-4 shadow-[0_1px_4px_rgba(42,20,16,0.04)]">
+          <i class="pi pi-search text-[#7a5a55]"></i>
           <input
             v-model="searchQuery"
             @input="filterBooks"
             type="text"
             placeholder="Caută după titlu, autor sau gen..."
-            class="flex-1 bg-transparent text-dark placeholder-gray-400 focus:outline-none text-sm sm:text-base"
+            class="flex-1 bg-transparent text-[#2a1410] placeholder-[#7a5a55]/50 focus:outline-none text-sm sm:text-base font-medium"
           >
-          <span v-if="searchQuery" @click="searchQuery = ''; filterBooks()" class="text-gray-400 hover:text-gray-600 cursor-pointer">
+          <span v-if="searchQuery" @click="searchQuery = ''; filterBooks()" class="text-[#7a5a55] hover:text-[#2a1410] cursor-pointer">
             <i class="pi pi-times text-sm"></i>
           </span>
         </div>
       </div>
 
       <!-- Filters Panel -->
-      <div class="bg-white rounded-xl shadow-card border border-gray-100 p-4 mb-6">
-        <div class="flex flex-wrap gap-4 items-end">
-
+      <div class="bg-white rounded-sm border border-[#2a1410]/10 p-5 mb-8 shadow-[0_1px_4px_rgba(42,20,16,0.04)]">
+        <div class="flex flex-wrap gap-5 items-end">
           <!-- Gen -->
-          <div class="flex flex-col gap-1 min-w-[160px]">
-            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Gen</label>
-            <select v-model="filterGen" @change="filterBooks" class="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-cream focus:outline-none focus:border-secondary/50 text-dark">
+          <div class="flex flex-col gap-2 min-w-[160px]">
+            <label class="font-mono text-[10px] tracking-widest uppercase text-[#7a5a55]">Gen</label>
+            <select v-model="filterGen" @change="filterBooks" class="text-sm font-medium border border-[#2a1410]/10 rounded-sm px-3 py-2 bg-cream-dark focus:outline-none focus:border-[#c9a84c] text-[#2a1410]">
               <option value="">Toate genurile</option>
               <option v-for="g in allGenres" :key="g" :value="g">{{ g }}</option>
             </select>
           </div>
 
           <!-- Autor -->
-          <div class="flex flex-col gap-1 min-w-[180px]">
-            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Autor</label>
-            <select v-model="filterAutor" @change="filterBooks" class="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-cream focus:outline-none focus:border-secondary/50 text-dark">
+          <div class="flex flex-col gap-2 min-w-[180px]">
+            <label class="font-mono text-[10px] tracking-widest uppercase text-[#7a5a55]">Autor</label>
+            <select v-model="filterAutor" @change="filterBooks" class="text-sm font-medium border border-[#2a1410]/10 rounded-sm px-3 py-2 bg-cream-dark focus:outline-none focus:border-[#c9a84c] text-[#2a1410]">
               <option value="">Toți autorii</option>
               <option v-for="a in allAuthors" :key="a" :value="a">{{ a }}</option>
             </select>
           </div>
 
           <!-- Disponibilitate -->
-          <div class="flex flex-col gap-1 min-w-[170px]">
-            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Disponibilitate</label>
-            <select v-model="filterAvailability" @change="filterBooks" class="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-cream focus:outline-none focus:border-secondary/50 text-dark">
+          <div class="flex flex-col gap-2 min-w-[170px]">
+            <label class="font-mono text-[10px] tracking-widest uppercase text-[#7a5a55]">Disponibilitate</label>
+            <select v-model="filterAvailability" @change="filterBooks" class="text-sm font-medium border border-[#2a1410]/10 rounded-sm px-3 py-2 bg-cream-dark focus:outline-none focus:border-[#c9a84c] text-[#2a1410]">
               <option value="">Toate</option>
               <option value="available">Disponibile</option>
               <option value="unavailable">Indisponibile</option>
@@ -61,9 +79,9 @@
           </div>
 
           <!-- Sortare -->
-          <div class="flex flex-col gap-1 min-w-[200px]">
-            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Sortare</label>
-            <select v-model="sortType" @change="filterBooks" class="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-cream focus:outline-none focus:border-secondary/50 text-dark">
+          <div class="flex flex-col gap-2 min-w-[200px]">
+            <label class="font-mono text-[10px] tracking-widest uppercase text-[#7a5a55]">Sortare</label>
+            <select v-model="sortType" @change="filterBooks" class="text-sm font-medium border border-[#2a1410]/10 rounded-sm px-3 py-2 bg-cream-dark focus:outline-none focus:border-[#c9a84c] text-[#2a1410]">
               <option value="newest">Cele mai noi</option>
               <option value="title_asc">Titlu A → Z</option>
               <option value="title_desc">Titlu Z → A</option>
@@ -80,7 +98,7 @@
           <button
             v-if="hasActiveFilters"
             @click="clearFilters"
-            class="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-accent border border-accent/30 rounded-lg hover:bg-accent/5 transition-colors"
+            class="flex items-center gap-1.5 px-4 py-2.5 text-[10px] font-mono tracking-widest uppercase font-bold text-secondary border border-secondary/30 rounded-sm hover:bg-secondary/5 transition-colors"
           >
             <i class="pi pi-filter-slash"></i> Resetează
           </button>
@@ -88,94 +106,104 @@
       </div>
 
       <!-- Results Info -->
-      <div class="mb-5">
-        <p class="text-gray-500 text-sm">
-          <span class="text-dark font-semibold">{{ filteredBooks.length }}</span> cărți găsite
-          <span v-if="hasActiveFilters" class="ml-2 text-secondary text-xs">(filtrate din {{ allBooks.length }} total)</span>
+      <div class="mb-5 flex items-center justify-between">
+        <p class="font-mono text-xs tracking-wider text-[#7a5a55] uppercase">
+          <span class="text-[#2a1410] font-bold">{{ filteredBooks.length }}</span> cărți găsite
+          <span v-if="hasActiveFilters" class="ml-2 text-secondary/80">(filtrate din {{ allBooks.length }})</span>
         </p>
       </div>
 
       <!-- Books Grid -->
-      <div v-if="filteredBooks.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      <div v-if="filteredBooks.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
         <div 
           v-for="book in paginatedBooks"
           :key="book.id"
           @click="openBookDetail(book)"
-          class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden hover:shadow-elevated transition-all duration-200 cursor-pointer group"
+          class="group rounded-sm overflow-hidden cursor-pointer transition-all bg-white border border-[#2a1410]/10 shadow-[0_1px_4px_rgba(42,20,16,0.06)] hover:shadow-[0_4px_16px_rgba(155,27,48,0.12)] flex flex-col"
         >
           <!-- Book Cover -->
-          <div class="relative h-48 bg-cream flex items-center justify-center overflow-hidden">
+          <div class="relative overflow-hidden h-44 bg-cream-dark shrink-0">
             <img
               :src="`/api/books/image/${book.id}`"
               :alt="book.title"
               loading="lazy"
-              class="absolute inset-0 w-full h-full object-cover"
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               @error="$event.target.style.display='none'"
             >
-            <i class="pi pi-book text-5xl text-secondary/20 group-hover:text-secondary/30 transition-colors"></i>
+            <div class="absolute inset-0 flex items-center justify-center -z-10 bg-cream-dark">
+                <i class="pi pi-book text-3xl text-secondary/20"></i>
+            </div>
             <!-- Availability Badge -->
-            <span
-              :class="[
-                'absolute top-3 right-3 text-xs px-2.5 py-1 rounded-full font-medium',
-                book.available ? 'bg-green-50 text-green-700' : 'bg-red-50 text-accent'
-              ]"
-            >
-              {{ book.available ? 'Disponibil' : 'Indisponibil' }}
-            </span>
+            <div class="absolute top-2 right-2 flex flex-col gap-1 items-end">
+                <span
+                  v-if="book.available"
+                  class="font-mono text-[9px] tracking-widest uppercase px-1.5 py-0.5 rounded-sm bg-[#2a5c3a]/90 text-[#6fcf97] backdrop-blur-sm border border-[#6fcf97]/30"
+                >
+                  Disponibil
+                </span>
+                <span
+                  v-else
+                  class="font-mono text-[9px] tracking-widest uppercase px-1.5 py-0.5 rounded-sm bg-[#ff3d5a]/90 text-white backdrop-blur-sm border border-white/30"
+                >
+                  Indisponibil
+                </span>
+            </div>
             <!-- Stock Badge -->
-            <span class="absolute top-3 left-3 bg-dark/80 text-white text-xs px-2.5 py-1 rounded-full font-medium">
-              {{ book.stoc_disponibil }}/{{ book.stoc_total }}
-            </span>
+            <div class="absolute bottom-2 right-2">
+                <span class="font-mono text-[9px] bg-dark/80 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-sm border border-white/20">
+                  {{ book.stoc_disponibil }}/{{ book.stoc_total }}
+                </span>
+            </div>
           </div>
 
           <!-- Book Info -->
-          <div class="p-4">
-            <h3 class="text-sm font-semibold text-dark mb-1 line-clamp-2 group-hover:text-secondary transition-colors">
+          <div class="p-3 flex-1 flex flex-col">
+            <p class="font-mono text-[10px] uppercase tracking-wider mb-1 text-[#7a5a55] truncate">
+              {{ book.genre || 'General' }}
+            </p>
+            <h3 class="text-sm font-semibold leading-tight mb-1 line-clamp-2 text-[#2a1410]">
               {{ book.title }}
             </h3>
-            <p class="text-gray-400 text-xs mb-3">{{ book.author }}</p>
-            <span class="inline-block text-xs bg-cream text-secondary/80 px-2 py-0.5 rounded-md font-medium">
-              {{ book.genre }}
-            </span>
+            <p class="text-xs text-[#7a5a55] truncate mt-auto">{{ book.author }}</p>
           </div>
         </div>
       </div>
 
       <!-- Pagination Controls -->
-      <div v-if="totalPages > 1" class="flex justify-center items-center gap-4 mt-10">
+      <div v-if="totalPages > 1" class="flex justify-center items-center gap-4 mt-12">
         <button 
           @click="currentPage > 1 ? currentPage-- : null"
           :disabled="currentPage === 1"
-          class="px-4 py-2 rounded-lg font-medium text-sm transition-colors border"
-          :class="currentPage === 1 ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-secondary/30 text-secondary hover:bg-secondary/5'"
+          class="px-4 py-2 rounded-sm font-mono text-xs uppercase tracking-wider transition-colors border"
+          :class="currentPage === 1 ? 'border-[#2a1410]/10 text-[#7a5a55]/50 bg-cream-dark cursor-not-allowed' : 'border-[#2a1410]/20 text-[#2a1410] hover:bg-[#c9a84c] hover:border-[#c9a84c]'"
         >
-          <i class="pi pi-chevron-left mr-1 text-xs"></i> Înapoi
+          <i class="pi pi-chevron-left mr-1 text-[10px]"></i> Înapoi
         </button>
         
-        <span class="text-sm font-medium text-dark">
-          Pagina {{ currentPage }} din {{ totalPages }}
+        <span class="font-mono text-xs uppercase tracking-wider text-[#7a5a55]">
+          Pagina <span class="text-[#2a1410] font-bold">{{ currentPage }}</span> din <span class="text-[#2a1410] font-bold">{{ totalPages }}</span>
         </span>
 
         <button 
           @click="currentPage < totalPages ? currentPage++ : null"
           :disabled="currentPage === totalPages"
-          class="px-4 py-2 rounded-lg font-medium text-sm transition-colors border"
-          :class="currentPage === totalPages ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-secondary/30 text-secondary hover:bg-secondary/5'"
+          class="px-4 py-2 rounded-sm font-mono text-xs uppercase tracking-wider transition-colors border"
+          :class="currentPage === totalPages ? 'border-[#2a1410]/10 text-[#7a5a55]/50 bg-cream-dark cursor-not-allowed' : 'border-[#2a1410]/20 text-[#2a1410] hover:bg-[#c9a84c] hover:border-[#c9a84c]'"
         >
-          Înainte <i class="pi pi-chevron-right ml-1 text-xs"></i>
+          Înainte <i class="pi pi-chevron-right ml-1 text-[10px]"></i>
         </button>
       </div>
 
       <!-- Empty State -->
-      <div v-else class="text-center py-20">
-        <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-          <i class="pi pi-book text-2xl text-gray-300"></i>
+      <div v-else class="text-center py-20 bg-white border border-[#2a1410]/10 rounded-sm">
+        <div class="w-16 h-16 rounded-full bg-cream-dark flex items-center justify-center mx-auto mb-4">
+          <i class="pi pi-book text-2xl text-[#2a1410]/30"></i>
         </div>
-        <h3 class="text-lg font-semibold text-dark mb-2">Nicio carte găsită</h3>
-        <p class="text-gray-500 text-sm mb-6">Modifică filtrele sau caută cu alt cuvânt cheie</p>
+        <h3 class="text-lg font-bold font-display uppercase tracking-tight text-[#2a1410] mb-2">Nicio carte găsită</h3>
+        <p class="text-[#7a5a55] text-sm mb-6">Modifică filtrele sau caută cu alt cuvânt cheie</p>
         <button 
           @click="clearFilters"
-          class="btn-secondary text-sm"
+          class="px-5 py-2.5 rounded-sm font-mono text-xs uppercase tracking-wider transition-colors bg-[#c9a84c] text-dark hover:opacity-90"
         >
           Șterge Filtre
         </button>
@@ -184,155 +212,116 @@
 
     <!-- Book Detail Modal -->
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showModal = false">
-      <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="showModal = false"></div>
+      <div class="absolute inset-0 bg-dark/80 backdrop-blur-sm" @click="showModal = false"></div>
       
-      <div class="relative bg-white rounded-2xl shadow-modal w-full max-w-lg max-h-[85vh] overflow-y-auto z-10">
+      <div class="relative bg-cream rounded-sm shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto z-10 border border-[#c9a84c]/20 custom-scrollbar">
         <!-- Header -->
-        <div class="sticky top-0 bg-dark px-6 py-5 rounded-t-2xl flex items-center gap-4">
+        <div class="sticky top-0 bg-dark px-6 py-5 border-b border-white/10 flex items-start gap-5 z-20">
           <img
             v-if="selectedBook"
             :src="`/api/books/image/${selectedBook.id}`"
             :alt="selectedBook.title"
-            class="w-14 h-20 object-cover rounded-md flex-shrink-0 shadow"
+            class="w-20 h-28 object-cover rounded-sm flex-shrink-0 shadow-lg border border-white/10"
             @error="$event.target.style.display='none'"
           >
           <div class="flex-1 min-w-0 pr-8">
-            <h3 class="text-lg font-bold text-white">{{ selectedBook?.title }}</h3>
-            <p class="text-white/40 text-sm mt-1">de {{ selectedBook?.author }}</p>
+            <span class="inline-block text-[10px] font-mono tracking-widest uppercase text-[#c9a84c] mb-1">
+              {{ selectedBook?.genre || 'General' }}
+            </span>
+            <h3 class="text-xl sm:text-2xl font-black font-display tracking-tight text-white leading-tight mb-1">{{ selectedBook?.title }}</h3>
+            <p class="text-white/70 text-sm font-medium">de {{ selectedBook?.author }}</p>
           </div>
-          <button @click="showModal = false" class="absolute top-4 right-4 text-white/40 hover:text-white transition-colors">
+          <button @click="showModal = false" class="absolute top-4 right-4 text-white/40 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-sm">
             <i class="pi pi-times"></i>
           </button>
         </div>
 
-        <!-- Book Info -->
-        <div class="px-6 py-4 border-b border-gray-100">
-          <div class="flex flex-wrap gap-2 mb-3">
-            <span class="text-xs bg-cream text-secondary/80 px-2.5 py-1 rounded-md font-medium">{{ selectedBook?.genre }}</span>
-            <span class="text-xs bg-gray-100 text-gray-500 px-2.5 py-1 rounded-md font-medium">ISBN: {{ selectedBook?.ISBN }}</span>
-          </div>
-          <div class="flex items-center gap-4 text-sm text-gray-500">
-            <span><strong class="text-dark">{{ selectedBook?.stoc_disponibil }}</strong> disponibil</span>
-            <span><strong class="text-dark">{{ selectedBook?.stoc_total }}</strong> total</span>
-          </div>
-          <div v-if="selectedBook?.pozitie" class="flex items-center gap-1.5 mt-2 text-sm text-gray-500">
-            <i class="pi pi-map-marker text-secondary text-xs"></i>
-            <span>Poziție: <strong class="text-dark">{{ selectedBook.pozitie }}</strong></span>
-          </div>
+        <!-- Book Info & Action Buttons -->
+        <div class="px-6 py-5 bg-white border-b border-[#2a1410]/10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+           <div class="flex gap-8 text-sm">
+             <div>
+               <p class="font-mono text-[10px] tracking-widest uppercase text-[#7a5a55] mb-0.5">Stoc Disponibil</p>
+               <p class="font-bold text-[#2a1410] text-lg">{{ selectedBook?.stoc_disponibil }} <span class="text-sm font-normal text-[#7a5a55]">/ {{ selectedBook?.stoc_total }}</span></p>
+             </div>
+             <div v-if="selectedBook?.pozitie">
+               <p class="font-mono text-[10px] tracking-widest uppercase text-[#7a5a55] mb-0.5">Poziție</p>
+               <p class="font-bold text-[#2a1410] mt-1">{{ selectedBook.pozitie }}</p>
+             </div>
+             <div>
+               <p class="font-mono text-[10px] tracking-widest uppercase text-[#7a5a55] mb-0.5">ISBN</p>
+               <p class="font-mono text-xs text-[#2a1410] mt-1.5">{{ selectedBook?.ISBN || 'N/A' }}</p>
+             </div>
+           </div>
+
+           <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              <button
+                @click="requestFizic"
+                :disabled="requestingFizic || !selectedBook?.available"
+                :class="[
+                  'flex items-center justify-center gap-2 px-5 py-2.5 rounded-sm text-xs font-mono tracking-wider uppercase transition-all whitespace-nowrap',
+                  selectedBook?.available
+                    ? 'bg-[#c9a84c] text-dark hover:opacity-90'
+                    : 'bg-[#2a1410]/5 text-[#7a5a55] cursor-not-allowed border border-[#2a1410]/10'
+                ]"
+              >
+                <i :class="requestingFizic ? 'pi pi-spin pi-spinner' : 'pi pi-book'" class="text-sm"></i>
+                {{ requestingFizic ? 'Se trimite...' : 'Împrumută Fizic' }}
+              </button>
+              <a
+                v-if="selectedBook?.has_pdf"
+                :href="`/api/books/pdf/${selectedBook.id}`"
+                target="_blank"
+                class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-sm text-xs font-mono tracking-wider uppercase transition-all bg-secondary text-white hover:bg-secondary/90 whitespace-nowrap"
+              >
+                <i class="pi pi-file-pdf text-sm"></i> Citește PDF
+              </a>
+           </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="px-6 py-4 border-b border-gray-100 flex gap-3">
-          <button
-            @click="requestFizic"
-            :disabled="requestingFizic || !selectedBook?.available"
-            :class="[
-              'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150',
-              selectedBook?.available
-                ? 'bg-secondary text-white hover:bg-secondary/90 active:scale-[0.98]'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            ]"
-          >
-            <i :class="requestingFizic ? 'pi pi-spin pi-spinner' : 'pi pi-book'" class="text-sm"></i>
-            {{ requestingFizic ? 'Se trimite...' : 'Împrumută Fizic' }}
-          </button>
-          <a
-            v-if="selectedBook?.has_pdf"
-            :href="`/api/books/pdf/${selectedBook.id}`"
-            target="_blank"
-            class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-all duration-150"
-          >
-            <i class="pi pi-file-pdf text-sm"></i>
-            Citește PDF
-          </a>
-          <button
-            v-else
-            disabled
-            class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 text-gray-400 cursor-not-allowed"
-          >
-            <i class="pi pi-file-pdf text-sm"></i>
-            PDF indisponibil
-          </button>
-        </div>
-
-        <!-- Request feedback toast -->
         <div v-if="requestMessage" :class="[
-          'mx-6 mt-4 px-4 py-2.5 rounded-xl text-sm font-medium transition-all',
-          requestSuccess ? 'bg-green-50 text-green-700' : 'bg-red-50 text-accent'
+          'mx-6 mt-4 px-4 py-3 border rounded-sm text-sm font-medium transition-all',
+          requestSuccess ? 'bg-[#2a5c3a]/10 border-[#2a5c3a]/20 text-[#2a5c3a]' : 'bg-[#9b1b30]/10 border-[#9b1b30]/20 text-[#9b1b30]'
         ]">
           {{ requestMessage }}
         </div>
 
-        <!-- Rating -->
-        <div class="px-6 py-4 border-b border-gray-100">
-          <div class="flex items-center gap-3">
-            <span class="text-3xl font-bold text-dark">{{ avgRating }}</span>
-            <div>
-              <div class="flex items-center gap-0.5">
-                <span v-for="star in 5" :key="star" :class="star <= Math.round(avgRating) ? 'text-amber-400' : 'text-gray-200'" class="text-lg">★</span>
-              </div>
-              <p class="text-gray-400 text-xs mt-0.5">{{ totalReviews }} {{ totalReviews === 1 ? 'recenzie' : 'recenzii' }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Reviews -->
-        <div class="px-6 py-5">
-          <h4 class="font-semibold text-dark mb-4 text-sm">Recenzii</h4>
-
-          <div v-if="loadingReviews" class="text-center py-8">
-            <i class="pi pi-spin pi-spinner text-xl text-secondary"></i>
-          </div>
-
-          <div v-else-if="reviews.length === 0" class="text-center py-8">
-            <p class="text-gray-400 text-sm">Nicio recenzie încă</p>
-          </div>
-
-          <div v-else class="space-y-3">
-            <div v-for="review in reviews" :key="review.id" class="bg-cream rounded-xl p-4">
-              <div class="flex items-center justify-between mb-2">
-                <span class="font-medium text-dark text-sm">{{ review.username }}</span>
-                <div class="flex items-center gap-0.5">
-                  <span v-for="star in 5" :key="star" :class="star <= review.nota ? 'text-amber-400' : 'text-gray-200'" class="text-xs">★</span>
+        <!-- Rating & AI Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#2a1410]/10 bg-cream border-b border-[#2a1410]/10">
+           <div class="p-6">
+              <div class="flex items-center gap-5">
+                <div class="text-5xl font-black font-display text-[#2a1410]">{{ avgRating }}</div>
+                <div>
+                  <div class="flex items-center gap-1 text-lg">
+                    <span v-for="star in 5" :key="star" :class="star <= Math.round(avgRating) ? 'text-[#c9a84c]' : 'text-[#2a1410]/15'">★</span>
+                  </div>
+                  <p class="font-mono text-[10px] tracking-widest uppercase text-[#7a5a55] mt-1">{{ totalReviews }} RECENZII</p>
                 </div>
               </div>
-              <p class="text-gray-600 text-sm">{{ review.comentariu }}</p>
-            </div>
-          </div>
+           </div>
+
+           <div class="p-6 bg-white flex flex-col justify-center">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="font-mono text-[10px] tracking-widest uppercase text-[#7a5a55] flex items-center gap-1.5">
+                  <i class="pi pi-sparkles text-[#c9a84c]"></i> Rezumat AI
+                </h4>
+                <button v-if="reviews.length > 0" @click="loadAiSummary" :disabled="loadingAiSummary" class="text-[10px] font-mono tracking-widest uppercase text-secondary hover:underline disabled:opacity-50 flex items-center gap-1">
+                   <i :class="loadingAiSummary ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"></i> Generează
+                </button>
+              </div>
+              <div v-if="loadingAiSummary" class="py-2 text-[#7a5a55] font-mono text-xs"><i class="pi pi-spin pi-spinner"></i> Generare în curs...</div>
+              <div v-else-if="aiSummary" class="text-xs text-[#2a1410] leading-relaxed italic font-serif">{{ aiSummary }}</div>
+              <div v-else class="text-xs text-[#7a5a55] italic font-serif">Apasă pe generează pentru a obține un rezumat bazat pe recenzii.</div>
+           </div>
         </div>
 
-        <!-- AI Reviews Summary -->
-        <div v-if="reviews.length > 0" class="px-6 py-4 border-b border-gray-100">
-          <div class="flex items-center justify-between mb-3">
-            <h4 class="font-semibold text-dark text-sm flex items-center gap-2">
-              <i class="pi pi-sparkles text-secondary text-xs"></i> Rezumat AI
-            </h4>
-            <button
-              @click="loadAiSummary"
-              :disabled="loadingAiSummary"
-              class="text-xs text-secondary hover:underline disabled:opacity-50 flex items-center gap-1"
-            >
-              <i :class="loadingAiSummary ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'" class="text-xs"></i>
-              {{ aiSummary ? 'Reîmprospătează' : 'Generează' }}
-            </button>
-          </div>
-          <div v-if="loadingAiSummary" class="text-center py-3">
-            <i class="pi pi-spin pi-spinner text-secondary text-sm"></i>
-          </div>
-          <div v-if="aiSummary" class="bg-cream rounded-xl p-3 text-xs text-dark leading-relaxed">
-            {{ aiSummary }}
-          </div>
-        </div>
-
-        <!-- Submit Review -->
-        <div v-if="isLoggedIn" class="px-6 py-5">
-          <h4 class="font-semibold text-dark mb-4 text-sm">Scrie o Recenzie</h4>
-          <!-- Star picker -->
+        <!-- Write Review -->
+        <div v-if="isLoggedIn" class="px-6 py-6 bg-white border-b border-[#2a1410]/10">
+          <h4 class="font-bold text-[#2a1410] mb-4 text-sm font-display tracking-tight uppercase">Scrie o Recenzie</h4>
           <div class="flex gap-1 mb-3">
             <button
               v-for="s in 5" :key="s"
               @click="reviewNota = s"
-              :class="s <= reviewNota ? 'text-amber-400' : 'text-gray-300'"
+              :class="s <= reviewNota ? 'text-[#c9a84c]' : 'text-[#2a1410]/10'"
               class="text-2xl leading-none hover:scale-110 transition-transform"
             >★</button>
           </div>
@@ -340,32 +329,56 @@
             v-model="reviewText"
             rows="3"
             placeholder="Scrie părerea ta despre carte..."
-            class="w-full text-sm px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-secondary/50 resize-none bg-cream placeholder-gray-400"
+            class="w-full text-sm px-4 py-3 rounded-sm border border-[#2a1410]/10 focus:outline-none focus:border-[#c9a84c] resize-none bg-cream-dark placeholder-[#7a5a55]/50 text-[#2a1410]"
           ></textarea>
 
-          <!-- AI assist -->
-          <div class="flex items-center gap-2 mt-2 mb-3">
-            <button
-              @click="aiAssistReview"
-              :disabled="loadingAiReview || !reviewText.trim()"
-              class="text-xs text-secondary hover:underline disabled:opacity-50 flex items-center gap-1"
-            >
-              <i :class="loadingAiReview ? 'pi pi-spin pi-spinner' : 'pi pi-sparkles'" class="text-xs"></i>
-              {{ loadingAiReview ? 'Se îmbunătățește...' : 'Îmbunătățește cu AI' }}
-            </button>
-            <span v-if="aiReviewError" class="text-xs text-red-500">{{ aiReviewError }}</span>
-          </div>
+          <div class="flex flex-col sm:flex-row items-center justify-between mt-3 gap-4">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <button
+                @click="aiAssistReview"
+                :disabled="loadingAiReview || !reviewText.trim()"
+                class="text-[10px] font-mono tracking-widest uppercase text-secondary hover:underline disabled:opacity-50 flex items-center gap-1.5"
+              >
+                <i :class="loadingAiReview ? 'pi pi-spin pi-spinner' : 'pi pi-sparkles'"></i>
+                Îmbunătățește cu AI
+              </button>
+              <span v-if="aiReviewError" class="text-[10px] text-red-500 font-mono">{{ aiReviewError }}</span>
+            </div>
 
-          <div class="flex items-center gap-2">
-            <button
-              @click="submitReview"
-              :disabled="submittingReview || !reviewText.trim() || reviewNota === 0"
-              class="px-4 py-2 bg-secondary hover:bg-secondary/90 text-white text-xs font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-            >
-              <i :class="submittingReview ? 'pi pi-spin pi-spinner' : 'pi pi-send'" class="text-xs"></i>
-              Trimite Recenzia
-            </button>
-            <span v-if="reviewMessage" :class="reviewSuccess ? 'text-green-600' : 'text-red-500'" class="text-xs">{{ reviewMessage }}</span>
+            <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <span v-if="reviewMessage" :class="reviewSuccess ? 'text-green-600' : 'text-red-500'" class="text-[10px] font-mono tracking-wider uppercase">{{ reviewMessage }}</span>
+              <button
+                @click="submitReview"
+                :disabled="submittingReview || !reviewText.trim() || reviewNota === 0"
+                class="px-5 py-2.5 bg-[#c9a84c] hover:opacity-90 text-dark text-[10px] font-mono tracking-widest uppercase font-bold rounded-sm disabled:opacity-50 transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
+              >
+                <i :class="submittingReview ? 'pi pi-spin pi-spinner' : 'pi pi-send'" class="text-[10px]"></i>
+                Trimite
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviews List -->
+        <div class="px-6 py-6 bg-cream">
+          <h4 class="font-bold text-[#2a1410] mb-5 text-sm font-display tracking-tight uppercase">Recenzii ({{ reviews.length }})</h4>
+
+          <div v-if="loadingReviews" class="text-center py-8">
+            <i class="pi pi-spin pi-spinner text-xl text-secondary"></i>
+          </div>
+          <div v-else-if="reviews.length === 0" class="text-center py-8">
+            <p class="text-[#7a5a55] font-serif italic text-sm">Nicio recenzie încă. Fii primul care își spune părerea!</p>
+          </div>
+          <div v-else class="space-y-4">
+            <div v-for="review in reviews" :key="review.id" class="bg-white rounded-sm p-5 border border-[#2a1410]/5 shadow-[0_1px_3px_rgba(42,20,16,0.03)]">
+              <div class="flex items-center justify-between mb-3">
+                <span class="font-bold text-[#2a1410] text-sm">{{ review.username }}</span>
+                <div class="flex items-center gap-1">
+                  <span v-for="star in 5" :key="star" :class="star <= review.nota ? 'text-[#c9a84c]' : 'text-[#2a1410]/10'" class="text-[10px]">★</span>
+                </div>
+              </div>
+              <p class="text-[#3b2b18] text-sm font-serif italic leading-relaxed">{{ review.comentariu }}</p>
+            </div>
           </div>
         </div>
       </div>
