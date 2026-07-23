@@ -3,7 +3,7 @@
     <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col lg:flex-row gap-8 items-start">
       
       <!-- Left Column: Threads Widget -->
-      <ScrollWidget class="w-full lg:w-80 flex-shrink-0 sticky top-24">
+      <ScrollWidget class="w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-24 z-10 mb-2 lg:mb-0">
         <template #title>Discuții Recente</template>
         
         <div class="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
