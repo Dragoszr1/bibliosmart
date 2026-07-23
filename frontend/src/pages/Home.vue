@@ -41,12 +41,6 @@
             >
               Răsfoiește Catalogul <i class="pi pi-arrow-right text-[10px]"></i>
             </button>
-            <button
-              @click="$router.push(isLoggedIn ? '/club' : '/login')"
-              class="flex items-center justify-center gap-2 border border-white/25 text-white px-6 py-3 text-sm font-mono tracking-wider uppercase hover:border-white/50 transition-colors rounded-sm backdrop-blur-sm"
-            >
-              {{ isLoggedIn ? 'Clubul de Lectură' : 'Intră în cont' }}
-            </button>
           </div>
         </div>
       </div>
@@ -223,13 +217,7 @@
               <span class="flex items-center gap-2"><i class="pi pi-user"></i> Contul Meu</span>
               <i class="pi pi-chevron-right text-[10px] text-[#2a1410]/30 group-hover:text-secondary"></i>
             </a>
-            <a
-              @click="$router.push('/club')"
-              class="flex items-center justify-between py-2.5 text-xs transition-colors group cursor-pointer border-b border-[#2a1410]/10 text-[#2a1410] hover:text-secondary"
-            >
-              <span class="flex items-center gap-2"><i class="pi pi-users"></i> Clubul de Lectură</span>
-              <i class="pi pi-chevron-right text-[10px] text-[#2a1410]/30 group-hover:text-secondary"></i>
-            </a>
+
             <a
               href="mailto:contact@cni-sv.ro"
               class="flex items-center justify-between py-2.5 text-xs transition-colors group cursor-pointer border-b border-[#2a1410]/10 text-[#2a1410] hover:text-secondary"
