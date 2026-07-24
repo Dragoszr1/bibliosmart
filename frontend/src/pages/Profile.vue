@@ -2,9 +2,14 @@
   <div id="app" class="font-sans text-[#2a1410] bg-cream min-h-screen pb-20">
     <!-- Hero Section -->
     <section class="relative overflow-hidden border-b border-[#ede0cc] min-h-[240px] flex items-center">
+      <img
+        src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=1600&h=900&fit=crop&auto=format"
+        alt="Library bookshelves"
+        class="absolute inset-0 w-full h-full object-cover object-center"
+      />
       <div
         class="absolute inset-0"
-        style="background: linear-gradient(105deg, rgba(45,16,24,0.95) 0%, rgba(45,16,24,0.85) 100%)"
+        style="background: linear-gradient(105deg, rgba(45,16,24,0.85) 0%, rgba(45,16,24,0.65) 45%, rgba(45,16,24,0.35) 70%, rgba(45,16,24,0.1) 100%)"
       ></div>
       <div
         class="absolute inset-0 opacity-[0.03]"
