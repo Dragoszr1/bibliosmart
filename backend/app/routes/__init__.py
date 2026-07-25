@@ -10,6 +10,11 @@ def health_check():
 def index():
     return jsonify({
         'name': 'API site biblioteca CNI Suceava',
-        'version': 'idk(forgot to count lol)',
+        'version': '1.0.0',
         'message': 'Database connection established'
     }), 200
+
+@main_bp.route('/csrf-token', methods=['GET'])
+def get_csrf_token():
+    from flask_wtf.csrf import generate_csrf
+    return jsonify({'csrfToken': generate_csrf()}), 200

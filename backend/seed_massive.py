@@ -2,6 +2,7 @@ import random
 from app import create_app
 from app.database import db
 from app.models import Carti
+from sqlalchemy import text
 
 app = create_app()
 
@@ -96,6 +97,16 @@ def generate_books(count):
     return books
 
 with app.app_context():
+    print("Clearing old books...")
+    try:
+        db.session.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
+        db.session.execute(text("TRUNCATE TABLE carti;"))
+        db.session.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
+        db.session.commit()
+    except Exception as e:
+        db.session.query(Carti).delete()
+        db.session.commit()
+        
     print("Generating 2500 books for the database...")
     books = generate_books(2500)
     

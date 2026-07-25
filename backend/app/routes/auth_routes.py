@@ -1,10 +1,12 @@
 from flask import Blueprint, request
 from app.middlewares.auth import jwt_required
 from app.controllers import auth_controller
+from app.extensions import limiter
 
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['POST'])
+@limiter.limit("5 per minute")
 def login():
     return auth_controller.login()
 
@@ -22,10 +24,12 @@ def logout():
     return auth_controller.logout()
 
 @auth_bp.route('/forgot-password', methods=['POST'])
+@limiter.limit("3 per minute")
 def forgot_password():
     return auth_controller.forgot_password()
 
 @auth_bp.route('/reset-password/<token>', methods=['POST'])
+@limiter.limit("5 per minute")
 def reset_password(token):
     return auth_controller.reset_password(token)
 
@@ -45,6 +49,7 @@ def update_profile():
     return auth_controller.update_profile(request.current_user)
 
 @auth_bp.route('/register', methods=['POST'])
+@limiter.limit("5 per minute")
 def register():
     return auth_controller.register()
 

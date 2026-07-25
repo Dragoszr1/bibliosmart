@@ -793,8 +793,8 @@
                     <p class="text-sm font-serif italic text-[#3b2b18] whitespace-pre-line">{{ thread.continut }}</p>
                   </div>
                   <div class="flex flex-row sm:flex-col gap-2 flex-shrink-0 w-full sm:w-auto mt-4 sm:mt-0">
-                    <button @click="approveThread(thread.thread_id)" class="flex-1 sm:flex-none px-4 py-2 bg-[#2a5c3a] hover:bg-[#2a5c3a]/90 text-white rounded-sm font-mono text-[9px] uppercase tracking-widest font-bold transition-colors flex items-center justify-center gap-1.5"><i class="pi pi-check"></i> Aprobă</button>
-                    <button @click="rejectThread(thread.thread_id)" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-[#ff3d5a]/30 text-[#ff3d5a] hover:bg-[#ff3d5a]/5 rounded-sm font-mono text-[9px] uppercase tracking-widest font-bold transition-colors flex items-center justify-center gap-1.5"><i class="pi pi-times"></i> Respinge</button>
+                    <button @click="openConfirmThreadModal(thread.thread_id, 'approve')" class="flex-1 sm:flex-none px-4 py-2 bg-[#2a5c3a] hover:bg-[#2a5c3a]/90 text-white rounded-sm font-mono text-[9px] uppercase tracking-widest font-bold transition-colors flex items-center justify-center gap-1.5"><i class="pi pi-check"></i> Aprobă</button>
+                    <button @click="openConfirmThreadModal(thread.thread_id, 'reject')" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-[#ff3d5a]/30 text-[#ff3d5a] hover:bg-[#ff3d5a]/5 rounded-sm font-mono text-[9px] uppercase tracking-widest font-bold transition-colors flex items-center justify-center gap-1.5"><i class="pi pi-times"></i> Respinge</button>
                   </div>
                 </div>
               </div>
@@ -1425,6 +1425,22 @@
         </div>
       </div>
     </div>
+    <div v-if="confirmThreadModalOpen" class="fixed inset-0 z-[70] flex items-center justify-center p-4" @click.self="closeConfirmThreadModal">
+      <div class="absolute inset-0 bg-white/40 backdrop-blur-md pointer-events-none"></div>
+      <div class="bg-white border border-[#2a5c3a]/20 p-8 rounded-sm shadow-2xl relative z-10 w-full max-w-md">
+        <h3 class="text-xl font-serif text-[#2a5c3a] mb-2 font-bold">{{ confirmThreadAction === 'approve' ? 'Aprobare Discuție' : 'Respingere Discuție' }}</h3>
+        <div class="w-12 h-0.5 bg-[#d4af37] mb-6"></div>
+        <p class="text-sm font-sans text-gray-600 mb-8">{{ confirmThreadAction === 'approve' ? 'Sunteți sigur că doriți să aprobați această discuție? Va deveni vizibilă pentru toți membrii clubului.' : 'Sunteți sigur că doriți să respingeți (ștergeți) această discuție? Această acțiune este ireversibilă.' }}</p>
+        <div class="flex flex-col sm:flex-row gap-3 mt-4">
+          <button @click="closeConfirmThreadModal" class="flex-1 py-3 bg-white border border-[#2a5c3a]/20 text-[#2a5c3a] hover:bg-[#2a5c3a]/5 font-mono text-[10px] uppercase tracking-widest font-bold transition-colors">
+            Anulează
+          </button>
+          <button @click="executeThreadAction" :class="confirmThreadAction === 'approve' ? 'bg-[#2a5c3a] hover:bg-[#2a5c3a]/90 text-white border-none' : 'bg-white border border-[#ff3d5a]/30 text-[#ff3d5a] hover:bg-[#ff3d5a]/5'" class="flex-1 py-3 font-mono text-[10px] uppercase tracking-widest font-bold transition-colors">
+            Confirmă
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -1485,12 +1501,13 @@ export default {
         { label: '24 ore', value: 24 },
         { label: '7 zile', value: 168 }
       ],
-      inviteLoading: false,
-      generatedInviteLink: '',
-      inviteExpiresAt: '',
+      generateInviteLoading: false,
+      generatedInviteLink: null,
       inviteCopied: false,
+      confirmThreadModalOpen: false,
+      confirmThreadAction: null,
+      selectedThreadId: null,
       inviteError: '',
-      inviteExpiry: 1, // days
       
       pendingThreads: [],
       pendingThreadsLoading: false,     // Add book
@@ -2366,23 +2383,36 @@ export default {
         this.pendingThreadsLoading = false
       }
     },
-    async approveThread(threadId) {
-      if (!confirm('Aprobați această discuție?')) return
-      try {
-        const res = await fetch(`/api/club/threads/${threadId}/approve`, { method: 'POST', credentials: 'include' })
-        if (res.ok) {
-          this.pendingThreads = this.pendingThreads.filter(t => t.thread_id !== threadId)
-        }
-      } catch (err) { /* ignore */ }
+    openConfirmThreadModal(id, action) {
+      this.selectedThreadId = id;
+      this.confirmThreadAction = action;
+      this.confirmThreadModalOpen = true;
     },
-    async rejectThread(threadId) {
-      if (!confirm('Respingeți (ștergeți) această discuție?')) return
-      try {
-        const res = await fetch(`/api/club/threads/${threadId}`, { method: 'DELETE', credentials: 'include' })
-        if (res.ok) {
-          this.pendingThreads = this.pendingThreads.filter(t => t.thread_id !== threadId)
-        }
-      } catch (err) { /* ignore */ }
+    closeConfirmThreadModal() {
+      this.confirmThreadModalOpen = false;
+      this.selectedThreadId = null;
+      this.confirmThreadAction = null;
+    },
+    async executeThreadAction() {
+      const threadId = this.selectedThreadId;
+      const action = this.confirmThreadAction;
+      this.closeConfirmThreadModal();
+
+      if (action === 'approve') {
+        try {
+          const res = await fetch(`/api/club/threads/${threadId}/approve`, { method: 'POST', credentials: 'include' })
+          if (res.ok) {
+            this.pendingThreads = this.pendingThreads.filter(t => t.thread_id !== threadId)
+          }
+        } catch (err) { /* ignore */ }
+      } else if (action === 'reject') {
+        try {
+          const res = await fetch(`/api/club/threads/${threadId}`, { method: 'DELETE', credentials: 'include' })
+          if (res.ok) {
+            this.pendingThreads = this.pendingThreads.filter(t => t.thread_id !== threadId)
+          }
+        } catch (err) { /* ignore */ }
+      }
     },
     async copyInviteLink() {
       try {

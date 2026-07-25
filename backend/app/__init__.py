@@ -20,6 +20,10 @@ def create_app(config_name=None):
     
     # Initialize extensions
     db.init_app(app)
+    
+    from app.extensions import limiter
+    limiter.init_app(app)
+    
     CORS(app, resources={r"/api/*": {
         "origins": app.config.get('CORS_ORIGINS', ['http://localhost:5173', 'http://localhost:3000']),
         "supports_credentials": True

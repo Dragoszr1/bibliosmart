@@ -477,11 +477,21 @@ def upload_book_image():
 
 def get_book_image(carte_id):
     matches = _find_files_by_prefix(BOOK_IMAGES_DIR, str(carte_id))
+    if matches:
+        return send_from_directory(BOOK_IMAGES_DIR, matches[0])
+        
+    # Fallback to base title
+    from app.models import Carti
+    carte = db.session.query(Carti).filter_by(carte_id=carte_id).first()
+    if carte:
+        base_title = carte.titlu.split('-')[0].strip()
+        safe_title = "".join([c for c in base_title if c.isalpha() or c.isdigit() or c==' ']).strip()
+        filename = f"{safe_title}.jpg"
+        filepath = os.path.join(BOOK_IMAGES_DIR, filename)
+        if os.path.exists(filepath):
+            return send_from_directory(BOOK_IMAGES_DIR, filename)
 
-    if not matches:
-        return jsonify({'success': False, 'message': 'Nicio imagine găsită'}), 404
-
-    return send_from_directory(BOOK_IMAGES_DIR, matches[0])
+    return jsonify({'success': False, 'message': 'Nicio imagine găsită'}), 404
 
 def upload_book_pdf():
     carte_id = request.form.get('carte_id')

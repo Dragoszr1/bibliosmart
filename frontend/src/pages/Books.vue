@@ -401,7 +401,7 @@ export default {
       allBooks: [],
       filteredBooks: [],
       currentPage: 1,
-      itemsPerPage: 12,
+      itemsPerPage: 15,
       showModal: false,
       selectedBook: null,
       reviews: [],
