@@ -1,21 +1,33 @@
 <template>
-  <div class="min-h-screen">
+  <div class="min-h-screen font-sans text-[#2a1410] bg-cream pb-12">
     <!-- Hero Section -->
-    <section class="bg-dark py-16 sm:py-24 relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-br from-secondary/20 via-transparent to-accent/10"></div>
-      <div class="max-w-3xl mx-auto px-6 text-center relative z-10">
-        <h2 class="text-3xl sm:text-5xl font-bold text-white mb-3 tracking-tight">Conectare</h2>
-        <p class="text-white/50 text-sm sm:text-lg font-normal">Bine ai revenit la Biblioteca</p>
+    <section class="relative overflow-hidden border-b border-[#ede0cc] py-16 sm:py-24 flex items-center">
+      <img
+        src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=1600&h=900&fit=crop&auto=format"
+        alt="Library bookshelves"
+        class="absolute inset-0 w-full h-full object-cover object-center"
+      />
+      <div
+        class="absolute inset-0"
+        style="background: linear-gradient(105deg, rgba(45,16,24,0.85) 0%, rgba(45,16,24,0.65) 45%, rgba(45,16,24,0.35) 70%, rgba(45,16,24,0.1) 100%)"
+      ></div>
+      <div
+        class="absolute inset-0 opacity-[0.03]"
+        style="background-image: repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(201,168,76,1) 39px, rgba(201,168,76,1) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(201,168,76,1) 39px, rgba(201,168,76,1) 40px)"
+      ></div>
+      <div class="max-w-3xl mx-auto px-6 text-center relative z-10 w-full">
+        <h2 class="text-3xl sm:text-5xl font-black text-white mb-3 tracking-tight font-display drop-shadow uppercase">Conectare</h2>
+        <p class="text-[#c9a84c] text-sm sm:text-lg font-serif italic tracking-widest">Bine ai revenit la Biblioteca</p>
       </div>
     </section>
 
     <main class="max-w-md mx-auto px-4 sm:px-6 -mt-8 relative z-10 pb-16">
-      <div class="bg-white rounded-2xl shadow-elevated p-6 sm:p-8">
+      <div class="bg-white rounded-sm shadow-[0_1px_4px_rgba(42,20,16,0.04)] border border-[#2a1410]/10 p-6 sm:p-8">
 
         <!-- Logo -->
         <div class="text-center mb-8">
-          <img src="/logo.webp" alt="Biblioteca" class="h-14 w-14 mx-auto mb-3 rounded-xl">
-          <h1 class="text-xl font-bold text-dark">Biblioteca</h1>
+          <img src="/logo.webp" alt="Biblioteca Logo" class="h-16 w-16 mx-auto mb-4 rounded-sm border border-[#2a1410]/10 shadow-sm" />
+          <h1 class="text-xl font-bold font-display uppercase tracking-tight text-[#2a1410]">Biblioteca</h1>
         </div>
 
         <!-- STEP 1: credentials -->
@@ -48,7 +60,7 @@
             <p class="text-accent text-sm">{{ errorMessage }}</p>
           </div>
 
-          <button type="submit" :disabled="loading" class="btn-primary w-full flex items-center justify-center gap-2">
+          <button type="submit" :disabled="loading" class="w-full px-5 py-3 rounded-sm font-mono text-xs uppercase tracking-wider transition-colors bg-[#c9a84c] text-dark hover:opacity-90 font-bold flex items-center justify-center gap-2 shadow-sm border border-[#c9a84c]/20">
             <i v-if="loading" class="pi pi-spin pi-spinner text-sm"></i>
             {{ loading ? 'Se verifică...' : 'Continuă' }}
           </button>
@@ -57,11 +69,11 @@
         <!-- STEP 2: 2FA code -->
         <form v-else @submit.prevent="handleVerifyCode" class="space-y-5">
           <div class="text-center mb-2">
-            <div class="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-3">
-              <i class="pi pi-envelope text-secondary text-xl"></i>
+            <div class="w-12 h-12 rounded-sm border border-[#c9a84c]/30 bg-[#c9a84c]/10 flex items-center justify-center mx-auto mb-4">
+              <i class="pi pi-envelope text-[#c9a84c] text-xl"></i>
             </div>
-            <p class="text-sm text-gray-600">Am trimis un cod de 6 cifre la</p>
-            <p class="text-sm font-semibold text-dark">{{ form.email }}</p>
+            <p class="text-sm text-[#7a5a55] font-serif italic">Am trimis un cod de 6 cifre la</p>
+            <p class="text-sm font-bold text-[#2a1410] font-mono tracking-widest mt-1">{{ form.email }}</p>
           </div>
 
           <div>
@@ -85,7 +97,7 @@
             <p class="text-accent text-sm">{{ errorMessage }}</p>
           </div>
 
-          <button type="submit" :disabled="loading || code.length !== 6" class="btn-primary w-full flex items-center justify-center gap-2">
+          <button type="submit" :disabled="loading || code.length !== 6" class="w-full px-5 py-3 rounded-sm font-mono text-xs uppercase tracking-wider transition-colors bg-[#c9a84c] text-dark hover:opacity-90 font-bold flex items-center justify-center gap-2 shadow-sm border border-[#c9a84c]/20 disabled:opacity-50">
             <i v-if="loading" class="pi pi-spin pi-spinner text-sm"></i>
             {{ loading ? 'Se verifică...' : 'Verifică codul' }}
           </button>
