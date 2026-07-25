@@ -5,20 +5,20 @@
       <!-- Header -->
       <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <router-link to="/club" class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-[#8b4513] mb-2 transition-colors">
-            <i class="pi pi-arrow-left text-[10px]"></i> Înapoi la club
+          <router-link to="/club" class="inline-flex items-center gap-1 text-sm text-[#7a5a55] hover:text-[#2a1410] mb-2 transition-colors">
+            <i class="pi pi-arrow-left text-xs"></i> Înapoi la club
           </router-link>
-          <h1 class="text-2xl sm:text-3xl font-bold text-dark flex items-center gap-2">
+          <h1 class="text-3xl sm:text-4xl font-black text-[#2a1410] flex items-center gap-3">
             <i class="pi pi-history text-[#8b4513]"></i> Săptămâna anterioară
           </h1>
-          <p class="text-gray-500 text-sm mt-1">Activitățile și sarcinile din săptămâna trecută</p>
+          <p class="text-[#7a5a55] text-base mt-2">Activitățile și sarcinile din săptămâna trecută</p>
         </div>
         <button
           v-if="isBibliotecar"
           @click="openAddModal"
-          class="px-5 py-2.5 bg-[#8b4513] hover:bg-[#8b4513]/90 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2 self-start"
+          class="px-5 py-2.5 bg-[#8b4513] hover:opacity-90 text-white text-[10px] font-mono tracking-widest uppercase font-bold rounded-sm transition-colors flex items-center gap-2 self-start shadow-soft hover:shadow-card active:scale-[0.98]"
         >
-          <i class="pi pi-plus text-xs"></i> Activitate nouă
+          <i class="pi pi-plus text-sm"></i> Activitate nouă
         </button>
       </div>
 
@@ -44,7 +44,7 @@
         <div
           v-for="act in activitati"
           :key="act.activitate_id"
-          class="bg-papyrus-light rounded-2xl shadow-card border border-[#8b4513]/10"
+          class="bg-white rounded-sm border border-[#2a1410]/10 shadow-[0_1px_4px_rgba(42,20,16,0.04)] hover:shadow-[0_4px_12px_rgba(42,20,16,0.08)] transition-all font-sans"
         >
           <div class="p-5 sm:p-6">
             <div class="flex items-start justify-between gap-3">
@@ -57,11 +57,11 @@
                     <i :class="tipBadge(act.tip).icon" class="text-[10px]"></i>
                     {{ tipBadge(act.tip).label }}
                   </span>
-                  <span class="text-xs text-gray-400">{{ act.creat_la }} · {{ act.autor }}</span>
+                  <span class="text-xs text-[#7a5a55]">{{ act.creat_la }} · {{ act.autor }}</span>
                   <span v-if="act.autor_rol === 'bibliotecar'" class="text-xs bg-[#8b4513]/10 text-[#8b4513] font-semibold px-2 py-0.5 rounded-full">bibliotecar</span>
                 </div>
-                <h3 class="text-base sm:text-lg font-bold text-dark leading-snug">{{ act.titlu }}</h3>
-                <p v-if="act.continut" class="text-sm text-gray-600 mt-2 whitespace-pre-line leading-relaxed">{{ act.continut }}</p>
+                <h3 class="text-xl sm:text-2xl font-bold text-[#2a1410] leading-snug">{{ act.titlu }}</h3>
+                <p v-if="act.continut" class="text-base text-[#4a3a35] mt-2 whitespace-pre-line leading-relaxed">{{ act.continut }}</p>
               </div>
               <button
                 v-if="isBibliotecar"
@@ -84,7 +84,7 @@
           </div>
 
           <!-- Thread panel -->
-          <div v-if="openThreads[act.activitate_id]" class="border-t border-[#8b4513]/10 bg-[#8b4513]/5 rounded-b-2xl px-5 sm:px-6 py-4 space-y-4">
+          <div v-if="openThreads[act.activitate_id]" class="border-t border-[#2a1410]/10 bg-cream rounded-b-2xl px-5 sm:px-6 py-4 space-y-4">
             <div v-if="loadingThread[act.activitate_id]" class="text-center text-gray-400 text-sm py-4">
               <i class="pi pi-spin pi-spinner mr-1"></i> Se încarcă...
             </div>
@@ -126,14 +126,14 @@
                 type="text"
                 placeholder="Scrie un comentariu... (Enter pentru a trimite)"
                 maxlength="2000"
-                class="flex-1 text-sm border border-[#8b4513]/20 rounded-xl px-3 py-2 bg-papyrus-light focus:outline-none focus:ring-2 focus:ring-[#8b4513]/40 placeholder-gray-400"
+                class="flex-1 text-sm border border-[#2a1410]/10 rounded-sm px-4 py-3 bg-cream-dark focus:outline-none focus:ring-1 focus:ring-[#8b4513]/40 placeholder-gray-400"
               />
               <button
                 @click="submitComment(act.activitate_id)"
                 :disabled="!(newComment[act.activitate_id] || '').trim()"
-                class="px-4 py-2 bg-[#8b4513] hover:bg-[#8b4513]/90 disabled:opacity-40 text-white rounded-xl text-sm font-semibold transition-all"
+                class="px-5 py-2.5 bg-[#8b4513] hover:opacity-90 disabled:opacity-40 text-white text-[10px] font-mono tracking-widest uppercase font-bold rounded-sm transition-all flex items-center justify-center gap-2"
               >
-                <i class="pi pi-send text-xs"></i>
+                <i class="pi pi-send text-sm"></i>
               </button>
             </div>
             <p v-if="threadError[act.activitate_id]" class="text-xs text-accent">{{ threadError[act.activitate_id] }}</p>
@@ -144,9 +144,9 @@
 
     <!-- Add Activity Modal (bibliotecar) -->
     <div v-if="addModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="addModalOpen = false">
-      <div class="w-full max-w-lg bg-papyrus-light rounded-2xl shadow-modal p-6">
-        <div class="flex items-center justify-between mb-5">
-          <h2 class="text-lg font-bold text-dark flex items-center gap-2">
+      <div class="w-full max-w-lg bg-white rounded-sm shadow-2xl border border-[#2a1410]/10 p-8 font-sans">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-[#2a1410] flex items-center gap-2">
             <i class="pi pi-plus-circle text-[#8b4513]"></i> Activitate — săptămâna anterioară
           </h2>
           <button @click="addModalOpen = false" class="text-gray-400 hover:text-[#8b4513] text-2xl font-bold leading-none">&times;</button>
@@ -161,8 +161,8 @@
             <textarea v-model="addForm.continut" rows="4" maxlength="5000" placeholder="Detalii, instrucțiuni, linkuri..." class="w-full text-sm border border-[#8b4513]/20 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#8b4513]/40 resize-none"></textarea>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Tip</label>
-            <select v-model="addForm.tip" class="w-full text-sm border border-[#8b4513]/20 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#8b4513]/40 bg-papyrus-light">
+            <label class="block text-sm font-bold text-[#7a5a55] mb-2">Tip</label>
+            <select v-model="addForm.tip" class="w-full text-base border border-[#2a1410]/10 rounded-xl px-4 py-3 bg-cream-dark focus:outline-none focus:ring-2 focus:ring-[#8b4513]/40">
               <option value="activitate">Activitate</option>
               <option value="sarcina">Sarcină</option>
               <option value="anunt">Anunț</option>
@@ -171,11 +171,11 @@
         </div>
         <p v-if="addError" class="mt-3 text-xs text-accent">{{ addError }}</p>
         <div class="flex gap-3 mt-6">
-          <button @click="addModalOpen = false" class="flex-1 px-4 py-2.5 border border-[#8b4513]/20 text-gray-600 font-semibold rounded-xl text-sm hover:bg-[#8b4513]/5 transition-colors">Anulează</button>
+          <button @click="addModalOpen = false" class="px-5 py-2.5 border border-[#2a1410]/20 text-[#7a5a55] text-[10px] font-mono tracking-widest uppercase font-bold rounded-sm hover:bg-black/5 transition-colors">Anulează</button>
           <button
             @click="submitActivity"
             :disabled="addSaving || !addForm.titlu.trim()"
-            class="flex-1 px-4 py-2.5 bg-[#8b4513] hover:bg-[#8b4513]/90 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+            class="px-5 py-2.5 bg-[#8b4513] hover:opacity-90 disabled:opacity-50 text-white text-[10px] font-mono tracking-widest uppercase font-bold rounded-sm transition-colors flex items-center justify-center gap-2"
           >
             <i :class="addSaving ? 'pi pi-spin pi-spinner' : 'pi pi-check'" class="text-xs"></i>
             Publică
@@ -186,13 +186,13 @@
 
     <!-- Delete confirm -->
     <div v-if="deleteTarget" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" @click.self="deleteTarget = null">
-      <div class="w-full max-w-sm bg-papyrus-light rounded-2xl shadow-modal p-6 text-center">
-        <i class="pi pi-exclamation-triangle text-3xl text-accent mb-3 block"></i>
-        <h3 class="font-bold text-dark mb-1">Ștergi activitatea?</h3>
+      <div class="w-full max-w-sm bg-white rounded-sm shadow-2xl border border-[#2a1410]/10 p-8 text-center font-sans">
+        <i class="pi pi-exclamation-triangle text-4xl text-red-500 mb-4 block"></i>
+        <h3 class="font-bold text-[#2a1410] text-xl mb-2">Ștergi activitatea?</h3>
         <p class="text-sm text-gray-500 mb-5">„{{ deleteTarget.titlu }}" și toate comentariile aferente vor fi șterse definitiv.</p>
         <div class="flex gap-3">
           <button @click="deleteTarget = null" class="flex-1 px-4 py-2.5 border border-[#8b4513]/20 text-gray-600 font-semibold rounded-xl text-sm hover:bg-[#8b4513]/5">Anulează</button>
-          <button @click="executeDelete" :disabled="deleteSaving" class="flex-1 px-4 py-2.5 bg-accent hover:bg-accent/90 disabled:opacity-50 text-white font-semibold rounded-xl text-sm">
+          <button @click="executeDelete" :disabled="deleteSaving" class="px-5 py-2.5 bg-red-600 hover:opacity-90 disabled:opacity-50 text-white text-[10px] font-mono tracking-widest uppercase font-bold rounded-sm transition-colors flex items-center justify-center gap-2">
             <i :class="deleteSaving ? 'pi pi-spin pi-spinner' : 'pi pi-trash'" class="text-xs mr-1"></i>Șterge
           </button>
         </div>

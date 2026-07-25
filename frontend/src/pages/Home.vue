@@ -49,13 +49,19 @@
     <!-- Search & Catalog -->
     <section class="bg-cream border-b border-cream-dark">
       <div class="max-w-7xl mx-auto px-6 py-16">
-        <div class="flex flex-col md:flex-row md:items-end gap-6 mb-10">
-          <div class="flex-1">
-            <h2
-              class="text-4xl font-black tracking-tight font-display text-[#2a1410]"
-            >
-              TITLURI NOI
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+          <div>
+            <h2 class="text-4xl font-black tracking-tight font-display text-[#2a1410]">
+              DESCOPERĂ CĂRȚI
             </h2>
+          </div>
+          <div v-if="totalBookPages > 1" class="flex gap-3">
+            <button @click="prevBooks" :disabled="bookPage === 0" class="w-10 h-10 bg-white shadow-sm border border-[#2a1410]/10 rounded-sm flex items-center justify-center text-[#8b4513] hover:bg-[#8b4513] hover:text-white transition-colors disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-[#8b4513]">
+              <i class="pi pi-chevron-left text-sm"></i>
+            </button>
+            <button @click="nextBooks" :disabled="bookPage === totalBookPages - 1" class="w-10 h-10 bg-white shadow-sm border border-[#2a1410]/10 rounded-sm flex items-center justify-center text-[#8b4513] hover:bg-[#8b4513] hover:text-white transition-colors disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-[#8b4513]">
+              <i class="pi pi-chevron-right text-sm"></i>
+            </button>
           </div>
         </div>
 
@@ -65,46 +71,52 @@
         <div v-else-if="cartiRecente.length === 0" class="text-center py-8 text-[#7a5a55] font-medium font-sans">
           Nu am găsit cărți.
         </div>
-        <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-5">
-          <div
-            v-for="carte in cartiRecente"
-            :key="carte.carte_id"
-            @click="$router.push('/books')"
-            class="group rounded-sm overflow-hidden cursor-pointer transition-all bg-white border border-[#2a1410]/10 shadow-[0_1px_4px_rgba(42,20,16,0.06)] hover:shadow-[0_4px_16px_rgba(155,27,48,0.12)]"
-          >
-            <div class="relative overflow-hidden h-44 bg-cream-dark">
-              <img
-                :src="`/api/books/image/${carte.carte_id}`"
-                @error="$event.target.src='https://placehold.co/200x280/e2e8f0/64748b?text=Carte'"
-                :alt="`Coperta ${carte.titlu}`"
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div class="absolute top-2 right-2">
-                <span
-                  v-if="carte.stoc_disponibil > 0"
-                  class="font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 rounded-sm bg-[#2a5c3a]/60 text-[#6fcf97] border border-[#6fcf97]/30"
-                >
-                  Disponibil
-                </span>
-                <span
-                  v-else
-                  class="font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 rounded-sm bg-[#ff3d5a]/10 text-[#ff3d5a] border border-[#ff3d5a]/30"
-                >
-                  Indisponibil
-                </span>
+        <div v-else class="relative overflow-hidden -mx-2 px-2 py-4">
+          <div class="w-full flex transition-transform duration-500 ease-in-out" :style="{ transform: `translateX(-${bookPage * 100}%)` }">
+            <div v-for="p in totalBookPages" :key="p" class="w-full shrink-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-5 px-1">
+              
+              <div
+                v-for="carte in getPage(p)"
+                :key="carte.carte_id"
+                @click="$router.push('/books')"
+                class="group rounded-sm overflow-hidden cursor-pointer transition-all bg-white border border-[#2a1410]/10 shadow-[0_1px_4px_rgba(42,20,16,0.06)] hover:shadow-[0_4px_16px_rgba(155,27,48,0.12)]"
+              >
+                <div class="relative overflow-hidden h-44 bg-cream-dark">
+                  <img
+                    :src="`/api/books/image/${carte.carte_id}`"
+                    @error="$event.target.src='https://placehold.co/200x280/e2e8f0/64748b?text=Carte'"
+                    :alt="`Coperta ${carte.titlu}`"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div class="absolute top-2 right-2">
+                    <span
+                      v-if="carte.stoc_disponibil > 0"
+                      class="font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 rounded-sm bg-[#2a5c3a]/60 text-[#6fcf97] border border-[#6fcf97]/30"
+                    >
+                      Disponibil
+                    </span>
+                    <span
+                      v-else
+                      class="font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 rounded-sm bg-[#ff3d5a]/10 text-[#ff3d5a] border border-[#ff3d5a]/30"
+                    >
+                      Indisponibil
+                    </span>
+                  </div>
+                </div>
+                <div class="p-3">
+                  <p class="font-mono text-[10px] uppercase tracking-wider mb-1 text-[#7a5a55] truncate">
+                    {{ carte.gen || 'General' }}
+                  </p>
+                  <h3 class="text-sm font-semibold leading-tight mb-1 line-clamp-2 text-[#2a1410]">
+                    {{ carte.titlu }}
+                  </h3>
+                  <p class="text-xs text-[#7a5a55] truncate">{{ carte.autor }}</p>
+                  <p v-if="carte.stoc_disponibil > 0" class="font-mono text-[10px] mt-2 text-secondary">
+                    {{ carte.stoc_disponibil }} exemplare
+                  </p>
+                </div>
               </div>
-            </div>
-            <div class="p-3">
-              <p class="font-mono text-[10px] uppercase tracking-wider mb-1 text-[#7a5a55] truncate">
-                {{ carte.gen || 'General' }}
-              </p>
-              <h3 class="text-sm font-semibold leading-tight mb-1 line-clamp-2 text-[#2a1410]">
-                {{ carte.titlu }}
-              </h3>
-              <p class="text-xs text-[#7a5a55] truncate">{{ carte.autor }}</p>
-              <p v-if="carte.stoc_disponibil > 0" class="font-mono text-[10px] mt-2 text-secondary">
-                {{ carte.stoc_disponibil }} exemplare
-              </p>
+              
             </div>
           </div>
         </div>
@@ -245,7 +257,13 @@ export default {
       loadingAnunturi: false,
       isLoggedIn: false,
       cartiRecente: [],
-      loadingCarti: false
+      loadingCarti: false,
+      bookPage: 0
+    }
+  },
+  computed: {
+    totalBookPages() {
+      return Math.ceil(this.cartiRecente.length / 5);
     }
   },
   mounted() {
@@ -254,6 +272,15 @@ export default {
     this.fetchCartiRecente()
   },
   methods: {
+    nextBooks() {
+      if (this.bookPage < this.totalBookPages - 1) this.bookPage++;
+    },
+    prevBooks() {
+      if (this.bookPage > 0) this.bookPage--;
+    },
+    getPage(p) {
+      return this.cartiRecente.slice((p - 1) * 5, p * 5);
+    },
     async checkAuth() {
       try {
         const res = await fetch('/api/auth/me', { credentials: 'include' })

@@ -39,7 +39,7 @@ def get_books():
 
 def get_recent_books():
     try:
-        result = db.session.execute(text('SELECT carte_id, titlu, autor, gen, stoc_disponibil FROM carti ORDER BY carte_id DESC LIMIT 3'))
+        result = db.session.execute(text('SELECT carte_id, titlu, autor, gen, stoc_disponibil FROM carti ORDER BY carte_id DESC LIMIT 15'))
         
         books = []
         for row in result:

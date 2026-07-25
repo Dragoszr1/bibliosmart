@@ -1,5 +1,5 @@
 <template>
-  <nav class="bg-dark/95 backdrop-blur-md border-b border-white/5 sticky top-0 z-50">
+  <nav class="bg-[#2a1410] backdrop-blur-md border-b-[3px] border-[#8b4513] sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-6">
       <div class="flex items-center h-16">
         <!-- Logo -->

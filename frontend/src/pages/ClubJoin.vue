@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-base flex items-center justify-center px-4">
-    <div class="bg-papyrus-light rounded-2xl shadow-card border border-[#8b4513]/10 p-8 max-w-md w-full text-center">
+  <div class="min-h-screen bg-base flex items-center justify-center px-4 font-sans">
+    <div class="bg-white rounded-sm border border-[#2a1410]/10 shadow-[0_1px_4px_rgba(42,20,16,0.04)] p-8 max-w-md w-full text-center">
       <!-- Loading -->
       <div v-if="state === 'loading'">
         <i class="pi pi-spin pi-spinner text-3xl text-[#8b4513] mb-4"></i>
