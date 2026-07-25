@@ -238,9 +238,58 @@
               <i class="pi pi-chevron-right text-[10px] text-[#2a1410]/30 group-hover:text-secondary"></i>
             </a>
           </div>
+          
+          <!-- Despre Noi -->
+          <div class="rounded-sm p-6 bg-white border border-[#2a1410]/10 mt-6">
+            <p class="font-mono text-xs tracking-widest uppercase mb-4 text-[#7a5a55]">
+              Despre Noi
+            </p>
+            <p class="text-sm text-[#4a3a35] leading-relaxed line-clamp-3 mb-4">
+              Biblioteca Colegiului Național de Informatică „Spiru Haret” Suceava vă stă la dispoziție cu o selecție de lecturi obligatorii, beletristică și materiale de studiu.
+            </p>
+            <button
+              @click="showTextModal = true"
+              class="w-full py-2.5 bg-[#8b4513]/5 hover:bg-[#8b4513]/10 text-[#2a1410] text-[10px] font-mono tracking-widest uppercase font-bold rounded-sm transition-colors flex items-center justify-center gap-2"
+            >
+              <span>Citește mai mult</span> <i class="pi pi-arrow-right text-[10px]"></i>
+            </button>
+          </div>
+
         </div>
       </div>
     </section>
+
+    <!-- Modal -->
+    <transition name="fade">
+      <div v-if="showTextModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 sm:p-6" @click.self="showTextModal = false">
+        <div class="bg-white w-full max-w-2xl rounded-sm shadow-2xl flex flex-col max-h-[90vh]">
+          <div class="p-5 sm:p-6 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="text-2xl font-serif font-bold text-[#2a1410]">Despre Noi</h2>
+            <button @click="showTextModal = false" class="text-gray-400 hover:text-[#2a1410] transition-colors">
+              <i class="pi pi-times text-xl"></i>
+            </button>
+          </div>
+          <div class="p-6 sm:p-8 overflow-y-auto">
+            <div class="prose prose-sm max-w-none text-[#4a3a35]">
+              <p class="mb-4 text-base leading-relaxed">Biblioteca Colegiului Național de Informatică „Spiru Haret” Suceava vă stă la dispoziție pe parcursul anilor de liceu cu o selecție de lecturi obligatorii, literatură clasică și materiale de studiu necesare pentru pregătirea școlară. Ne propunem să fim un punct de sprijin pentru elevi în realizarea temelor și dezvoltarea personală prin lectură.</p>
+              <ul class="list-disc pl-5 mb-4 space-y-2 text-base leading-relaxed">
+                <li>Acces la bibliografia școlară obligatorie și literatură suplimentară.</li>
+                <li>O sală de lectură potrivită pentru studiu în pauze sau după ore.</li>
+                <li>Un Club de Lectură unde discutăm despre cărțile preferate.</li>
+                <li>Îndrumare din partea bibliotecarului pentru găsirea materialelor necesare.</li>
+              </ul>
+              <p class="text-base leading-relaxed font-semibold mt-6">Vă așteptăm pe la noi, fie pentru a împrumuta o carte, fie pentru un moment de liniște!</p>
+            </div>
+          </div>
+          <div class="p-5 sm:p-6 border-t border-gray-100 bg-gray-50 flex justify-end rounded-b-sm">
+            <button @click="showTextModal = false" class="px-6 py-2.5 bg-[#8b4513] hover:opacity-90 text-white text-[10px] font-mono tracking-widest uppercase font-bold rounded-sm transition-colors">
+              Închide
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
   </div>
 </template>
 
@@ -258,7 +307,8 @@ export default {
       isLoggedIn: false,
       cartiRecente: [],
       loadingCarti: false,
-      bookPage: 0
+      bookPage: 0,
+      showTextModal: false
     }
   },
   computed: {
