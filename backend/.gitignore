@@ -31,3 +31,4 @@ imagini_anunturi_club/
 *.sqlite3
 .idea/
 .vscode/
+node_modules/
