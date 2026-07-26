@@ -384,10 +384,10 @@ def update_book_request(cerere_id):
 
         db.session.commit()
         return jsonify({'success': True, 'message': f'Cerere {status_nou}'}), 200
-    except Exception:
+    except Exception as e:
         db.session.rollback()
         logger.exception('Eroare la actualizarea cererii %d', cerere_id)
-        return jsonify({'success': False, 'message': 'Eroare la actualizarea cererii'}), 500
+        return jsonify({'success': False, 'message': f'Eroare la actualizarea cererii: {str(e)}'}), 500
 
 def confirma_ridicare(cerere_id):
     try:
