@@ -267,22 +267,29 @@
                 <i :class="requestingFizic ? 'pi pi-spin pi-spinner' : 'pi pi-book'" class="text-sm"></i>
                 {{ requestingFizic ? 'Se trimite...' : 'Împrumută Fizic' }}
               </button>
-              <a
-                v-if="selectedBook?.has_pdf"
-                :href="`/api/books/pdf/${selectedBook.id}`"
-                target="_blank"
-                class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-sm text-xs font-mono tracking-wider uppercase transition-all bg-secondary text-white hover:bg-secondary/90 whitespace-nowrap"
+              <template v-if="selectedBook?.has_pdf">
+                <a
+                  :href="`/api/books/pdf/${selectedBook.id}/download`"
+                  download
+                  class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-sm text-xs font-mono tracking-wider uppercase transition-all bg-[#2a1410] text-white hover:bg-[#2a1410]/90 whitespace-nowrap"
+                >
+                  <i class="pi pi-download text-sm"></i> Descarcă PDF
+                </a>
+                <a
+                  :href="`/api/books/pdf/${selectedBook.id}`"
+                  target="_blank"
+                  class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-sm text-xs font-mono tracking-wider uppercase transition-all bg-secondary text-white hover:bg-secondary/90 whitespace-nowrap"
+                >
+                  <i class="pi pi-eye text-sm"></i> Citește
+                </a>
+              </template>
+              <button
+                v-else
+                disabled
+                class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-sm text-xs font-mono tracking-wider uppercase transition-all bg-[#2a1410]/5 text-[#7a5a55] cursor-not-allowed border border-[#2a1410]/10 whitespace-nowrap"
               >
-                <i class="pi pi-file-pdf text-sm"></i> Citește PDF
-              </a>
-              <a
-                v-if="selectedBook?.has_pdf"
-                :href="`/api/books/pdf/${selectedBook.id}/download`"
-                download
-                class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-sm text-xs font-mono tracking-wider uppercase transition-all bg-[#2a1410] text-white hover:bg-[#2a1410]/90 whitespace-nowrap"
-              >
-                <i class="pi pi-download text-sm"></i> Descarcă
-              </a>
+                <i class="pi pi-times-circle text-sm"></i> Fără versiune digitală
+              </button>
            </div>
         </div>
 
