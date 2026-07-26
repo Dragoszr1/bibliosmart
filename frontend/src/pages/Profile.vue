@@ -387,7 +387,7 @@
                 </thead>
                 <tbody class="divide-y divide-[#2a1410]/5">
                   <tr 
-                    v-for="book in filteredLibBooks" 
+                    v-for="book in paginatedLibBooks" 
                     :key="book.carte_id"
                     class="hover:bg-cream/50 transition-colors"
                   >
@@ -431,6 +431,9 @@
                         <button v-if="book.has_pdf" @click="openPdfInTab(book.carte_id)" class="p-2 text-[#2a5c3a] hover:bg-[#2a5c3a]/10 rounded-sm transition-colors border border-transparent hover:border-[#2a5c3a]/20" title="Vizualizează PDF">
                           <i class="pi pi-file-pdf text-sm"></i>
                         </button>
+                        <a v-if="book.has_pdf" :href="`/api/books/pdf/${book.carte_id}/download`" download class="p-2 text-[#c9a84c] hover:bg-[#c9a84c]/10 rounded-sm transition-colors border border-transparent hover:border-[#c9a84c]/20 flex items-center justify-center" title="Descarcă PDF">
+                          <i class="pi pi-download text-sm"></i>
+                        </a>
                         <button @click="triggerBookPdfInput(book.carte_id)" class="p-2 text-secondary hover:bg-secondary/10 rounded-sm transition-colors border border-transparent hover:border-secondary/20" :title="book.has_pdf ? 'Înlocuiește PDF' : 'Încarcă PDF'">
                           <i :class="book.has_pdf ? 'pi pi-refresh' : 'pi pi-upload'" class="text-sm"></i>
                         </button>
@@ -456,6 +459,31 @@
                   </tr>
                 </tbody>
               </table>
+
+              <!-- Pagination Controls -->
+              <div v-if="libBooksTotalPages > 1" class="flex justify-center items-center gap-4 mt-6 mb-6">
+                <button 
+                  @click="libBooksCurrentPage > 1 ? libBooksCurrentPage-- : null"
+                  :disabled="libBooksCurrentPage === 1"
+                  class="px-4 py-2 rounded-sm font-mono text-xs uppercase tracking-wider transition-colors border"
+                  :class="libBooksCurrentPage === 1 ? 'border-[#2a1410]/10 text-[#7a5a55]/50 bg-cream-dark cursor-not-allowed' : 'border-[#2a1410]/20 text-[#2a1410] hover:bg-[#c9a84c] hover:border-[#c9a84c]'"
+                >
+                  <i class="pi pi-chevron-left mr-1 text-[10px]"></i> Înapoi
+                </button>
+                
+                <span class="font-mono text-xs uppercase tracking-wider text-[#7a5a55]">
+                  Pagina <span class="text-[#2a1410] font-bold">{{ libBooksCurrentPage }}</span> din <span class="text-[#2a1410] font-bold">{{ libBooksTotalPages }}</span>
+                </span>
+
+                <button 
+                  @click="libBooksCurrentPage < libBooksTotalPages ? libBooksCurrentPage++ : null"
+                  :disabled="libBooksCurrentPage === libBooksTotalPages"
+                  class="px-4 py-2 rounded-sm font-mono text-xs uppercase tracking-wider transition-colors border"
+                  :class="libBooksCurrentPage === libBooksTotalPages ? 'border-[#2a1410]/10 text-[#7a5a55]/50 bg-cream-dark cursor-not-allowed' : 'border-[#2a1410]/20 text-[#2a1410] hover:bg-[#c9a84c] hover:border-[#c9a84c]'"
+                >
+                  Înainte <i class="pi pi-chevron-right ml-1 text-[10px]"></i>
+                </button>
+              </div>
 
               <!-- Empty -->
               <div v-if="filteredLibBooks.length === 0 && !loadingBooks" class="text-center py-16 border-t border-[#2a1410]/5">
@@ -1489,6 +1517,8 @@ export default {
       approvingRequest: false,
       allBooks: [],
       filteredLibBooks: [],
+      libBooksCurrentPage: 1,
+      libBooksItemsPerPage: 15,
       libSearch: '',
       loadingBooks: false,
       imageCacheBust: Date.now(),
@@ -1569,6 +1599,14 @@ export default {
     }
   },
   computed: {
+    paginatedLibBooks() {
+      const start = (this.libBooksCurrentPage - 1) * this.libBooksItemsPerPage
+      const end = start + this.libBooksItemsPerPage
+      return this.filteredLibBooks.slice(start, end)
+    },
+    libBooksTotalPages() {
+      return Math.ceil(this.filteredLibBooks.length / this.libBooksItemsPerPage) || 1
+    },
     pendingRequestsCount() {
       return this.bookRequests.filter(r => r.status === 'pending').length
     },
@@ -1888,6 +1926,7 @@ export default {
       }
     },
     filterLibBooks() {
+      this.libBooksCurrentPage = 1
       if (!this.libSearch.trim()) {
         this.filteredLibBooks = this.allBooks
         return

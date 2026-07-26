@@ -275,6 +275,14 @@
               >
                 <i class="pi pi-file-pdf text-sm"></i> Citește PDF
               </a>
+              <a
+                v-if="selectedBook?.has_pdf"
+                :href="`/api/books/pdf/${selectedBook.id}/download`"
+                download
+                class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-sm text-xs font-mono tracking-wider uppercase transition-all bg-[#2a1410] text-white hover:bg-[#2a1410]/90 whitespace-nowrap"
+              >
+                <i class="pi pi-download text-sm"></i> Descarcă
+              </a>
            </div>
         </div>
 

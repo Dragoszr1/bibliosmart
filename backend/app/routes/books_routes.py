@@ -67,6 +67,11 @@ def upload_book_pdf():
 def get_book_pdf(carte_id):
     return books_controller.get_book_pdf(carte_id)
 
+@books_bp.route('/pdf/<int:carte_id>/download', methods=['GET'])
+@jwt_required
+def download_book_pdf(carte_id):
+    return books_controller.download_book_pdf(carte_id)
+
 @books_bp.route('/pdf/<int:carte_id>', methods=['DELETE'])
 @bibliotecar_required
 def delete_book_pdf(carte_id):

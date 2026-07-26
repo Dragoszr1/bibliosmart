@@ -523,6 +523,18 @@ def get_book_pdf(carte_id):
         return jsonify({'success': False, 'message': 'PDF negăsit'}), 404
     return send_from_directory(BOOK_PDFS_DIR, f"{carte_id}.pdf", as_attachment=False)
 
+def download_book_pdf(carte_id):
+    pdf_path = os.path.join(BOOK_PDFS_DIR, f"{carte_id}.pdf")
+    if not os.path.exists(pdf_path):
+        return jsonify({'success': False, 'message': 'PDF negăsit'}), 404
+        
+    from app.models import Carti
+    carte = db.session.query(Carti).filter_by(carte_id=carte_id).first()
+    title = carte.titlu if carte else f"carte_{carte_id}"
+    safe_title = "".join([c for c in title if c.isalpha() or c.isdigit() or c==' ']).strip()
+    
+    return send_from_directory(BOOK_PDFS_DIR, f"{carte_id}.pdf", as_attachment=True, download_name=f"{safe_title}.pdf")
+
 def delete_book_pdf(carte_id):
     pdf_path = os.path.join(BOOK_PDFS_DIR, f"{carte_id}.pdf")
     if not os.path.exists(pdf_path):
