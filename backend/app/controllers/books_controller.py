@@ -14,9 +14,7 @@ logger = logging.getLogger(__name__)
 
 def get_books():
     try:
-        result = db.session.execute(text('SELECT carte_id, titlu, autor, ISBN, stoc_total, stoc_disponibil, imprumutat, gen, pozitie, cod FROM carti'))
-        os.makedirs(BOOK_PDFS_DIR, exist_ok=True)
-        pdf_ids = {f.rsplit('.', 1)[0] for f in os.listdir(BOOK_PDFS_DIR) if f.endswith('.pdf')}
+        result = db.session.execute(text('SELECT carte_id, titlu, autor, ISBN, stoc_total, stoc_disponibil, imprumutat, gen, pozitie, cod, pdf_filename FROM carti'))
         books = []
         for row in result:
             books.append({
@@ -30,7 +28,7 @@ def get_books():
                 'gen': row[7],
                 'pozitie': row[8],
                 'cod': row[9],
-                'has_pdf': str(row[0]) in pdf_ids
+                'has_pdf': row[10] is not None and row[10] != ''
             })
         return jsonify({'books': books}), 200
     except Exception:
@@ -505,39 +503,64 @@ def upload_book_pdf():
     if not file.filename.lower().endswith('.pdf'):
         return jsonify({'success': False, 'message': 'Doar fișiere PDF sunt acceptate'}), 400
 
-    result = db.session.execute(text("SELECT carte_id FROM carti WHERE carte_id = :id"), {'id': carte_id}).mappings().first()
+    result = db.session.execute(text("SELECT carte_id, pdf_filename FROM carti WHERE carte_id = :id"), {'id': carte_id}).mappings().first()
     if not result:
         return jsonify({'success': False, 'message': 'Cartea nu a fost găsită'}), 404
 
     os.makedirs(BOOK_PDFS_DIR, exist_ok=True)
-    old_path = os.path.join(BOOK_PDFS_DIR, f"{carte_id}.pdf")
-    if os.path.exists(old_path):
-        os.remove(old_path)
+    if result['pdf_filename']:
+        old_path = os.path.join(BOOK_PDFS_DIR, result['pdf_filename'])
+        if os.path.exists(old_path):
+            os.remove(old_path)
 
-    file.save(os.path.join(BOOK_PDFS_DIR, f"{carte_id}.pdf"))
+    # Secure the filename or just use it if trusted, but let's just use it
+    from werkzeug.utils import secure_filename
+    filename = secure_filename(file.filename)
+    if not filename:
+        filename = f"carte_{carte_id}.pdf"
+        
+    file.save(os.path.join(BOOK_PDFS_DIR, filename))
+    
+    db.session.execute(text("UPDATE carti SET pdf_filename = :filename WHERE carte_id = :id"), {'filename': filename, 'id': carte_id})
+    db.session.commit()
+    
     return jsonify({'success': True, 'message': 'PDF încărcat'}), 200
 
 def get_book_pdf(carte_id):
-    pdf_path = os.path.join(BOOK_PDFS_DIR, f"{carte_id}.pdf")
-    if not os.path.exists(pdf_path):
-        return jsonify({'success': False, 'message': 'PDF negăsit'}), 404
-    return send_from_directory(BOOK_PDFS_DIR, f"{carte_id}.pdf", as_attachment=False)
-
-def download_book_pdf(carte_id):
-    pdf_path = os.path.join(BOOK_PDFS_DIR, f"{carte_id}.pdf")
-    if not os.path.exists(pdf_path):
-        return jsonify({'success': False, 'message': 'PDF negăsit'}), 404
-        
     from app.models import Carti
     carte = db.session.query(Carti).filter_by(carte_id=carte_id).first()
-    title = carte.titlu if carte else f"carte_{carte_id}"
-    safe_title = "".join([c for c in title if c.isalpha() or c.isdigit() or c==' ']).strip()
-    
-    return send_from_directory(BOOK_PDFS_DIR, f"{carte_id}.pdf", as_attachment=True, download_name=f"{safe_title}.pdf")
+    if not carte or not carte.pdf_filename:
+        return jsonify({'success': False, 'message': 'PDF negăsit'}), 404
+        
+    pdf_path = os.path.join(BOOK_PDFS_DIR, carte.pdf_filename)
+    if not os.path.exists(pdf_path):
+        return jsonify({'success': False, 'message': 'PDF negăsit pe disc'}), 404
+    return send_from_directory(BOOK_PDFS_DIR, carte.pdf_filename, as_attachment=False)
+
+def download_book_pdf(carte_id):
+    from app.models import Carti
+    carte = db.session.query(Carti).filter_by(carte_id=carte_id).first()
+    if not carte or not carte.pdf_filename:
+        return jsonify({'success': False, 'message': 'PDF negăsit'}), 404
+        
+    pdf_path = os.path.join(BOOK_PDFS_DIR, carte.pdf_filename)
+    if not os.path.exists(pdf_path):
+        return jsonify({'success': False, 'message': 'PDF negăsit pe disc'}), 404
+        
+    # User wanted the original name without modifications
+    return send_from_directory(BOOK_PDFS_DIR, carte.pdf_filename, as_attachment=True, download_name=carte.pdf_filename)
 
 def delete_book_pdf(carte_id):
-    pdf_path = os.path.join(BOOK_PDFS_DIR, f"{carte_id}.pdf")
-    if not os.path.exists(pdf_path):
+    from app.models import Carti
+    carte = db.session.query(Carti).filter_by(carte_id=carte_id).first()
+    if not carte or not carte.pdf_filename:
         return jsonify({'success': False, 'message': 'PDF negăsit'}), 404
-    os.remove(pdf_path)
+        
+    pdf_path = os.path.join(BOOK_PDFS_DIR, carte.pdf_filename)
+    if os.path.exists(pdf_path):
+        os.remove(pdf_path)
+        
+    carte.pdf_filename = None
+    db.session.commit()
+    
     return jsonify({'success': True, 'message': 'PDF șters'}), 200

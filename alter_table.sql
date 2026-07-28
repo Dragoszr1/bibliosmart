@@ -1,0 +1,1 @@
+ALTER TABLE carti ADD COLUMN pdf_filename VARCHAR(255) NULL;
