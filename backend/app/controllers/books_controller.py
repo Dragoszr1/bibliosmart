@@ -453,19 +453,34 @@ def upload_book_image():
     if not allowed_file(file.filename):
         return jsonify({'success': False, 'message': 'Tip de fișier nepermis. Folosește png, jpg, jpeg, gif sau webp'}), 400
 
-    query = text("SELECT carte_id FROM carti WHERE carte_id = :carte_id")
+    query = text("SELECT carte_id, image_filename FROM carti WHERE carte_id = :carte_id")
     result = db.session.execute(query, {'carte_id': carte_id}).mappings().first()
     if not result:
         return jsonify({'success': False, 'message': 'Cartea nu a fost găsită'}), 404
 
-    ext = file.filename.rsplit('.', 1)[1].lower()
+    os.makedirs(BOOK_IMAGES_DIR, exist_ok=True)
+    if result['image_filename']:
+        old_path = os.path.join(BOOK_IMAGES_DIR, result['image_filename'])
+        if os.path.exists(old_path):
+            os.remove(old_path)
+    else:
+        for imagine_veche in _find_files_by_prefix(BOOK_IMAGES_DIR, str(carte_id)):
+            os.remove(os.path.join(BOOK_IMAGES_DIR, imagine_veche))
 
-    for imagine_veche in _find_files_by_prefix(BOOK_IMAGES_DIR, str(carte_id)):
-        os.remove(os.path.join(BOOK_IMAGES_DIR, imagine_veche))
+    from werkzeug.utils import secure_filename
+    original_filename = secure_filename(file.filename)
+    if original_filename:
+        ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else 'jpg'
+        filename = f"carte_{carte_id}_{original_filename}"
+    else:
+        ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
+        filename = f"carte_{carte_id}_img.{ext}"
 
-    filename = f"{carte_id}.{ext}"
     filepath = os.path.join(BOOK_IMAGES_DIR, filename)
     file.save(filepath)
+
+    db.session.execute(text("UPDATE carti SET image_filename = :filename WHERE carte_id = :id"), {'filename': filename, 'id': carte_id})
+    db.session.commit()
 
     return jsonify({
         'success': True,
@@ -474,13 +489,18 @@ def upload_book_image():
     }), 200
 
 def get_book_image(carte_id):
+    from app.models import Carti
+    carte = db.session.query(Carti).filter_by(carte_id=carte_id).first()
+    if carte and carte.image_filename:
+        filepath = os.path.join(BOOK_IMAGES_DIR, carte.image_filename)
+        if os.path.exists(filepath):
+            return send_from_directory(BOOK_IMAGES_DIR, carte.image_filename)
+
     matches = _find_files_by_prefix(BOOK_IMAGES_DIR, str(carte_id))
     if matches:
         return send_from_directory(BOOK_IMAGES_DIR, matches[0])
         
     # Fallback to base title
-    from app.models import Carti
-    carte = db.session.query(Carti).filter_by(carte_id=carte_id).first()
     if carte:
         base_title = carte.titlu.split('-')[0].strip()
         safe_title = "".join([c for c in base_title if c.isalpha() or c.isdigit() or c==' ']).strip()

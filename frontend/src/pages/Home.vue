@@ -83,7 +83,7 @@
               >
                 <div class="relative overflow-hidden h-44 bg-cream-dark">
                   <img
-                    :src="`/api/books/image/${carte.carte_id}`"
+                    :src="`/api/books/image/${carte.carte_id}?t=${imageCacheBust}`"
                     @error="$event.target.src='https://placehold.co/200x280/e2e8f0/64748b?text=Carte'"
                     :alt="`Coperta ${carte.titlu}`"
                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -309,7 +309,8 @@ export default {
       cartiRecente: [],
       loadingCarti: false,
       bookPage: 0,
-      showTextModal: false
+      showTextModal: false,
+      imageCacheBust: Date.now()
     }
   },
   computed: {

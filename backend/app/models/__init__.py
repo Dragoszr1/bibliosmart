@@ -18,6 +18,7 @@ class Carti(db.Model):
     pozitie = db.Column(db.String(100), nullable=True)
     cod = db.Column(db.String(50), nullable=True)
     pdf_filename = db.Column(db.String(255), nullable=True)
+    image_filename = db.Column(db.String(255), nullable=True)
 
     def __repr__(self):
         return f'<Carti {self.titlu}>'

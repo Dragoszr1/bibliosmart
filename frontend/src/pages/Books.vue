@@ -124,11 +124,11 @@
           <!-- Book Cover -->
           <div class="relative overflow-hidden h-44 bg-cream-dark shrink-0">
             <img
-              :src="`/api/books/image/${book.id}`"
+              :src="`/api/books/image/${book.id}?t=${imageCacheBust}`"
               :alt="book.title"
               loading="lazy"
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              @error="$event.target.style.display='none'"
+              @error="$event.target.src='https://placehold.co/200x280/e2e8f0/64748b?text=Carte'"
             >
             <div class="absolute inset-0 flex items-center justify-center -z-10 bg-cream-dark">
                 <i class="pi pi-book text-3xl text-secondary/20"></i>
@@ -219,10 +219,10 @@
         <div class="sticky top-0 bg-dark px-6 py-5 border-b border-white/10 flex items-start gap-5 z-20">
           <img
             v-if="selectedBook"
-            :src="`/api/books/image/${selectedBook.id}`"
+            :src="`/api/books/image/${selectedBook.id}?t=${imageCacheBust}`"
             :alt="selectedBook.title"
             class="w-20 h-28 object-cover rounded-sm flex-shrink-0 shadow-lg border border-white/10"
-            @error="$event.target.style.display='none'"
+            @error="$event.target.src='https://placehold.co/200x280/e2e8f0/64748b?text=Carte'"
           >
           <div class="flex-1 min-w-0 pr-8">
             <span class="inline-block text-[10px] font-mono tracking-widest uppercase text-[#c9a84c] mb-1">
@@ -407,6 +407,7 @@ export default {
       filterAvailability: '',
       allBooks: [],
       filteredBooks: [],
+      imageCacheBust: Date.now(),
       currentPage: 1,
       itemsPerPage: 15,
       showModal: false,
