@@ -280,7 +280,7 @@
                 disabled
                 class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-sm text-xs font-mono tracking-wider uppercase transition-all bg-[#2a1410]/5 text-[#7a5a55] cursor-not-allowed border border-[#2a1410]/10 whitespace-nowrap"
               >
-                <i class="pi pi-times-circle text-sm"></i> Nu este disponibilă digital
+                <i class="pi pi-times-circle text-sm"></i> Indisponibilă digital
               </button>
            </div>
         </div>
